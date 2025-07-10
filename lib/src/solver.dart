@@ -1,7 +1,5 @@
 import "dart:math";
 
-import "package:quiver/iterables.dart" show zip;
-
 import "cube/coord_cube.dart";
 import "cube/cubie_cube.dart";
 import "cube/enums.dart";
@@ -257,17 +255,6 @@ class SolveManager {
     return (status: SolverStatus.exceededMaxLength, solution: "");
   }
 
-  String _recoverMove(int axis, int power) {
-    if (power == 1) {
-      return CFace.faceToString[axis];
-    } else if (power == 2) {
-      return "${CFace.faceToString[axis]}2";
-    } else if (power == 3) {
-      return "${CFace.faceToString[axis]}'";
-    }
-    throw ArgumentError("Invalid move in solution");
-  }
-
   /// Generate solution string
   ///
   /// Uses standard cube notation:
@@ -276,8 +263,7 @@ class SolveManager {
   ///   R2 means a half turn of the R face etc.
   String _solutionToString(int length) {
     final solution = [
-      for (var pair in zip([axis.sublist(0, length), power.sublist(0, length)]))
-        _recoverMove(pair[0], pair[1]),
+      for (var i = 0; i < length; i++) CRotation(ERotation.values[axis[i]], power[i]).toString(),
     ];
 
     return solution.join(" ");
