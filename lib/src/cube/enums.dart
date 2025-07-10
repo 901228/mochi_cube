@@ -291,6 +291,14 @@ class CRotation {
 
     return CRotation(notation, amount);
   }
+
+  void invert() {
+    if (amount == 1) {
+      amount = 3;
+    } else if (amount == 3) {
+      amount = 1;
+    }
+  }
 }
 
 enum CubeVerification {

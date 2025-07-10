@@ -268,4 +268,16 @@ class SolveManager {
 
     return solution.join(" ");
   }
+
+  static String inverseSolution(String solution) {
+    final solutionList = solution.split(" ");
+
+    final scramble = solutionList.reversed.map((move) {
+      final rotation = CRotation.fromString(move);
+      rotation.invert();
+      return rotation.toString();
+    });
+
+    return scramble.join(" ");
+  }
 }
