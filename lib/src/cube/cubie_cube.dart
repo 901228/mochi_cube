@@ -64,6 +64,29 @@ class CubieCube {
       cornerState = cornerState ?? initCornerState(),
       edgeState = edgeState ?? initEdgeState();
 
+  /// Generate a random cube
+  ///
+  /// The probability is the same for all possible states
+  CubieCube.randomize([int? seed]) : cornerState = initCornerState(), edgeState = initEdgeState() {
+    final random = Random(seed);
+
+    // set edge permutation
+    edge = random.nextInt(_factorial(edgeLength)); // 12!
+
+    // set corner permutation
+    final ep = edgeParity;
+    while (true) {
+      corner = random.nextInt(_factorial(cornerLength)); // 8!
+      if (ep == cornerParity) {
+        break;
+      }
+    }
+
+    // set orientations
+    twist = random.nextInt(pow(3, cornerLength - 1).toInt()); // 3^7
+    flip = random.nextInt(pow(2, edgeLength - 1).toInt()); // 2^11
+  }
+
   factory CubieCube.fromFaceCube(FaceCube cube) {
     List<CCorner?> cornerState = List.filled(cornerLength, null);
     List<CEdge?> edgeState = List.filled(edgeLength, null);
@@ -320,8 +343,6 @@ class CubieCube {
     return s;
   }
 
-  final List middleLayerEdges = [EEdge.frontRight, EEdge.frontLeft, EEdge.backLeft, EEdge.backRight];
-
   /// Encode the center layer edge position into a int
   ///
   /// Since there are 12 possible positions and we care only about those 4 edges, udslice takes values in the range 0, ..., 12C4 - 1
@@ -511,7 +532,7 @@ class CubieCube {
   /// There are 8 possible positions for the 8 corners, so corner takes values in the range 0, ..., 8! - 1
   int get corner {
     int ret = 0;
-    for (var i = 7; i > 0; i--) {
+    for (var i = cornerLength - 1; i > 0; i--) {
       int s = 0;
       for (var j = 0; j < i; j++) {
         if (cornerState[j].permutation.index > cornerState[i].permutation.index) {
@@ -528,18 +549,18 @@ class CubieCube {
   ///
   /// 0 <= [value] < 8!
   set corner(int value) {
-    assert(0 <= value && value < _factorial(8));
+    assert(0 <= value && value < _factorial(cornerLength));
 
     final corners = List.from(ECorner.values);
 
-    final coefficients = List.filled(7, 0);
-    for (var i = 1; i < 8; i++) {
+    final coefficients = List.filled(cornerLength - 1, 0);
+    for (var i = 1; i < cornerLength; i++) {
       coefficients[i - 1] = value % (i + 1);
       value ~/= i + 1;
     }
 
-    final permutations = List<ECorner?>.filled(8, null);
-    for (var i = 6; i >= 0; i--) {
+    final permutations = List<ECorner?>.filled(cornerLength, null);
+    for (var i = cornerLength - 2; i >= 0; i--) {
       permutations[i + 1] = corners.removeAt(i + 1 - coefficients[i]);
     }
     permutations[0] = corners[0];
@@ -553,20 +574,46 @@ class CubieCube {
   // Misc. coordinates
   // ==========================
 
+  /// Encode the permutation of the 12 edges
+  ///
+  /// There are 12 possible positions for the 12 corners, so corner takes values in the range 0, ..., 12! - 1
   int get edge {
-    // TODO: edge getter, for generating scramble
-    throw UnimplementedError();
+    int ret = 0;
+    for (var i = edgeLength - 1; i > 0; i--) {
+      int s = 0;
+      for (var j = 0; j < i; j++) {
+        if (edgeState[j].permutation.index > edgeState[i].permutation.index) {
+          s++;
+        }
+      }
+      ret = i * (ret + s);
+    }
+
+    return ret;
   }
 
+  /// Decode the permutation of the 12 edges
+  ///
+  /// 0 <= [value] < 12!
   set edge(int value) {
-    // TODO: edge setter, for generating scramble
-    throw UnimplementedError();
-    // self.ep = [i for i in Ed]
-    //         for j in Ed:
-    //             k = idx % (j + 1)
-    //             idx //= j + 1
-    //             while k > 0:
-    //                 rotate_right(self.ep, 0, j)
-    //                 k -= 1
+    assert(0 <= value && value < _factorial(edgeLength));
+
+    final edges = List.from(EEdge.values);
+
+    final coefficients = List.filled(edgeLength - 1, 0);
+    for (var i = 1; i < edgeLength; i++) {
+      coefficients[i - 1] = value % (i + 1);
+      value ~/= i + 1;
+    }
+
+    final permutations = List<EEdge?>.filled(edgeLength, null);
+    for (var i = edgeLength - 2; i >= 0; i--) {
+      permutations[i + 1] = edges.removeAt(i + 1 - coefficients[i]);
+    }
+    permutations[0] = edges[0];
+
+    permutations.asMap().forEach(
+      (index, edge) => edgeState[index] = CEdge(edge!, edgeState[index].orientation),
+    );
   }
 }

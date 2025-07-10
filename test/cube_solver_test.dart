@@ -22,5 +22,15 @@ void main() {
     test("Solver Test", () {
       expect(solveManager.solve().status, same(SolverStatus.foundSolution));
     });
+
+    test("Random Test", () {
+      final randomCube = CubieCube.randomize();
+      expect(randomCube.validate(), same(CubeVerification.solvable));
+
+      final solution = solveManager.solve();
+      expect(solution.status, same(SolverStatus.foundSolution));
+      print("scramble: ${SolveManager.inverseSolution(solution.solution)}");
+      print("solution: ${solution.solution}");
+    });
   });
 }
