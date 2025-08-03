@@ -2,7 +2,7 @@ import "dart:convert";
 import "dart:io";
 
 import "package:app_dirs/app_dirs.dart";
-import "package:cube_solver/src/logger.dart";
+import "package:cube_solver/kociemba/logger.dart";
 import "package:json_annotation/json_annotation.dart";
 import "package:path/path.dart" as path;
 

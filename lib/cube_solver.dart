@@ -3,7 +3,7 @@
 /// More dartdocs go here.
 library;
 
-export "src/cube/cubie_cube.dart" show CubieCube;
-export "src/cube/enums.dart";
-export "src/cube/face_cube.dart" show FaceCube;
-export "src/solver.dart";
+export "kociemba/cube/cubie_cube.dart" show CubieCube;
+export "kociemba/cube/enums.dart";
+export "kociemba/cube/face_cube.dart" show FaceCube;
+export "kociemba/solver.dart";
