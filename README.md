@@ -1,8 +1,9 @@
 # mochi_cube
 
-Rubik's Cube solvers in pure Dart, no Flutter dependency.
+Twisty puzzle solvers and scramble generators in pure Dart, no Flutter
+dependency. The 3x3x3 and the 2x2x2 so far.
 
-Two of them. The one you want is a port of Chen Shuang's
+For the 3x3x3 there are two solvers. The one you want is a port of Chen Shuang's
 [min2phase](https://github.com/cs0x7f/min2phase); the other is a plainer
 implementation of Herbert Kociemba's two-phase algorithm, kept because it is the
 independent reference every table in the first one is checked against.
@@ -55,6 +56,38 @@ Tables are built on first use and cached under the platform's app-data
 directory. `Phase1Tables.useTwistFlipPrune = false` trades the largest table for
 speed: 644 KB and 21.5ms instead of 1.0 MB and 13.4ms, with no change to
 solution length.
+
+## The 2x2x2
+
+`package:mochi_cube/pocket.dart`, and a different problem entirely. Where the
+3x3x3 has 4.3 × 10^19 states and needs a two-phase search, the 2x2x2 has
+3,674,160 — few enough to hold the exact distance to solved for every one of
+them. So there is no search: solving is a walk downhill, taking any move that
+leaves you one step nearer.
+
+```dart
+import "package:mochi_cube/pocket.dart";
+
+final scramble = randomPocketScramble();
+final result = pocket.solve(scramble.cube.toPocketFaceletString());
+// always the shortest solution that exists
+```
+
+| | |
+| ---------- | ------------------------------------- |
+| solve      | 1.2μs, and always optimal             |
+| moves      | 8.8 average, 11 at worst              |
+| table      | 1.9 MB, built in ~570ms, loaded in ~25ms |
+
+11 is God's number for the puzzle. The table's distance histogram matches the
+published one exactly, down to the 2,644 states that need all eleven — which is
+a stronger check on it than anything the 3x3x3 tables get.
+
+A 2x2x2 has no centres, so nothing announces which colour is which face.
+`PocketCube.fromFaceletString` works it out: the corner held still names three
+faces by definition, and each remaining colour is opposite whichever of those it
+never shares a corner with. Any six letters in any scheme parse, same as the
+3x3x3.
 
 ## Scrambles
 
@@ -134,11 +167,12 @@ it has to use an 8-element subgroup; and a breadth-first search that ignores
 inadmissible and lets the search miss solutions. Neither shows up without an
 exhaustive comparison.
 
-121 tests, `dart test`.
+140 tests, `dart test`.
 
 ## Roadmap
 
-Only the 3x3x3 is implemented. Everything below is wanted but not written.
+The 3x3x3 and the 2x2x2 are implemented. Everything below is wanted but not
+written.
 
 ### Other puzzles
 
@@ -148,7 +182,7 @@ and reversed, as above. Where it cannot, it is random turns.
 
 | Puzzle       | Method       | What it needs                                    |
 | ------------ | ------------ | ------------------------------------------------ |
-| 2x2x2        | random state | one breadth-first search over all 3,674,160 states |
+| 2x2x2        | random state | **done**                                         |
 | 3x3x3        | random state | **done**                                         |
 | 4x4x4        | random state | a staged reduction solver — much the largest job |
 | 5x5x5        | random turns | 60 turns                                         |
@@ -161,20 +195,25 @@ and reversed, as above. Where it cannot, it is random turns.
 | Clock        | random state | no search at all: the notation *is* the state    |
 | FTO          | random state | its own solver                                   |
 
-2x2x2, Pyraminx and Skewb are the easy ones: their state spaces are small enough
-to hold the exact distance to solved for every state, so no two-phase search is
-needed and `fillPruningTable` already does the work. Clock needs nothing —
+Pyraminx and Skewb should go the way the 2x2x2 did: their state spaces are small
+enough to hold the exact distance to solved for every state, so no two-phase
+search is needed and `fillPruningTable` already does the work. Clock needs
+nothing —
 every state is reachable and the notation encodes it directly. 5x5x5 and up are
 the *easiest* to scramble, since random turns need no solver at all; it is
 solving them that is out of reach.
 
 Each has its own minimum, per WCA regulation 4b3: 2x2x2 four moves, Pyraminx
-six, Skewb seven, Square-1 eleven, the rest two. `randomStateScramble` already
-takes that as a parameter.
+six, Skewb seven, Square-1 eleven, the rest two. Both scramble generators take
+that as a parameter.
 
-This will force one design change first: `Algorithm` and the notation assume the
-3x3x3's eighteen turns. Supporting another puzzle means making the move set
-something a puzzle supplies rather than something the library hard-codes.
+One design change is still coming. The 2x2x2 needed none, because its turns are
+a subset of the 3x3x3's and mean the same thing — but Pyraminx, Skewb, Megaminx
+and FTO all turn about different things, and Square-1 and Clock are not face
+turns at all. `Algorithm` and the notation currently assume the 3x3x3's eighteen
+turns, and at some point the move set has to become something a puzzle supplies.
+Two more puzzles should make the right shape for that obvious; guessing at it
+now would not.
 
 ### Practice scrambles
 

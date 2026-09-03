@@ -1,3 +1,30 @@
+## 1.1.0
+
+### The 2x2x2
+
+`package:mochi_cube/pocket.dart`. A different problem from the 3x3x3: with
+3,674,160 states, one breadth-first search holds the exact distance to solved
+for every one of them, so there is no search. Solving walks downhill and every
+solution is optimal — 1.2μs, 8.8 moves on average, 11 at worst, which is God's
+number for the puzzle.
+
+- `PocketSearch.solve` and `PocketSearch.distanceOf`
+- `pocket`, a `Solver` like the other two
+- `randomPocketCube` and `randomPocketScramble`, the latter honouring WCA
+  regulation 4b3's four-move minimum — and exactly, not as a bound, since the
+  solutions are optimal
+- `PocketCube.fromFaceletString` and `toPocketFaceletString` for the 24 stickers
+
+A 2x2x2 has no centres, so nothing says which colour is which face. The parser
+works it out from two facts: the corner held still names three faces by
+definition, and no corner carries two opposite colours.
+
+It reuses the 3x3x3's cube model, move cubes, notation and `Algorithm`. A 2x2x2
+is the corners of a 3x3x3, and U, R and F mean the same thing on both.
+
+The distance histogram matches the published one for the puzzle exactly, down to
+the 2,644 states that need all eleven moves.
+
 ## 1.0.0
 
 First working version. The package solves a 3x3x3 and scrambles one.

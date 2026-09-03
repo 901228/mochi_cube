@@ -1,6 +1,6 @@
 name: mochi_cube
-description: "Rubik's Cube solvers: a port of min2phase, and a plainer Kociemba two-phase solver."
-version: 1.0.0
+description: "Twisty puzzle solvers and scramble generators: a min2phase port, a Kociemba two-phase solver, and an optimal 2x2x2."
+version: 1.1.0
 # repository: https://github.com/my_org/my_repo
 
 environment:
