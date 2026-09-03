@@ -4,6 +4,8 @@ import "cube/coord_cube.dart";
 import "cube/cubie_cube.dart";
 import "cube/enums.dart";
 import "cube/face_cube.dart";
+import "../cube/algorithm.dart";
+import "../solver.dart";
 import "tables.dart";
 
 enum SolverStatus {
@@ -82,25 +84,6 @@ class SolveManager {
     return (status: SolverStatus.exceededMaxLength, solution: "");
   }
 
-  List<String> solveAll({int maxLength = 25, double maxTime = double.infinity}) {
-    final List<String> solutions = [];
-
-    while (true) {
-      // FIXME: This loop is infinite
-      final solution = solve(maxLength: maxLength, maxTime: maxTime);
-      print(solution);
-
-      if (solution.status == SolverStatus.foundSolution) {
-        solutions.add(solution.solution);
-      } else {
-        // timeout or no more solutions
-        break;
-      }
-    }
-
-    return solutions;
-  }
-
   late List<int> _axis;
   late List<int> _power;
   late List<int> _twist;
@@ -154,7 +137,7 @@ class SolveManager {
     final cc = CubieCube.fromFaceCube(_faceCube);
     for (var i = 0; i < n; i++) {
       for (var j = 0; j < _power[i]; j++) {
-        cc.move(ERotation.values[_axis[i]]);
+        cc.move(Face.values[_axis[i]]);
       }
     }
     _edge4[n] = cc.edge4;
@@ -197,7 +180,7 @@ class SolveManager {
       }
       return (status: SolverStatus.exceededMaxLength, solution: "");
     } else if (_minDist1[n] <= depth) {
-      for (var i = 0; i < ERotation.values.length; i++) {
+      for (var i = 0; i < Face.values.length; i++) {
         // don't turn the same face on consecutive moves
         // also for opposite faces, e.g. U and D, UD = DU, so we can impose that the lower index happens first
         if (n > 0 && (_axis[n - 1] == i || _axis[n - 1] == i + 3)) {
@@ -210,9 +193,9 @@ class SolveManager {
           final int mv = 3 * i + j - 1;
 
           // update coordnates
-          _twist[n + 1] = Table().twistMove[_twist[n]][mv];
-          _flip[n + 1] = Table().flipMove[_flip[n]][mv];
-          _udslice[n + 1] = Table().udsliceMove[_udslice[n]][mv];
+          _twist[n + 1] = Table().twistMove[(_twist[n], mv)];
+          _flip[n + 1] = Table().flipMove[(_flip[n], mv)];
+          _udslice[n + 1] = Table().udsliceMove[(_udslice[n], mv)];
           _minDist1[n + 1] = _phase1Cost(n + 1);
 
           // start search from next node
@@ -233,17 +216,17 @@ class SolveManager {
     } else if (_minDist2[n] == 0) {
       return (status: SolverStatus.foundSolution, solution: _solutionToString(n));
     } else if (_minDist2[n] <= depth) {
-      for (var i = 0; i < ERotation.values.length; i++) {
+      for (var i = 0; i < Face.values.length; i++) {
         if (n > 0 && (_axis[n - 1] == i || _axis[n - 1] == i + 3)) {
           continue;
         }
 
         for (var j = 1; j < 4; j++) {
           // in phase 2 we only allow half turns of right, front, left, back
-          if ((ERotation.values[i] == ERotation.right ||
-                  ERotation.values[i] == ERotation.front ||
-                  ERotation.values[i] == ERotation.left ||
-                  ERotation.values[i] == ERotation.back) &&
+          if ((Face.values[i] == Face.right ||
+                  Face.values[i] == Face.front ||
+                  Face.values[i] == Face.left ||
+                  Face.values[i] == Face.back) &&
               j != 2) {
             continue;
           }
@@ -252,9 +235,9 @@ class SolveManager {
           final mv = 3 * i + j - 1;
 
           // update coordinates
-          _edge4[n + 1] = Table().edge4Move[_edge4[n]][mv];
-          _edge8[n + 1] = Table().edge8Move[_edge8[n]][mv];
-          _corner[n + 1] = Table().cornerMove[_corner[n]][mv];
+          _edge4[n + 1] = Table().edge4Move[(_edge4[n], mv)];
+          _edge8[n + 1] = Table().edge8Move[(_edge8[n], mv)];
+          _corner[n + 1] = Table().cornerMove[(_corner[n], mv)];
           _minDist2[n + 1] = _phase2Cost(n + 1);
 
           // start search from new node
@@ -279,7 +262,7 @@ class SolveManager {
   ///   R2 means a half turn of the R face etc.
   String _solutionToString(int length) {
     final solution = [
-      for (var i = 0; i < length; i++) CRotation(ERotation.values[_axis[i]], _power[i]).toString(),
+      for (var i = 0; i < length; i++) CRotation(Face.values[_axis[i]], _power[i]).toString(),
     ];
 
     return solution.join(" ");
@@ -297,3 +280,55 @@ class SolveManager {
     return scramble.join(" ");
   }
 }
+
+/// [SolveManager] behind the common [Solver] interface.
+///
+/// Slower than [Min2PhaseSolver] and its solutions are a couple of moves
+/// longer, but it is the reference the other one's tables are verified against.
+class KociembaSolver implements Solver {
+  const KociembaSolver();
+
+  @override
+  String get name => "kociemba";
+
+  @override
+  int get defaultMaxLength => 25;
+
+  @override
+  SolveResult solve(String facelets, {int maxLength = 25, Duration? maxTime}) {
+    final SolveManager manager;
+    try {
+      manager = SolveManager(facelets);
+    } on FormatException catch (e) {
+      return (status: SolveStatus.invalidCube, solution: null, error: e);
+    }
+
+    final clock = Stopwatch()..start();
+    final result = manager.solve(
+      maxLength: maxLength,
+      maxTime: maxTime == null ? double.infinity : maxTime.inMicroseconds / 1e6,
+    );
+    clock.stop();
+
+    return switch (result.status) {
+      SolverStatus.foundSolution => (
+        status: SolveStatus.foundSolution,
+        solution: Solution(Algorithm.parse(result.solution), elapsedTime: clock.elapsed),
+        error: null,
+      ),
+      SolverStatus.exceededMaxTime => (
+        status: SolveStatus.exceededMaxTime,
+        solution: null,
+        error: null,
+      ),
+      SolverStatus.exceededMaxLength => (
+        status: SolveStatus.exceededMaxLength,
+        solution: null,
+        error: null,
+      ),
+    };
+  }
+}
+
+/// The default [KociembaSolver].
+const Solver kociemba = KociembaSolver();
