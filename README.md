@@ -188,7 +188,7 @@ it has to use an 8-element subgroup; and a breadth-first search that ignores
 inadmissible and lets the search miss solutions. Neither shows up without an
 exhaustive comparison.
 
-155 tests, `dart test`.
+154 tests, `dart test`.
 
 ## Roadmap
 
