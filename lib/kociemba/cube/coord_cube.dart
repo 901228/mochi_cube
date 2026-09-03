@@ -35,11 +35,11 @@ class CoordCube {
   /// calculating as 3 * i + j where i = 0, 1, 2, 3, 4, 5 for U, R, F, D, L, B respectively,
   /// and j = 0, 1, 2 for quarter turn clockwise, half turn and quarter turn anticlockwise respectively
   void move(int mv) {
-    twist = Table().twistMove[twist][mv];
-    flip = Table().flipMove[flip][mv];
-    udslice = Table().udsliceMove[udslice][mv];
-    edge4 = Table().edge4Move[edge4][mv];
-    edge8 = Table().edge8Move[edge8][mv];
-    corner = Table().cornerMove[corner][mv];
+    twist = Table().twistMove[(twist, mv)];
+    flip = Table().flipMove[(flip, mv)];
+    udslice = Table().udsliceMove[(udslice, mv)];
+    edge4 = Table().edge4Move[(edge4, mv)];
+    edge8 = Table().edge8Move[(edge8, mv)];
+    corner = Table().cornerMove[(corner, mv)];
   }
 }
