@@ -19,6 +19,8 @@ library;
 export "cube/algorithm.dart" show Algorithm, MoveSet;
 export "pyraminx/cube.dart"
     show PyraminxCube, layerMoveCount, pyraminxMoves, tipMoveCount;
+export "pyraminx/facelets.dart"
+    show PyraminxFacelet, PyraminxFacelets, nPyraminxFacelets, pyraminxFaceNames;
 export "pyraminx/search.dart"
     show PyraminxSearch, randomPyraminxCube, randomPyraminxScramble;
 export "pyraminx/tables.dart" show PyraminxTables;

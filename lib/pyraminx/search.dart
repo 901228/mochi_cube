@@ -10,11 +10,34 @@ import "tables.dart";
 /// every state, so solving takes any move that leaves the puzzle one step
 /// nearer and repeats. Every solution is therefore **optimal**.
 ///
-/// Tips are not part of this. Each is one turn on its own and cannot be got
-/// wrong, so they are added to a scramble rather than solved.
+/// That is about the layers. The tips are not searched for — each is one turn
+/// on its own — so [solveLayers] leaves them and [solve] finishes them off.
 abstract final class PyraminxSearch {
-  /// The fewest layer turns that solve [cube].
+  /// The moves that solve [cube], tips and all.
+  ///
+  /// The layer part is optimal; the tips are one turn each afterwards, which is
+  /// the only way to fix them and so cannot be bettered.
   static Algorithm solve(PyraminxCube cube) {
+    final moves = [...solveLayers(cube).moves];
+
+    // Layer turns carry the tips with them, so what is left to do is only known
+    // once the layers are done.
+    final finished = PyraminxCube.from(cube)..apply(Algorithm(moves, moveSet: pyraminxMoves));
+    for (var tip = 0; tip < PyraminxCube.vertexCount; tip++) {
+      final twist = finished.tips[tip];
+      if (twist == 0) {
+        continue;
+      }
+      // One turn puts it back: twisted once needs the other way round.
+      final amount = twist == 1 ? 1 : 0;
+      moves.add((PyraminxCube.vertexCount + tip) * pyraminxMoves.amounts.length + amount);
+    }
+
+    return Algorithm(moves, moveSet: pyraminxMoves);
+  }
+
+  /// The fewest layer turns that solve [cube], leaving the tips alone.
+  static Algorithm solveLayers(PyraminxCube cube) {
     final tables = PyraminxTables();
     var index = tables.stateOf(cube);
     var remaining = tables.distance.at(index);
@@ -39,7 +62,7 @@ abstract final class PyraminxSearch {
     return Algorithm(moves, moveSet: pyraminxMoves);
   }
 
-  /// How many layer turns [cube] is from solved. Exact, not a bound.
+  /// How many layer turns [cube] is from solved, tips aside. Exact, not a bound.
   static int distanceOf(PyraminxCube cube) => PyraminxTables().distanceOf(cube);
 }
 
@@ -93,7 +116,7 @@ Algorithm randomPyraminxScramble({
 
   while (true) {
     final cube = randomPyraminxCube(random: rng);
-    final solution = PyraminxSearch.solve(cube);
+    final solution = PyraminxSearch.solveLayers(cube);
     if (solution.length < minimumMoves) {
       continue;
     }

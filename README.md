@@ -130,8 +130,13 @@ print(PyraminxSearch.solve(cube)); // the shortest way back
 | table      | 463 KB, built in ~180ms, loaded in ~25ms |
 
 933,120 states, God's number 11, and the distance histogram matches the
-published one. The tips are left out of the puzzle — each is one turn on its own
-and cannot be got wrong — so they are added to a scramble rather than solved.
+published one. The tips are left out of the *tables* — each is one turn on its
+own — so `solveLayers` is the optimal part and `solve` finishes them off.
+
+`toFaceletString` renders the 36 stickers, four faces of nine. Reading them back
+needs no centres, which a Pyraminx has not got: a vertex piece never leaves its
+corner and touches every face but one, so the colour it never shows names that
+face.
 
 This is where the notation finally had to become the puzzle's business rather
 than the library's. A Pyraminx turns four vertices and four tips by two amounts
@@ -261,7 +266,7 @@ it has to use an 8-element subgroup; and a breadth-first search that ignores
 inadmissible and lets the search miss solutions. Neither shows up without an
 exhaustive comparison.
 
-194 tests, `dart test`.
+205 tests, `dart test`.
 
 ## Roadmap
 

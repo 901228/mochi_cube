@@ -20,12 +20,19 @@ so as with the 2x2x2 one breadth-first search holds the exact number of turns to
 solve for every one of them and every solution is optimal — 1.3μs, 7.8 turns on
 average, 11 at worst, which is God's number for the puzzle.
 
-- `PyraminxCube`, `PyraminxSearch.solve` and `PyraminxSearch.distanceOf`
+- `PyraminxCube`, `PyraminxSearch.solve`, `solveLayers` and `distanceOf`
 - `randomPyraminxCube` and `randomPyraminxScramble`, the scramble ending with
   the tips as one is written
+- `toFacelets` and `toFaceletString` for the 36 stickers, and
+  `PyraminxFacelet.fromFaceletString` to read them back
 
-The tips are not part of the puzzle: each is one turn on its own and cannot be
-got wrong, so they are added to a scramble rather than solved.
+The tips are kept on the puzzle, since they are part of what it looks like, but
+left out of the tables: each is one turn on its own. `solveLayers` is the
+optimal part and `solve` finishes the tips afterwards.
+
+Reading stickers needs no centres, which a Pyraminx has not got. A vertex piece
+never leaves its corner and touches every face but one, so the colour it never
+shows names that face, and any four letters work.
 
 ### Move sets
 

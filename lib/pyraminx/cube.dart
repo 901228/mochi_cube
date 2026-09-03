@@ -9,9 +9,10 @@ import "../cube/algorithm.dart";
 /// other than `v`.
 ///
 /// The pieces are four vertices that twist without ever moving, six edges that
-/// permute and flip, and four tips. The tips are ignored here: each is one turn
-/// on its own and would only multiply the state space by 81 without making the
-/// puzzle any harder.
+/// permute and flip, and four tips. The tips are kept, since they are part of
+/// what the puzzle looks like, but they are left out of the tables: each is one
+/// turn on its own and would only multiply the state space by 81 without making
+/// the puzzle any harder.
 class PyraminxCube {
   /// How far each vertex is twisted, 0 to 2.
   final List<int> vertices;
@@ -22,15 +23,24 @@ class PyraminxCube {
   /// Whether the piece at each position is flipped.
   final List<int> flips;
 
+  /// How far each tip is twisted, 0 to 2.
+  ///
+  /// The tips are not part of what makes the puzzle hard — each is one turn on
+  /// its own — but they are part of what you see, so they are kept here and
+  /// left out of the tables.
+  final List<int> tips;
+
   PyraminxCube()
     : vertices = List.filled(vertexCount, 0),
       edges = List.generate(edgeCount, (i) => i),
-      flips = List.filled(edgeCount, 0);
+      flips = List.filled(edgeCount, 0),
+      tips = List.filled(vertexCount, 0);
 
   PyraminxCube.from(PyraminxCube other)
     : vertices = [...other.vertices],
       edges = [...other.edges],
-      flips = [...other.flips];
+      flips = [...other.flips],
+      tips = [...other.tips];
 
   static const int vertexCount = 4;
   static const int edgeCount = 6;
@@ -53,7 +63,7 @@ class PyraminxCube {
   }
 
   void _turnOnce(int vertex) {
-    final sigma = _faceCycle(vertex);
+    final sigma = faceCycle(vertex);
 
     final movedEdges = [...edges];
     final movedFlips = [...flips];
@@ -76,7 +86,14 @@ class PyraminxCube {
     edges.setAll(0, movedEdges);
     flips.setAll(0, movedFlips);
 
+    // The tip rides along with the layer it sits on top of.
     vertices[vertex] = (vertices[vertex] + 1) % 3;
+    tips[vertex] = (tips[vertex] + 1) % 3;
+  }
+
+  /// Twist a tip on its own, without the layer beneath it.
+  void turnTip(int vertex, [int times = 1]) {
+    tips[vertex] = (tips[vertex] + times) % 3;
   }
 
   /// Apply an algorithm written in [pyraminxMoves].
@@ -87,17 +104,24 @@ class PyraminxCube {
   }
 
   /// Apply one move index of [pyraminxMoves].
-  ///
-  /// Tip moves change nothing here: the tips are not part of the state.
   void applyMove(int move) {
     final axis = pyraminxMoves.axisOf(move);
+    final times = pyraminxMoves.amountOf(move) + 1;
     if (axis >= vertexCount) {
-      return;
+      turnTip(axis - vertexCount, times);
+    } else {
+      turn(axis, times);
     }
-    turn(axis, pyraminxMoves.amountOf(move) + 1);
   }
 
-  bool get isSolved {
+  /// Whether the whole puzzle is solved, tips included.
+  bool get isSolved => areLayersSolved && areTipsSolved;
+
+  /// Whether everything but the tips is solved.
+  ///
+  /// This is what the solver works on: the tips cannot be got wrong, so they
+  /// are not part of the search.
+  bool get areLayersSolved {
     for (var i = 0; i < vertexCount; i++) {
       if (vertices[i] != 0) return false;
     }
@@ -107,11 +131,16 @@ class PyraminxCube {
     return true;
   }
 
+  bool get areTipsSolved => tips.every((tip) => tip == 0);
+
   @override
-  String toString() => "${vertices.join()}|${edges.join()}|${flips.join()}";
+  String toString() => "${vertices.join()}|${edges.join()}|${flips.join()}|${tips.join()}";
 
   /// The face permutation a turn at [vertex] applies: the other three, cycled.
-  static List<int> _faceCycle(int vertex) {
+  ///
+  /// A sticker showing on face `x` shows on face `faceCycle(v)[x]` after a turn
+  /// at `v`.
+  static List<int> faceCycle(int vertex) {
     final others = [
       for (var face = 0; face < vertexCount; face++)
         if (face != vertex) face,
@@ -138,7 +167,7 @@ class PyraminxCube {
 ///
 /// The four vertices in capitals and the four tips in lower case, each turned
 /// one step or, with a prime, two. Tip moves are part of a scramble but not of
-/// the puzzle's difficulty, so they appear here and are ignored by the solver.
+/// the puzzle's difficulty, so the tables leave them out.
 const MoveSet pyraminxMoves = MoveSet(
   axes: ["U", "L", "R", "B", "u", "l", "r", "b"],
   amounts: ["", "'"],

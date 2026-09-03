@@ -43,10 +43,22 @@ void main() {
       }
     });
 
-    test("tip moves leave the puzzle alone", () {
+    test("tip moves turn the tips and nothing else", () {
       final cube = PyraminxCube();
       cube.apply(Algorithm.parse("u l' r b'", moveSet: pyraminxMoves));
-      expect(cube.isSolved, isTrue);
+
+      expect(cube.areLayersSolved, isTrue, reason: "a tip turn moved a layer");
+      expect(cube.areTipsSolved, isFalse);
+      expect(cube.isSolved, isFalse);
+      expect(cube.tips, [1, 2, 1, 2]);
+    });
+
+    test("a layer turn carries its tip with it", () {
+      for (var vertex = 0; vertex < PyraminxCube.vertexCount; vertex++) {
+        final cube = PyraminxCube()..turn(vertex);
+        expect(cube.tips[vertex], 1, reason: "vertex $vertex");
+        expect(cube.vertices[vertex], 1);
+      }
     });
   });
 
@@ -109,23 +121,44 @@ void main() {
   });
 
   group("solver", () {
-    test("every solution is optimal and actually solves", () {
+    test("the layer solution is optimal and solves the layers", () {
       for (var seed = 0; seed < 500; seed++) {
         final cube = randomPyraminxCube(random: Random(seed));
-        final solution = PyraminxSearch.solve(cube);
+        final solution = PyraminxSearch.solveLayers(cube);
 
         expect(solution.length, PyraminxSearch.distanceOf(cube), reason: "seed $seed");
         expect(solution.length, lessThanOrEqualTo(11));
         expect(solution.moveSet, pyraminxMoves);
 
-        final check = PyraminxCube.from(cube);
-        check.apply(solution);
+        final check = PyraminxCube.from(cube)..apply(solution);
+        expect(check.areLayersSolved, isTrue, reason: "seed $seed: $solution");
+      }
+    });
+
+    test("solve finishes the tips as well", () {
+      final random = Random(8);
+      for (var seed = 0; seed < 200; seed++) {
+        final cube = randomPyraminxCube(random: Random(seed));
+        for (var tip = 0; tip < PyraminxCube.vertexCount; tip++) {
+          cube.turnTip(tip, random.nextInt(3));
+        }
+
+        final solution = PyraminxSearch.solve(cube);
+        final check = PyraminxCube.from(cube)..apply(solution);
         expect(check.isSolved, isTrue, reason: "seed $seed: $solution");
+
+        // The layer part is still optimal, and each tip costs at most one more.
+        final layers = solution.moves
+            .where((m) => pyraminxMoves.axisOf(m) < PyraminxCube.vertexCount)
+            .length;
+        expect(layers, PyraminxSearch.distanceOf(cube), reason: "seed $seed");
+        expect(solution.length - layers, lessThanOrEqualTo(PyraminxCube.vertexCount));
       }
     });
 
     test("a solved puzzle needs no turns", () {
       expect(PyraminxSearch.solve(PyraminxCube()).isEmpty, isTrue);
+      expect(PyraminxSearch.solveLayers(PyraminxCube()).isEmpty, isTrue);
       expect(PyraminxSearch.distanceOf(PyraminxCube()), 0);
     });
   });
@@ -144,6 +177,7 @@ void main() {
 
         cube.apply(scramble.inverse);
         expect(cube.isSolved, isTrue, reason: "seed $seed");
+        expect(cube.areTipsSolved, isTrue, reason: "the scramble's tips were not undone");
       }
     });
 
@@ -222,6 +256,128 @@ void main() {
       expect(pyraminx == asCube, isFalse);
       expect(asCube.toString(), isNot(pyraminx.toString()));
       expect(() => pyraminx + Algorithm.parse("R U"), throwsArgumentError);
+    });
+  });
+
+  group("facelets", () {
+    test("a solved puzzle is nine of each colour, one per face", () {
+      expect(PyraminxCube().toFaceletString(),
+          "AAAAAAAAA" "BBBBBBBBB" "CCCCCCCCC" "DDDDDDDDD");
+      expect(nPyraminxFacelets, 36);
+    });
+
+    test("a layer turn moves twelve stickers and leaves its far face alone", () {
+      // Three faces meet at a vertex, and on each the turn carries a tip, a
+      // vertex piece and two edges. The fourth face is not part of the layer.
+      for (var vertex = 0; vertex < PyraminxCube.vertexCount; vertex++) {
+        final before = PyraminxCube().toFacelets();
+        final after = (PyraminxCube()..turn(vertex)).toFacelets();
+
+        final moved = [
+          for (var i = 0; i < nPyraminxFacelets; i++)
+            if (before[i] != after[i]) i,
+        ];
+        expect(moved, hasLength(12), reason: "vertex $vertex");
+        expect(moved.map((i) => i ~/ 9), isNot(contains(vertex)),
+            reason: "the turn touched the face opposite it");
+      }
+    });
+
+    test("a tip turn moves three stickers", () {
+      for (var vertex = 0; vertex < PyraminxCube.vertexCount; vertex++) {
+        final before = PyraminxCube().toFacelets();
+        final after = (PyraminxCube()..turnTip(vertex)).toFacelets();
+        expect([
+          for (var i = 0; i < nPyraminxFacelets; i++)
+            if (before[i] != after[i]) i,
+        ], hasLength(3), reason: "vertex $vertex");
+      }
+    });
+
+    test("there are always nine of each colour", () {
+      final random = Random(7);
+      for (var trial = 0; trial < 500; trial++) {
+        final cube = PyraminxCube();
+        for (var i = 0; i < 20; i++) {
+          cube.applyMove(random.nextInt(pyraminxMoves.count));
+        }
+
+        final counts = List.filled(PyraminxCube.vertexCount, 0);
+        for (final face in cube.toFacelets()) {
+          counts[face]++;
+        }
+        expect(counts, everyElement(9), reason: "trial $trial");
+      }
+    });
+
+    test("round-trip, tips included", () {
+      final random = Random(11);
+      for (var trial = 0; trial < 500; trial++) {
+        final cube = randomPyraminxCube(random: random);
+        for (var tip = 0; tip < PyraminxCube.vertexCount; tip++) {
+          cube.turnTip(tip, random.nextInt(3));
+        }
+
+        final text = cube.toFaceletString();
+        final back = PyraminxFacelet.fromFaceletString(text);
+        expect(back.toFaceletString(), text, reason: "trial $trial");
+        expect(back.toString(), cube.toString(), reason: "trial $trial");
+      }
+    });
+
+    test("reads any four letters, with no centres to name the faces", () {
+      // The vertex pieces settle it: one never leaves its corner, and the
+      // colour it never shows is the face it does not touch.
+      const scheme = {"A": "R", "B": "G", "C": "B", "D": "Y"};
+      for (var trial = 0; trial < 200; trial++) {
+        final cube = randomPyraminxCube(random: Random(trial));
+        final recoloured =
+            cube.toFaceletString().split("").map((c) => scheme[c]!).join();
+        expect(PyraminxFacelet.fromFaceletString(recoloured).toString(), cube.toString());
+      }
+    });
+
+    test("solves straight from a sticker string", () {
+      final cube = randomPyraminxCube(random: Random(42))..turnTip(1, 2);
+      final text = cube.toFaceletString();
+
+      final solution = PyraminxSearch.solve(PyraminxFacelet.fromFaceletString(text));
+      final check = PyraminxFacelet.fromFaceletString(text)..apply(solution);
+      expect(check.isSolved, isTrue);
+    });
+
+    test("ignores whitespace", () {
+      expect(
+        PyraminxFacelet.fromFaceletString(
+          "AAAAAAAAA BBBBBBBBB CCCCCCCCC DDDDDDDDD",
+        ).isSolved,
+        isTrue,
+      );
+    });
+
+    test("rejects strings that are not a Pyraminx", () {
+      expect(() => PyraminxFacelet.fromFaceletString("AAA"), throwsFormatException);
+      // Five colours.
+      expect(
+        () => PyraminxFacelet.fromFaceletString(
+          "AAAAAAAAE" "BBBBBBBBB" "CCCCCCCCC" "DDDDDDDDD",
+        ),
+        throwsFormatException,
+      );
+      // Ten of one colour, eight of another.
+      expect(
+        () => PyraminxFacelet.fromFaceletString(
+          "AAAAAAAAA" "BBBBBBBBA" "CCCCCCCCC" "DDDDDDDDD",
+        ),
+        throwsFormatException,
+      );
+      // Four colours, nine each, but not arranged as a puzzle.
+      expect(
+        () => PyraminxFacelet.fromFaceletString(
+          "ABCDABCDA" "BCDABCDAB" "CDABCDABC" "DABCDABCD",
+        ),
+        throwsFormatException,
+      );
     });
   });
 }
