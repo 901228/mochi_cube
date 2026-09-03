@@ -1,7 +1,7 @@
 # mochi_cube
 
 Twisty puzzle solvers and scramble generators in pure Dart, no Flutter
-dependency. The 3x3x3 and the 2x2x2 so far.
+dependency. The 3x3x3, the 2x2x2 and the Pyraminx so far.
 
 For the 3x3x3 there are two solvers. The one you want is a port of Chen Shuang's
 [min2phase](https://github.com/cs0x7f/min2phase); the other is a plainer
@@ -107,6 +107,38 @@ regulation 4b3, which asks a scramble to be at least two moves from solved.
 not evenly distributed and a short one can leave the cube nearly solved. Use it
 where the distribution does not matter.
 
+## The Pyraminx
+
+`package:mochi_cube/pyraminx.dart`. Like the 2x2x2, small enough to hold the
+exact distance for every state, so solving is a walk downhill and the answer is
+always optimal.
+
+```dart
+import "package:mochi_cube/pyraminx.dart";
+
+final scramble = randomPyraminxScramble();
+// B' L' U R U L U L' l b'
+
+final cube = PyraminxCube()..apply(scramble);
+print(PyraminxSearch.solve(cube)); // the shortest way back
+```
+
+| | |
+| ---------- | --------------------------------------- |
+| solve      | 1.3μs, and always optimal               |
+| turns      | 7.8 average, 11 at worst                |
+| table      | 463 KB, built in ~180ms, loaded in ~25ms |
+
+933,120 states, God's number 11, and the distance histogram matches the
+published one. The tips are left out of the puzzle — each is one turn on its own
+and cannot be got wrong — so they are added to a scramble rather than solved.
+
+This is where the notation finally had to become the puzzle's business rather
+than the library's. A Pyraminx turns four vertices and four tips by two amounts
+where a 3x3x3 turns six faces by three, so `MoveSet` now says what the axes and
+amounts are called, and an `Algorithm` carries the one it is written in. The
+2x2x2 needed none of that, because its turns are the 3x3x3's.
+
 ## Practice scrambles
 
 Scrambles that leave one step of a solve to do, for drilling it:
@@ -199,12 +231,12 @@ it has to use an 8-element subgroup; and a breadth-first search that ignores
 inadmissible and lets the search miss solutions. Neither shows up without an
 exhaustive comparison.
 
-162 tests, `dart test`.
+179 tests, `dart test`.
 
 ## Roadmap
 
-The 3x3x3 and the 2x2x2 are implemented. Everything below is wanted but not
-written.
+The 3x3x3, the 2x2x2 and the Pyraminx are implemented. Everything below is
+wanted but not written.
 
 ### Other puzzles
 
@@ -220,14 +252,14 @@ and reversed, as above. Where it cannot, it is random turns.
 | 5x5x5        | random turns | 60 turns                                         |
 | 6x6x6        | random turns | 80 turns                                         |
 | 7x7x7        | random turns | 100 turns                                        |
-| Pyraminx     | random state | one breadth-first search over 933,120 states     |
+| Pyraminx     | random state | **done**                                         |
 | Megaminx     | random turns | 70 turns, in the fixed `R++ D--` pattern         |
 | Skewb        | random state | one breadth-first search over 3,149,280 states   |
 | Square-1     | random state | a two-phase search, shape then permutation       |
 | Clock        | random state | no search at all: the notation *is* the state    |
 | FTO          | random state | its own solver                                   |
 
-Pyraminx and Skewb should go the way the 2x2x2 did: their state spaces are small
+Skewb should go the way the 2x2x2 and the Pyraminx did: its state space is small
 enough to hold the exact distance to solved for every state, so no two-phase
 search is needed and `fillPruningTable` already does the work. Clock needs
 nothing —
@@ -239,13 +271,11 @@ Each has its own minimum, per WCA regulation 4b3: 2x2x2 four moves, Pyraminx
 six, Skewb seven, Square-1 eleven, the rest two. Both scramble generators take
 that as a parameter.
 
-One design change is still coming. The 2x2x2 needed none, because its turns are
-a subset of the 3x3x3's and mean the same thing — but Pyraminx, Skewb, Megaminx
-and FTO all turn about different things, and Square-1 and Clock are not face
-turns at all. `Algorithm` and the notation currently assume the 3x3x3's eighteen
-turns, and at some point the move set has to become something a puzzle supplies.
-Two more puzzles should make the right shape for that obvious; guessing at it
-now would not.
+The notation is no longer the 3x3x3's alone: `MoveSet` says what a puzzle's axes
+and amounts are called, and covers anything that turns some number of axes by
+some number of amounts — Skewb and FTO included. Megaminx does not fit as
+neatly, and Square-1 and Clock are not face turns at all, so those will want
+something of their own rather than a `MoveSet` bent to fit.
 
 ### Named cases
 

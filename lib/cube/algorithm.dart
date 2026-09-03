@@ -1,6 +1,6 @@
 import "dart:collection";
 
-import "enums.dart";
+
 
 /// A sequence of face turns, in standard notation.
 ///
@@ -16,33 +16,47 @@ import "enums.dart";
 /// Deliberately free of any cube state, so both solvers can speak it. The
 /// operations that need a cube live in `package:mochi_cube/mochi_cube.dart`.
 class Algorithm extends IterableBase<int> {
-  /// The moves, as `3 * face + power` indices.
+  /// The moves, as `axis * amounts + amount` indices.
   final List<int> moves;
 
-  const Algorithm(this.moves);
+  /// What those indices are called. A 3x3x3's, unless said otherwise.
+  final MoveSet moveSet;
+
+  const Algorithm(this.moves, {this.moveSet = MoveSet.cube});
 
   static const Algorithm empty = Algorithm([]);
 
   /// Parse standard notation, e.g. `"R U R' U2"`.
   ///
   /// Whitespace between moves is ignored; an empty string gives [empty].
-  factory Algorithm.parse(String notation) {
+  factory Algorithm.parse(String notation, {MoveSet moveSet = MoveSet.cube}) {
     final tokens = notation.split(RegExp(r"\s+")).where((token) => token.isNotEmpty);
-    return Algorithm([for (final token in tokens) parseMove(token)]);
+    return Algorithm(
+      [for (final token in tokens) moveSet.parse(token)],
+      moveSet: moveSet,
+    );
   }
 
   /// The moves that undo this algorithm: reversed, each one inverted.
-  Algorithm get inverse => Algorithm(moves.reversed.map(invertMove).toList());
+  Algorithm get inverse =>
+      Algorithm(moves.reversed.map(moveSet.invert).toList(), moveSet: moveSet);
 
   /// This algorithm followed by [other].
-  Algorithm operator +(Algorithm other) => Algorithm([...moves, ...other.moves]);
+  ///
+  /// Throws [ArgumentError] if the two are not about the same puzzle.
+  Algorithm operator +(Algorithm other) {
+    if (other.isNotEmpty && other.moveSet != moveSet && isNotEmpty) {
+      throw ArgumentError("Cannot join algorithms for different puzzles");
+    }
+    return Algorithm([...moves, ...other.moves], moveSet: moveSet);
+  }
 
   /// This algorithm repeated [count] times.
   Algorithm operator *(int count) {
     if (count < 0) {
       throw ArgumentError.value(count, "count", "must not be negative");
     }
-    return Algorithm([for (var i = 0; i < count; i++) ...moves]);
+    return Algorithm([for (var i = 0; i < count; i++) ...moves], moveSet: moveSet);
   }
 
   int operator [](int index) => moves[index];
@@ -54,11 +68,14 @@ class Algorithm extends IterableBase<int> {
   int get length => moves.length;
 
   @override
-  String toString() => moves.map(moveToString).join(" ");
+  String toString() => moves.map(moveSet.render).join(" ");
 
   @override
   bool operator ==(Object other) {
     if (other is! Algorithm || other.moves.length != moves.length) {
+      return false;
+    }
+    if (moves.isNotEmpty && other.moveSet != moveSet) {
       return false;
     }
     for (var i = 0; i < moves.length; i++) {
@@ -73,37 +90,85 @@ class Algorithm extends IterableBase<int> {
   int get hashCode => Object.hashAll(moves);
 }
 
-/// The number of face turns: six faces, three amounts each.
-const int moveCount = 18;
+/// What a puzzle's turns are called, and how they compose.
+///
+/// A move is `axis * amounts.length + amount`, so the numbering is dense and a
+/// table can be indexed by it directly. Puzzles differ in both parts: a 3x3x3
+/// turns six faces by three amounts, a Pyraminx turns four vertices and four
+/// tips by two.
+///
+/// This is deliberately only about naming. Which moves a puzzle allows, and
+/// what they do, belong to that puzzle.
+class MoveSet {
+  /// What each axis is called: `U`, `R`, `F` and so on.
+  final List<String> axes;
 
-/// Parse one move in standard notation into a move index.
-int parseMove(String token) {
-  if (token.isEmpty || token.length > 2) {
+  /// What each amount is written as, in order. The first is the empty string,
+  /// since one turn clockwise is written with no suffix.
+  final List<String> amounts;
+
+  const MoveSet({required this.axes, required this.amounts});
+
+  /// Six faces turned clockwise, twice, or anticlockwise.
+  static const MoveSet cube = MoveSet(
+    axes: ["U", "R", "F", "D", "L", "B"],
+    amounts: ["", "2", "'"],
+  );
+
+  int get count => axes.length * amounts.length;
+
+  int axisOf(int move) => move ~/ amounts.length;
+
+  int amountOf(int move) => move % amounts.length;
+
+  /// Parse one move, e.g. `"R'"`.
+  int parse(String token) {
+    for (var axis = 0; axis < axes.length; axis++) {
+      final name = axes[axis];
+      if (!token.startsWith(name)) {
+        continue;
+      }
+      final suffix = token.substring(name.length);
+      final amount = amounts.indexOf(suffix);
+      if (amount >= 0) {
+        return axis * amounts.length + amount;
+      }
+    }
     throw FormatException("Invalid move: $token");
   }
 
-  final face = FaceExtension.faceToString.indexOf(token[0]);
-  if (face < 0) {
-    throw FormatException("Invalid face: ${token[0]}");
-  }
+  /// Render a move index.
+  String render(int move) => axes[axisOf(move)] + amounts[amountOf(move)];
 
-  final int power;
-  if (token.length == 1) {
-    power = 0;
-  } else if (token[1] == "2") {
-    power = 1;
-  } else if (token[1] == "'") {
-    power = 2;
-  } else {
-    throw FormatException("Invalid move amount: ${token[1]}");
-  }
+  @override
+  bool operator ==(Object other) =>
+      other is MoveSet &&
+      other.axes.length == axes.length &&
+      other.amounts.length == amounts.length &&
+      Iterable.generate(axes.length).every((i) => other.axes[i] == axes[i]) &&
+      Iterable.generate(amounts.length).every((i) => other.amounts[i] == amounts[i]);
 
-  return 3 * face + power;
+  @override
+  int get hashCode => Object.hash(Object.hashAll(axes), Object.hashAll(amounts));
+
+  /// The move that undoes [move].
+  ///
+  /// The amounts run from one turn upwards and stop one short of coming back to
+  /// the start, so the first and last undo each other, the second and second
+  /// last, and a middle one undoes itself. On a 3x3x3 that is `U` against `U'`
+  /// with `U2` its own inverse; on a Pyraminx, `U` against `U'`.
+  int invert(int move) =>
+      axisOf(move) * amounts.length + (amounts.length - 1 - amountOf(move));
 }
 
-/// Render a move index back into standard notation.
-String moveToString(int move) =>
-    FaceExtension.faceToString[move ~/ 3] + const ["", "2", "'"][move % 3];
+/// The number of face turns of a 3x3x3: six faces, three amounts each.
+const int moveCount = 18;
 
-/// The inverse of a move index: a quarter turn reverses, a half turn does not.
-int invertMove(int move) => 3 * (move ~/ 3) + const [2, 1, 0][move % 3];
+/// Parse one move of a 3x3x3 in standard notation into a move index.
+int parseMove(String token) => MoveSet.cube.parse(token);
+
+/// Render a 3x3x3 move index back into standard notation.
+String moveToString(int move) => MoveSet.cube.render(move);
+
+/// The inverse of a 3x3x3 move index: a quarter turn reverses, a half turn does not.
+int invertMove(int move) => MoveSet.cube.invert(move);

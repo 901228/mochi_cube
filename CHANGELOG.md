@@ -1,5 +1,29 @@
 ## Unreleased
 
+### The Pyraminx
+
+`package:mochi_cube/pyraminx.dart`. 933120 states once the tips are set aside,
+so as with the 2x2x2 one breadth-first search holds the exact number of turns to
+solve for every one of them and every solution is optimal — 1.3μs, 7.8 turns on
+average, 11 at worst, which is God's number for the puzzle.
+
+- `PyraminxCube`, `PyraminxSearch.solve` and `PyraminxSearch.distanceOf`
+- `randomPyraminxCube` and `randomPyraminxScramble`, the scramble ending with
+  the tips as one is written
+
+The tips are not part of the puzzle: each is one turn on its own and cannot be
+got wrong, so they are added to a scramble rather than solved.
+
+### Move sets
+
+`MoveSet` says what a puzzle's turns are called — its axes and its amounts — and
+an `Algorithm` now carries the one it is written in. The 3x3x3's is
+`MoveSet.cube` and stays the default, so nothing that was written against it
+changes.
+
+This is what the Pyraminx needed and the 2x2x2 did not: four vertices and four
+tips by two amounts, against six faces by three.
+
 ### Practice scrambles
 
 Scrambles that leave one step of a CFOP solve to do, for drilling it:
