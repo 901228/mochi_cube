@@ -170,9 +170,16 @@ reachable, so there is no such thing as an invalid one; and the fewest moves to
 solve is exactly how many dials are off zero, since one move fixes one dial by
 any amount.
 
-The eighteen dials you can see are not modelled — they are a linear image of
-these fourteen, and belong to whatever draws the puzzle, the same as sticker
-colours do.
+`toDials()` gives the eighteen dials you can see, nine a side, and
+`ClockDialReading.fromDials` reads them back. They are a linear image of the
+fourteen: four of them are corner pieces showing through both sides, which is
+exactly why eighteen dials are only fourteen numbers.
+
+That mapping was worked out from the mechanism rather than written down, and
+then checked three ways — the fourteen moves come out independent over Z12, so
+they really do reach 12^14; exactly four dials turn out locked to their opposite
+number; and those four are exactly the corners. None of that is asserted in the
+table, it falls out of it.
 
 ## Practice scrambles
 
@@ -266,7 +273,7 @@ it has to use an 8-element subgroup; and a breadth-first search that ignores
 inadmissible and lets the search miss solutions. Neither shows up without an
 exhaustive comparison.
 
-205 tests, `dart test`.
+213 tests, `dart test`.
 
 ## Roadmap
 

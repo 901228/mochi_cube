@@ -168,4 +168,85 @@ void main() {
       expect(many, hasLength(20));
     });
   });
+
+  group("the eighteen dials", () {
+    test("a solved clock reads twelve everywhere", () {
+      expect(ClockState.solved().toDials(), List.filled(nClockDials, 0));
+      expect(nClockDials, 18);
+    });
+
+    test("exactly four dials are locked to their opposite number, at the corners", () {
+      // This is the mechanism, and it is what makes eighteen dials only
+      // fourteen numbers. It is not asserted anywhere in the effect table; it
+      // comes out of it.
+      final locked = <int>[];
+      for (var dial = 0; dial < 9; dial++) {
+        final together = [
+          for (var move = 0; move < ClockState.dialCount; move++)
+            clockMoveEffect[move][dial] == clockMoveEffect[move][9 + mirroredDial(dial)],
+        ];
+        if (together.every((x) => x)) locked.add(dial);
+      }
+
+      expect(locked, clockCorners);
+      expect(nClockDials - locked.length, ClockState.dialCount);
+    });
+
+    test("each move turns the dials its mechanism reaches", () {
+      // A corner drives its own 2x2 block on one side, and its corner dial
+      // shows through the other: four plus one. An edge is two corners, whose
+      // blocks overlap: six plus two. All four is the whole side plus four.
+      const expected = [5, 5, 5, 5, 8, 8, 8, 8, 13, 8, 8, 8, 8, 13];
+      for (var move = 0; move < ClockState.dialCount; move++) {
+        final dials = List.filled(ClockState.dialCount, 0);
+        dials[move] = 1;
+        expect(ClockState(dials).toDials().where((d) => d != 0), hasLength(expected[move]),
+            reason: "move $move (${ClockState.dialNames[move]})");
+      }
+    });
+
+    test("round-trips back to the state that made them", () {
+      for (var seed = 0; seed < 1000; seed++) {
+        final state = ClockState.random(random: Random(seed));
+        expect(ClockDialReading.fromDials(state.toDials()), state, reason: "seed $seed");
+      }
+    });
+
+    test("different states show different dials", () {
+      // The fourteen moves have to be independent, or the puzzle would have
+      // fewer than 12^14 positions.
+      final seen = <String>{};
+      for (var seed = 0; seed < 2000; seed++) {
+        seen.add(ClockState.random(random: Random(seed)).toDials().join(","));
+      }
+      expect(seen, hasLength(2000));
+    });
+
+    test("turning a dial back undoes it", () {
+      for (var seed = 0; seed < 200; seed++) {
+        final state = ClockState.random(random: Random(seed));
+        expect((state + state.inverse).toDials(), List.filled(nClockDials, 0));
+      }
+    });
+
+    test("rejects readings the puzzle cannot show", () {
+      final good = ClockState.random(random: Random(1)).toDials();
+
+      expect(() => ClockDialReading.fromDials([1, 2, 3]), throwsFormatException);
+      expect(() => ClockDialReading.fromDials([...good.sublist(0, 17), 12]),
+          throwsFormatException);
+      expect(() => ClockDialReading.fromDials([...good.sublist(0, 17), -1]),
+          throwsFormatException);
+
+      // A corner that disagrees with itself: it is one piece.
+      final broken = [...good];
+      broken[0] = (broken[0] + 1) % ClockState.positions;
+      expect(() => ClockDialReading.fromDials(broken), throwsFormatException);
+    });
+
+    test("reads nicely", () {
+      expect(ClockState.solved().toDialString(),
+          "front 0 0 0  0 0 0  0 0 0 | back 0 0 0  0 0 0  0 0 0");
+    });
+  });
 }

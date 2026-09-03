@@ -9,9 +9,16 @@ is the group `(Z12)^14` and its notation is its state.
 - `ClockState`, with `parse`, `inverse`, `+`, `movesToSolve` and `isSolved`
 - `randomClockScramble`, which draws fourteen numbers and writes them down
 
+- `toDials` and `ClockDialReading.fromDials` for the eighteen dials you can see
+
 Every state is reachable, so nothing can be invalid, and the fewest moves to
-solve is exactly how many dials are off zero. The eighteen dials you can see are
-a linear image of these fourteen and are left to whatever draws the puzzle.
+solve is exactly how many dials are off zero.
+
+The eighteen dials are a linear image of the fourteen, worked out from the
+mechanism: a pin says which side its corner's wheel drives, and the corner dials
+are single pieces showing through both. That last part is why eighteen dials are
+only fourteen numbers, and it comes out of the table rather than being asserted
+in it.
 
 ### The Pyraminx
 

@@ -14,3 +14,5 @@
 library;
 
 export "clock/clock.dart" show ClockState, randomClockScramble;
+export "clock/dials.dart"
+    show ClockDialReading, ClockDials, clockCorners, clockMoveEffect, mirroredDial, nClockDials;
