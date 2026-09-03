@@ -1,7 +1,7 @@
 # mochi_cube
 
 Twisty puzzle solvers and scramble generators in pure Dart, no Flutter
-dependency. The 3x3x3, the 2x2x2 and the Pyraminx so far.
+dependency. The 3x3x3, the 2x2x2, the Pyraminx and the Clock so far.
 
 For the 3x3x3 there are two solvers. The one you want is a port of Chen Shuang's
 [min2phase](https://github.com/cs0x7f/min2phase); the other is a plainer
@@ -139,6 +139,36 @@ where a 3x3x3 turns six faces by three, so `MoveSet` now says what the axes and
 amounts are called, and an `Algorithm` carries the one it is written in. The
 2x2x2 needed none of that, because its turns are the 3x3x3's.
 
+## The Clock
+
+`package:mochi_cube/clock.dart`, and the odd one out: no search, and no table
+either.
+
+```dart
+import "package:mochi_cube/clock.dart";
+
+final scramble = randomClockScramble();
+// UR2- DR5- DL0+ UL1+ U2+ R0+ D3+ L5- ALL5- y2 U4- R3- D1+ L2- ALL3+
+
+scramble.movesToSolve;  // however many dials are off twelve o'clock
+scramble.inverse;       // the moves that put it back
+```
+
+Fourteen dials of twelve positions, and fourteen moves that each turn exactly
+one of them. The moves commute and none undoes another, so the puzzle is the
+group `(Z12)^14`: composing states adds them and solving negates them. Its
+notation *is* its state, which is why a scramble is fourteen numbers written
+down and nothing more.
+
+Two things fall out that every other puzzle needs work for. Every state is
+reachable, so there is no such thing as an invalid one; and the fewest moves to
+solve is exactly how many dials are off zero, since one move fixes one dial by
+any amount.
+
+The eighteen dials you can see are not modelled — they are a linear image of
+these fourteen, and belong to whatever draws the puzzle, the same as sticker
+colours do.
+
 ## Practice scrambles
 
 Scrambles that leave one step of a solve to do, for drilling it:
@@ -231,12 +261,12 @@ it has to use an 8-element subgroup; and a breadth-first search that ignores
 inadmissible and lets the search miss solutions. Neither shows up without an
 exhaustive comparison.
 
-179 tests, `dart test`.
+194 tests, `dart test`.
 
 ## Roadmap
 
-The 3x3x3, the 2x2x2 and the Pyraminx are implemented. Everything below is
-wanted but not written.
+The 3x3x3, the 2x2x2, the Pyraminx and the Clock are implemented. Everything
+below is wanted but not written.
 
 ### Other puzzles
 
@@ -256,14 +286,12 @@ and reversed, as above. Where it cannot, it is random turns.
 | Megaminx     | random turns | 70 turns, in the fixed `R++ D--` pattern         |
 | Skewb        | random state | one breadth-first search over 3,149,280 states   |
 | Square-1     | random state | a two-phase search, shape then permutation       |
-| Clock        | random state | no search at all: the notation *is* the state    |
+| Clock        | random state | **done**                                         |
 | FTO          | random state | its own solver                                   |
 
 Skewb should go the way the 2x2x2 and the Pyraminx did: its state space is small
 enough to hold the exact distance to solved for every state, so no two-phase
-search is needed and `fillPruningTable` already does the work. Clock needs
-nothing —
-every state is reachable and the notation encodes it directly. 5x5x5 and up are
+search is needed and `fillPruningTable` already does the work. 5x5x5 and up are
 the *easiest* to scramble, since random turns need no solver at all; it is
 solving them that is out of reach.
 

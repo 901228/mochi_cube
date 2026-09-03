@@ -1,5 +1,18 @@
 ## Unreleased
 
+### The Clock
+
+`package:mochi_cube/clock.dart`. No search, and no table either: fourteen dials
+of twelve positions and fourteen moves that each turn one of them, so the puzzle
+is the group `(Z12)^14` and its notation is its state.
+
+- `ClockState`, with `parse`, `inverse`, `+`, `movesToSolve` and `isSolved`
+- `randomClockScramble`, which draws fourteen numbers and writes them down
+
+Every state is reachable, so nothing can be invalid, and the fewest moves to
+solve is exactly how many dials are off zero. The eighteen dials you can see are
+a linear image of these fourteen and are left to whatever draws the puzzle.
+
 ### The Pyraminx
 
 `package:mochi_cube/pyraminx.dart`. 933120 states once the tips are set aside,
