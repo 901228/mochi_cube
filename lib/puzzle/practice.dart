@@ -18,6 +18,7 @@ import "dart:math";
 import "../cube/algorithm.dart";
 import "algorithm.dart";
 import "cube/cubie_cube.dart";
+import "cube/moves.dart";
 import "search.dart";
 
 /// The four corners of the last layer.
@@ -121,6 +122,39 @@ CubieCube randomStateWith({
   return cube;
 }
 
+/// How a practice scramble picks what to give you.
+enum PracticeSpread {
+  /// Draw evenly from the states, so cases turn up as often as they really do.
+  ///
+  /// A T-perm is four times as likely as an H-perm because four times as many
+  /// states are one. This is what to use to rehearse solving.
+  states,
+
+  /// Draw evenly from the cases, so each gets the same amount of practice.
+  ///
+  /// This is what to use to learn a set: with [states] the symmetric cases —
+  /// H, Z, E, N among the perms — come up a quarter as often as the rest.
+  ///
+  /// The case where there is nothing to do is left out, so this draws from the
+  /// 21 real PLLs or the 57 real OLLs.
+  cases,
+}
+
+/// The 288 states that a PLL starts from, grouped into the 21 real cases.
+///
+/// Two states are the same case when a turn of the last layer before, after, or
+/// both takes one to the other — which is what adjusting the U face around an
+/// algorithm does. The groups are not the same size: a case with no symmetry
+/// covers 16 states, while H, Z, E and N cover 8 or 4, and that is exactly why
+/// [PracticeSpread] has to be a choice.
+final List<List<CubieCube>> pllCases = _groupPllCases();
+
+/// The 57 real OLL cases, each as the last-layer orientations it can appear in.
+///
+/// Only the orientations matter: the permutation underneath is whatever it is,
+/// and becomes the PLL afterwards.
+final List<List<CubieCube>> ollCases = _groupOllCases();
+
 /// A scramble that leaves the last layer's permutation to do.
 ///
 /// The bottom two layers are solved and the last layer is oriented, so every
@@ -131,14 +165,25 @@ CubieCube randomStateWith({
 ///
 /// Some of those are a U turn from solved. That is a real PLL case, not a bad
 /// draw, so it is kept.
-Algorithm pllPracticeScramble({Random? random}) => _practiceScramble(
-  random: random,
-  solvedCorners: [for (final pair in f2lPairs) pair.$1],
-  solvedEdges: [...crossEdges, for (final pair in f2lPairs) pair.$2],
-  orientedCorners: true,
-  orientedEdges: true,
-  accept: (cube) => cube.cperm != 0 || cube.eperm != 0,
-);
+Algorithm pllPracticeScramble({
+  Random? random,
+  PracticeSpread spread = PracticeSpread.states,
+}) {
+  if (spread == PracticeSpread.cases) {
+    final rng = random ?? Random.secure();
+    final group = pllCases[rng.nextInt(pllCases.length)];
+    return _scrambleFor(CubieCube.from(group[rng.nextInt(group.length)]));
+  }
+
+  return _practiceScramble(
+    random: random,
+    solvedCorners: [for (final pair in f2lPairs) pair.$1],
+    solvedEdges: [...crossEdges, for (final pair in f2lPairs) pair.$2],
+    orientedCorners: true,
+    orientedEdges: true,
+    accept: (cube) => cube.cperm != 0 || cube.eperm != 0,
+  );
+}
 
 /// A scramble that leaves the last layer's orientation to do.
 ///
@@ -148,14 +193,42 @@ Algorithm pllPracticeScramble({Random? random}) => _practiceScramble(
 ///
 /// States where the last layer already happens to be oriented are drawn again:
 /// there would be no OLL to do.
-Algorithm ollPracticeScramble({Random? random}) => _practiceScramble(
-  random: random,
-  solvedCorners: [for (final pair in f2lPairs) pair.$1],
-  solvedEdges: [...crossEdges, for (final pair in f2lPairs) pair.$2],
-  accept: (cube) =>
-      lastLayerCorners.any((i) => cube.cornerState[i] >> 3 != 0) ||
-      lastLayerEdges.any((i) => cube.edgeState[i] & 1 != 0),
-);
+Algorithm ollPracticeScramble({
+  Random? random,
+  PracticeSpread spread = PracticeSpread.states,
+}) {
+  if (spread == PracticeSpread.cases) {
+    final rng = random ?? Random.secure();
+    final group = ollCases[rng.nextInt(ollCases.length)];
+    final pattern = group[rng.nextInt(group.length)];
+
+    // The permutation underneath does not change the case, so it is still
+    // drawn evenly: only the orientations are being chosen.
+    final cube = randomStateWith(
+      solvedCorners: [for (final pair in f2lPairs) pair.$1],
+      solvedEdges: [...crossEdges, for (final pair in f2lPairs) pair.$2],
+      orientedCorners: true,
+      orientedEdges: true,
+      random: rng,
+    );
+    for (final corner in lastLayerCorners) {
+      cube.cornerState[corner] |= pattern.cornerState[corner] & 0xF8;
+    }
+    for (final edge in lastLayerEdges) {
+      cube.edgeState[edge] |= pattern.edgeState[edge] & 1;
+    }
+    return _scrambleFor(cube);
+  }
+
+  return _practiceScramble(
+    random: random,
+    solvedCorners: [for (final pair in f2lPairs) pair.$1],
+    solvedEdges: [...crossEdges, for (final pair in f2lPairs) pair.$2],
+    accept: (cube) =>
+        lastLayerCorners.any((i) => cube.cornerState[i] >> 3 != 0) ||
+        lastLayerEdges.any((i) => cube.edgeState[i] & 1 != 0),
+  );
+}
 
 /// A scramble that leaves F2L to do.
 ///
@@ -178,6 +251,136 @@ Algorithm f2lPracticeScramble({int solvedPairs = 0, Random? random}) {
 }
 
 final String _solvedFacelets = CubieCube().toFaceletString();
+
+/// The moves that reach [cube] from solved.
+Algorithm _scrambleFor(CubieCube cube) => Search.solveCube(cube).solution!.algorithm.inverse;
+
+/// The last layer turned by [n] quarter turns of U.
+CubieCube _turned(CubieCube cube, int n) {
+  final result = CubieCube.from(cube);
+  for (var i = 0; i < n; i++) {
+    result.moveIndex(_uTurn);
+  }
+  return result;
+}
+
+final int _uTurn = parseMove("U");
+
+String _stateKey(CubieCube cube) => "${cube.cornerState}|${cube.edgeState}";
+
+String _orientationKey(CubieCube cube) =>
+    "${lastLayerCorners.map((i) => cube.cornerState[i] >> 3).join()}"
+    "-${lastLayerEdges.map((i) => cube.edgeState[i] & 1).join()}";
+
+List<List<CubieCube>> _groupPllCases() {
+  // Every permutation of the four last layer corners against every permutation
+  // of the four edges, keeping the pairs whose parities agree.
+  final states = <String, CubieCube>{};
+  for (var corners = 0; corners < 24; corners++) {
+    for (var edges = 0; edges < 24; edges++) {
+      final cube = CubieCube();
+      _writePermutation(cube.cornerState, lastLayerCorners, corners, isEdge: false);
+      _writePermutation(cube.edgeState, lastLayerEdges, edges, isEdge: true);
+      if (cube.cornerParityBit == cube.edgeParityBit) {
+        states[_stateKey(cube)] = cube;
+      }
+    }
+  }
+
+  final seen = <String>{};
+  final groups = <List<CubieCube>>[];
+  for (final state in states.values) {
+    if (seen.contains(_stateKey(state))) {
+      continue;
+    }
+
+    // A turn of U before the algorithm, after it, or both.
+    final group = <String, CubieCube>{};
+    for (var before = 0; before < 4; before++) {
+      for (var after = 0; after < 4; after++) {
+        final turned = _turned(CubieCube.from(_turned(CubieCube(), before))..multiply(state), after);
+        group[_stateKey(turned)] = turned;
+      }
+    }
+
+    seen.addAll(group.keys);
+    // The case with nothing to do is not one to practise.
+    if (!group.containsKey(_stateKey(CubieCube()))) {
+      groups.add(group.values.toList());
+    }
+  }
+  return groups;
+}
+
+List<List<CubieCube>> _groupOllCases() {
+  final patterns = <String, CubieCube>{};
+  for (var twists = 0; twists < 27; twists++) {
+    for (var flips = 0; flips < 8; flips++) {
+      final cube = CubieCube();
+      var twistTotal = 0;
+      var rest = twists;
+      for (var i = 0; i < lastLayerCorners.length - 1; i++) {
+        final twist = rest % 3;
+        rest ~/= 3;
+        twistTotal += twist;
+        cube.cornerState[lastLayerCorners[i]] |= twist << 3;
+      }
+      cube.cornerState[lastLayerCorners.last] |= ((3 - twistTotal % 3) % 3) << 3;
+
+      var flipTotal = 0;
+      rest = flips;
+      for (var i = 0; i < lastLayerEdges.length - 1; i++) {
+        final flip = rest % 2;
+        rest ~/= 2;
+        flipTotal ^= flip;
+        cube.edgeState[lastLayerEdges[i]] |= flip;
+      }
+      cube.edgeState[lastLayerEdges.last] |= flipTotal;
+
+      patterns[_orientationKey(cube)] = cube;
+    }
+  }
+
+  final seen = <String>{};
+  final groups = <List<CubieCube>>[];
+  for (final pattern in patterns.values) {
+    if (seen.contains(_orientationKey(pattern))) {
+      continue;
+    }
+
+    final group = <String, CubieCube>{};
+    for (var turns = 0; turns < 4; turns++) {
+      final turned = _turned(pattern, turns);
+      group[_orientationKey(turned)] = turned;
+    }
+
+    seen.addAll(group.keys);
+    if (!group.containsKey(_orientationKey(CubieCube()))) {
+      groups.add(group.values.toList());
+    }
+  }
+  return groups;
+}
+
+/// Write the permutation numbered [index] into [positions].
+void _writePermutation(
+  List<int> state,
+  List<int> positions,
+  int index, {
+  required bool isEdge,
+}) {
+  final remaining = [...positions];
+  var rest = index;
+  for (var i = 0; i < positions.length; i++) {
+    var radix = 1;
+    for (var f = 2; f < positions.length - i; f++) {
+      radix *= f;
+    }
+    final piece = remaining.removeAt(rest ~/ radix);
+    rest %= radix;
+    state[positions[i]] = isEdge ? piece << 1 : piece;
+  }
+}
 
 Algorithm _practiceScramble({
   required List<int> solvedCorners,

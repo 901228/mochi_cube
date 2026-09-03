@@ -122,11 +122,22 @@ Each is a uniformly random state of the kind that step starts from, solved and
 reversed — the same construction as a full scramble, with part of the cube held
 still. `randomStateWith` is the general form if you want a different split.
 
-Drawing evenly matters here: it means cases turn up at the frequency they
-actually occur, rather than at whatever a hand-written list of positions
-happens to give. There are 288 states with the last layer oriented and the rest
-solved, and `pllPracticeScramble` reaches all 287 of them that are not already
-solved.
+By default these draw evenly from the **states**, so cases turn up as often as
+they really do — a T-perm four times as often as an H-perm, and a PLL skip about
+one time in 72. That is what you want to rehearse solving.
+
+To learn a set you want the opposite, or the symmetric cases get a quarter of
+the practice:
+
+```dart
+pllPracticeScramble(spread: PracticeSpread.cases);
+ollPracticeScramble(spread: PracticeSpread.cases);
+```
+
+The difference is real. A PLL case covers 16 of the 288 states if it has no
+symmetry, but H, Z, E and N cover 8 or 4, and 51 of the 57 OLLs cover 4
+orientations where two cover only one. `pllCases` and `ollCases` are the
+groupings themselves, 21 and 57 of them.
 
 ## Colours and rendering
 
@@ -188,7 +199,7 @@ it has to use an 8-element subgroup; and a breadth-first search that ignores
 inadmissible and lets the search miss solutions. Neither shows up without an
 exhaustive comparison.
 
-154 tests, `dart test`.
+162 tests, `dart test`.
 
 ## Roadmap
 
@@ -238,7 +249,7 @@ now would not.
 
 ### Named cases
 
-The practice scrambles draw a random state of the right kind. Asking for a
-*particular* case — "give me a T-perm", "drill this OLL" — needs a table of the
-cases with their names and recognition patterns, which is data entry rather than
-algorithm.
+The practice scrambles can draw a case evenly, but they cannot yet be asked for
+a *particular* one — "give me a T-perm", "drill this OLL". The groupings exist
+as `pllCases` and `ollCases`; what is missing is the names and the recognition
+patterns to go with them, which is data entry rather than algorithm.

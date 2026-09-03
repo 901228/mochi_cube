@@ -11,9 +11,16 @@ reversed. `randomStateWith` is the general form — hold any set of pieces solve
 and draw the rest evenly — along with `isCrossSolved`, `isF2lSolved` and
 `isLastLayerOriented`.
 
-Drawing evenly means cases turn up at the frequency they really occur. There are
-288 states with the last layer oriented and everything else solved, and the PLL
-generator reaches all 287 of them that are not already solved.
+By default they draw evenly from the **states**, so cases turn up as often as
+they really do — a T-perm four times as often as an H-perm, and a PLL skip about
+one time in 72. `PracticeSpread.cases` draws evenly from the **cases** instead,
+which is what learning a set wants: otherwise the symmetric cases get a quarter
+of the practice.
+
+The two are genuinely different. A PLL case covers 16 of the 288 states when it
+has no symmetry, but H, Z, E and N cover 8 or 4. `pllCases` and `ollCases` are
+the groupings, 21 and 57 of them, worked out by asking which states a turn of U
+before or after the algorithm reaches.
 
 ### The 2x2x2
 

@@ -32,13 +32,16 @@ export "puzzle/practice.dart"
     show
         crossEdges,
         f2lPairs,
+        PracticeSpread,
         f2lPracticeScramble,
         isCrossSolved,
         isF2lSolved,
         isLastLayerOriented,
         lastLayerCorners,
         lastLayerEdges,
+        ollCases,
         ollPracticeScramble,
+        pllCases,
         pllPracticeScramble,
         randomStateWith;
 export "puzzle/cube/rotation.dart"
