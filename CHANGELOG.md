@@ -1,4 +1,19 @@
-## 1.1.0
+## Unreleased
+
+### Practice scrambles
+
+Scrambles that leave one step of a CFOP solve to do, for drilling it:
+`pllPracticeScramble`, `ollPracticeScramble` and `f2lPracticeScramble`, the last
+taking a `solvedPairs` count so `solvedPairs: 3` drills the last pair.
+
+Each is a uniformly random state of the kind that step starts from, solved and
+reversed. `randomStateWith` is the general form — hold any set of pieces solved
+and draw the rest evenly — along with `isCrossSolved`, `isF2lSolved` and
+`isLastLayerOriented`.
+
+Drawing evenly means cases turn up at the frequency they really occur. There are
+288 states with the last layer oriented and everything else solved, and the PLL
+generator reaches all 287 of them that are not already solved.
 
 ### The 2x2x2
 

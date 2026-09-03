@@ -28,6 +28,19 @@ export "puzzle/cube/cubie_cube.dart"
 export "cube/enums.dart" show Corner, Edge, Face, FaceExtension, Facelet;
 export "puzzle/cube/moves.dart" show MoveExtension, moveCube;
 export "puzzle/patterns.dart" show Patterns, randomScramble, randomStateScramble;
+export "puzzle/practice.dart"
+    show
+        crossEdges,
+        f2lPairs,
+        f2lPracticeScramble,
+        isCrossSolved,
+        isF2lSolved,
+        isLastLayerOriented,
+        lastLayerCorners,
+        lastLayerEdges,
+        ollPracticeScramble,
+        pllPracticeScramble,
+        randomStateWith;
 export "puzzle/cube/rotation.dart"
     show Axis, Rotation, RotationAlgorithmExtension, RotationExtension;
 export "puzzle/phase2_tables.dart" show Phase2Tables;

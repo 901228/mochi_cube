@@ -107,6 +107,27 @@ regulation 4b3, which asks a scramble to be at least two moves from solved.
 not evenly distributed and a short one can leave the cube nearly solved. Use it
 where the distribution does not matter.
 
+## Practice scrambles
+
+Scrambles that leave one step of a solve to do, for drilling it:
+
+```dart
+pllPracticeScramble();               // bottom two layers solved, top oriented
+ollPracticeScramble();               // bottom two layers solved, top misoriented
+f2lPracticeScramble();               // cross solved
+f2lPracticeScramble(solvedPairs: 3); // and three slots filled: last pair drills
+```
+
+Each is a uniformly random state of the kind that step starts from, solved and
+reversed — the same construction as a full scramble, with part of the cube held
+still. `randomStateWith` is the general form if you want a different split.
+
+Drawing evenly matters here: it means cases turn up at the frequency they
+actually occur, rather than at whatever a hand-written list of positions
+happens to give. There are 288 states with the last layer oriented and the rest
+solved, and `pllPracticeScramble` reaches all 287 of them that are not already
+solved.
+
 ## Colours and rendering
 
 Neither is built in, on purpose.
@@ -167,7 +188,7 @@ it has to use an 8-element subgroup; and a breadth-first search that ignores
 inadmissible and lets the search miss solutions. Neither shows up without an
 exhaustive comparison.
 
-140 tests, `dart test`.
+155 tests, `dart test`.
 
 ## Roadmap
 
@@ -215,16 +236,9 @@ turns, and at some point the move set has to become something a puzzle supplies.
 Two more puzzles should make the right shape for that obvious; guessing at it
 now would not.
 
-### Practice scrambles
+### Named cases
 
-Scrambles that leave one step of a solve to do, for drilling it:
-
-- **F2L** — cross solved, the four slots random
-- **OLL** — F2L solved, last layer misoriented
-- **PLL** — everything solved but the last layer's permutation
-
-The mechanism is the same for all three and reuses what is already here: build a
-cube with the finished part solved and the rest randomised, solve it with the
-existing search, and reverse the solution. The work is in generating the
-constrained state, which is a matter of setting the coordinates that are already
-exposed, plus a way to ask for a specific case rather than a random one.
+The practice scrambles draw a random state of the right kind. Asking for a
+*particular* case — "give me a T-perm", "drill this OLL" — needs a table of the
+cases with their names and recognition patterns, which is data entry rather than
+algorithm.

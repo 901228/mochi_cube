@@ -1,6 +1,6 @@
 name: mochi_cube
 description: "Twisty puzzle solvers and scramble generators: a min2phase port, a Kociemba two-phase solver, and an optimal 2x2x2."
-version: 1.1.0
+version: 1.0.0
 # repository: https://github.com/my_org/my_repo
 
 environment:
