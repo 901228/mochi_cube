@@ -12,14 +12,14 @@ class CubieCube {
 
   static List<CCorner> initCornerState() {
     return [
-      CCorner(ECorner.upRightFront, 0),
-      CCorner(ECorner.upFrontLeft, 0),
-      CCorner(ECorner.upLeftBack, 0),
-      CCorner(ECorner.upBackRight, 0),
-      CCorner(ECorner.downFrontRight, 0),
-      CCorner(ECorner.downLeftFront, 0),
-      CCorner(ECorner.downBackLeft, 0),
-      CCorner(ECorner.downRightBack, 0),
+      CCorner(Corner.upRightFront, 0),
+      CCorner(Corner.upFrontLeft, 0),
+      CCorner(Corner.upLeftBack, 0),
+      CCorner(Corner.upBackRight, 0),
+      CCorner(Corner.downFrontRight, 0),
+      CCorner(Corner.downLeftFront, 0),
+      CCorner(Corner.downBackLeft, 0),
+      CCorner(Corner.downRightBack, 0),
     ];
   }
 
@@ -43,18 +43,18 @@ class CubieCube {
 
   static List<CEdge> initEdgeState() {
     return [
-      CEdge(EEdge.upRight, 0),
-      CEdge(EEdge.upFront, 0),
-      CEdge(EEdge.upLeft, 0),
-      CEdge(EEdge.upBack, 0),
-      CEdge(EEdge.downRight, 0),
-      CEdge(EEdge.downFront, 0),
-      CEdge(EEdge.downLeft, 0),
-      CEdge(EEdge.downBack, 0),
-      CEdge(EEdge.frontRight, 0),
-      CEdge(EEdge.frontLeft, 0),
-      CEdge(EEdge.backLeft, 0),
-      CEdge(EEdge.backRight, 0),
+      CEdge(Edge.upRight, 0),
+      CEdge(Edge.upFront, 0),
+      CEdge(Edge.upLeft, 0),
+      CEdge(Edge.upBack, 0),
+      CEdge(Edge.downRight, 0),
+      CEdge(Edge.downFront, 0),
+      CEdge(Edge.downLeft, 0),
+      CEdge(Edge.downBack, 0),
+      CEdge(Edge.frontRight, 0),
+      CEdge(Edge.frontLeft, 0),
+      CEdge(Edge.backLeft, 0),
+      CEdge(Edge.backRight, 0),
     ];
   }
 
@@ -97,30 +97,36 @@ class CubieCube {
       //    allow us to find the orientation by checking where is the U and D
       int ori = 0;
       for (ori = 0; ori < 3; ori++) {
-        if ([EFace.up, EFace.down].contains(cube.state[CCorner.cornerToFacelet[i][ori].index])) {
+        if ([Face.up, Face.down].contains(cube.state[cornerFacelet[i][ori].index])) {
           break;
         }
       }
 
       // find permutation
-      final color1 = cube.state[CCorner.cornerToFacelet[i][(ori + 1) % 3].index];
-      final color2 = cube.state[CCorner.cornerToFacelet[i][(ori + 2) % 3].index];
+      final color1 = cube.state[cornerFacelet[i][(ori + 1) % 3].index];
+      final color2 = cube.state[cornerFacelet[i][(ori + 2) % 3].index];
       for (var j = 0; j < cornerLength; j++) {
-        if (CCorner.cornerToFace[j][1] == color1 && CCorner.cornerToFace[j][2] == color2) {
-          cornerState[i] = CCorner(ECorner.values[j], ori);
+        if (cornerFace[j][1] == color1 && cornerFace[j][2] == color2) {
+          cornerState[i] = CCorner(Corner.values[j], ori);
         }
+      }
+      if (cornerState[i] == null) {
+        throw FormatException("Facelets do not describe a corner at position $i");
       }
     }
 
     for (var i = 0; i < edgeLength; i++) {
       for (var j = 0; j < edgeLength; j++) {
-        if (cube.state[CEdge.edgeToFacelet[i][0].index] == CEdge.edgeToFace[j][0] &&
-            cube.state[CEdge.edgeToFacelet[i][1].index] == CEdge.edgeToFace[j][1]) {
-          edgeState[i] = CEdge(EEdge.values[j], 0);
-        } else if (cube.state[CEdge.edgeToFacelet[i][0].index] == CEdge.edgeToFace[j][1] &&
-            cube.state[CEdge.edgeToFacelet[i][1].index] == CEdge.edgeToFace[j][0]) {
-          edgeState[i] = CEdge(EEdge.values[j], 1);
+        if (cube.state[edgeFacelet[i][0].index] == edgeFace[j][0] &&
+            cube.state[edgeFacelet[i][1].index] == edgeFace[j][1]) {
+          edgeState[i] = CEdge(Edge.values[j], 0);
+        } else if (cube.state[edgeFacelet[i][0].index] == edgeFace[j][1] &&
+            cube.state[edgeFacelet[i][1].index] == edgeFace[j][0]) {
+          edgeState[i] = CEdge(Edge.values[j], 1);
         }
+      }
+      if (edgeState[i] == null) {
+        throw FormatException("Facelets do not describe an edge at position $i");
       }
     }
 
@@ -186,7 +192,7 @@ class CubieCube {
   }
 
   /// move the cube by the given rotation
-  void move(ERotation rotation) {
+  void move(Face rotation) {
     multiply(moveCube[rotation.index]);
   }
 
@@ -369,21 +375,21 @@ class CubieCube {
   ///
   /// Note that it does not determine the order of these edges
   set udslice(int value) {
-    assert(0 <= value && value < 12 * _choose(12, 4));
+    assert(0 <= value && value < _choose(12, 4));
 
-    final udsliceEdge = [EEdge.frontRight, EEdge.frontLeft, EEdge.backLeft, EEdge.backRight];
+    final udsliceEdge = [Edge.frontRight, Edge.frontLeft, Edge.backLeft, Edge.backRight];
     final otherEdge = [
-      EEdge.upRight,
-      EEdge.upFront,
-      EEdge.upLeft,
-      EEdge.upBack,
-      EEdge.downRight,
-      EEdge.downFront,
-      EEdge.downLeft,
-      EEdge.downBack,
+      Edge.upRight,
+      Edge.upFront,
+      Edge.upLeft,
+      Edge.upBack,
+      Edge.downRight,
+      Edge.downFront,
+      Edge.downLeft,
+      Edge.downBack,
     ];
 
-    List<EEdge?> newPermutation = List.filled(edgeLength, null);
+    List<Edge?> newPermutation = List.filled(edgeLength, null);
 
     // put the slice edges
     int seen = 3;
@@ -442,7 +448,7 @@ class CubieCube {
   set edge4(int value) {
     assert(0 <= value && value < 24); // 4! = 24
 
-    final slideEdge = [EEdge.frontRight, EEdge.frontLeft, EEdge.backLeft, EEdge.backRight];
+    final slideEdge = [Edge.frontRight, Edge.frontLeft, Edge.backLeft, Edge.backRight];
 
     final coefficients = List.filled(3, 0);
     for (var i = 1; i < 4; i++) {
@@ -450,7 +456,7 @@ class CubieCube {
       value ~/= i + 1;
     }
 
-    final permutations = List<EEdge?>.filled(4, null);
+    final permutations = List<Edge?>.filled(4, null);
     for (var i = 2; i >= 0; i--) {
       permutations[i + 1] = slideEdge.removeAt(i + 1 - coefficients[i]);
     }
@@ -508,7 +514,7 @@ class CubieCube {
   set edge8(int value) {
     assert(0 <= value && value < _factorial(8));
 
-    final edges = EEdge.values.sublist(0, 8);
+    final edges = Edge.values.sublist(0, 8);
 
     final coefficients = List.filled(7, 0);
     for (var i = 1; i < 8; i++) {
@@ -516,7 +522,7 @@ class CubieCube {
       value ~/= i + 1;
     }
 
-    final permutations = List<EEdge?>.filled(8, null);
+    final permutations = List<Edge?>.filled(8, null);
     for (var i = 6; i >= 0; i--) {
       permutations[i + 1] = edges.removeAt(i + 1 - coefficients[i]);
     }
@@ -551,7 +557,7 @@ class CubieCube {
   set corner(int value) {
     assert(0 <= value && value < _factorial(cornerLength));
 
-    final corners = List.from(ECorner.values);
+    final corners = List.from(Corner.values);
 
     final coefficients = List.filled(cornerLength - 1, 0);
     for (var i = 1; i < cornerLength; i++) {
@@ -559,7 +565,7 @@ class CubieCube {
       value ~/= i + 1;
     }
 
-    final permutations = List<ECorner?>.filled(cornerLength, null);
+    final permutations = List<Corner?>.filled(cornerLength, null);
     for (var i = cornerLength - 2; i >= 0; i--) {
       permutations[i + 1] = corners.removeAt(i + 1 - coefficients[i]);
     }
@@ -598,7 +604,7 @@ class CubieCube {
   set edge(int value) {
     assert(0 <= value && value < _factorial(edgeLength));
 
-    final edges = List.from(EEdge.values);
+    final edges = List.from(Edge.values);
 
     final coefficients = List.filled(edgeLength - 1, 0);
     for (var i = 1; i < edgeLength; i++) {
@@ -606,7 +612,7 @@ class CubieCube {
       value ~/= i + 1;
     }
 
-    final permutations = List<EEdge?>.filled(edgeLength, null);
+    final permutations = List<Edge?>.filled(edgeLength, null);
     for (var i = edgeLength - 2; i >= 0; i--) {
       permutations[i + 1] = edges.removeAt(i + 1 - coefficients[i]);
     }

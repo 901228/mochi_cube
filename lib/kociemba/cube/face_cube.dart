@@ -2,16 +2,16 @@ import "cubie_cube.dart";
 import "enums.dart";
 
 class FaceCube {
-  List<EFace> state;
+  List<Face> state;
   static const int stateLength = 54; // 6 face * 9 tiles
-  static List<EFace> initState() {
+  static List<Face> initState() {
     return [
-      ...List.generate(9, (_) => EFace.up, growable: false),
-      ...List.generate(9, (_) => EFace.right, growable: false),
-      ...List.generate(9, (_) => EFace.front, growable: false),
-      ...List.generate(9, (_) => EFace.down, growable: false),
-      ...List.generate(9, (_) => EFace.left, growable: false),
-      ...List.generate(9, (_) => EFace.back, growable: false),
+      ...List.generate(9, (_) => Face.up, growable: false),
+      ...List.generate(9, (_) => Face.right, growable: false),
+      ...List.generate(9, (_) => Face.front, growable: false),
+      ...List.generate(9, (_) => Face.down, growable: false),
+      ...List.generate(9, (_) => Face.left, growable: false),
+      ...List.generate(9, (_) => Face.back, growable: false),
     ];
   }
   /*
@@ -32,7 +32,7 @@ class FaceCube {
     index = face_index * 9 + tile_index
    */
 
-  FaceCube([List<EFace>? state])
+  FaceCube([List<Face>? state])
     : assert(state == null || state.length == stateLength),
       state = state ?? initState();
 
@@ -40,7 +40,7 @@ class FaceCube {
   String toString() {
     String str = "";
     for (final face in state) {
-      str += CFace.faceToString[face.index];
+      str += FaceExtension.faceToString[face.index];
     }
     return str;
   }
@@ -49,9 +49,9 @@ class FaceCube {
     facelets = facelets.replaceAll(" ", "");
     assert(facelets.length == stateLength);
 
-    List<EFace> state = [];
+    List<Face> state = [];
     for (int i = 0; i < facelets.length; i++) {
-      EFace face = CFace.faceFromLetter(facelets[i]);
+      Face face = FaceExtension.fromLetter(facelets[i]);
       state.add(face);
     }
 
@@ -59,11 +59,11 @@ class FaceCube {
   }
 
   factory FaceCube.fromCubieCube(CubieCube cube) {
-    List<EFace?> state = List.filled(stateLength, null);
+    List<Face?> state = List.filled(stateLength, null);
 
     // assign centers
     for (var i = 0; i < 6; i++) {
-      state[i * 9 + 4] = EFace.values[i];
+      state[i * 9 + 4] = Face.values[i];
     }
 
     // assign corners
@@ -71,8 +71,8 @@ class FaceCube {
       var permutation = cube.cornerState[i].permutation.index;
       var orientation = cube.cornerState[i].orientation;
       for (var k = 0; k < 3; k++) {
-        final index = CCorner.cornerToFacelet[i][(k + orientation) % 3].index;
-        state[index] = CCorner.cornerToFace[permutation][k];
+        final index = cornerFacelet[i][(k + orientation) % 3].index;
+        state[index] = cornerFace[permutation][k];
       }
     }
 
@@ -81,12 +81,12 @@ class FaceCube {
       var permutation = cube.edgeState[i].permutation.index;
       var orientation = cube.edgeState[i].orientation;
       for (var k = 0; k < 2; k++) {
-        final index = CEdge.edgeToFacelet[i][(k + orientation) % 2].index;
-        state[index] = CEdge.edgeToFace[permutation][k];
+        final index = edgeFacelet[i][(k + orientation) % 2].index;
+        state[index] = edgeFace[permutation][k];
       }
     }
 
-    return FaceCube(List<EFace>.from(state));
+    return FaceCube(List<Face>.from(state));
   }
 
   CubeVerification isValid() {
@@ -99,6 +99,6 @@ class FaceCube {
 
   @override
   bool operator ==(Object other) {
-    return super.hashCode == other.hashCode;
+    return other is FaceCube && toString() == other.toString();
   }
 }
