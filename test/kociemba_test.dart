@@ -1,7 +1,4 @@
-import "package:mochi_cube/kociemba/cube/cubie_cube.dart";
-import "package:mochi_cube/kociemba/cube/enums.dart";
-import "package:mochi_cube/kociemba/cube/face_cube.dart";
-import "package:mochi_cube/kociemba/solver.dart";
+import "package:mochi_cube/kociemba.dart";
 import "package:test/test.dart";
 
 const String solved =
@@ -145,5 +142,18 @@ void main() {
         expect(faceletsOf(c), solved, reason: "seed $seed solution does not solve the cube");
       }
     }, timeout: Timeout(Duration(minutes: 2)));
+  });
+
+  group("the kociemba library entry point", () {
+    test("solves through the public API", () {
+      // Nothing inside the package imports lib/kociemba.dart, so without this
+      // a broken export would only show up for whoever depends on it.
+      final result = kociemba.solve(knownFacelets);
+      expect(result.status, SolveStatus.foundSolution);
+
+      final cube = CubieCube.fromFaceCube(FaceCube.fromString(knownFacelets));
+      cube.applyScramble(result.solution!.toString());
+      expect(faceletsOf(cube), solved);
+    });
   });
 }

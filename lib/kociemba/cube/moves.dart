@@ -4,31 +4,6 @@ import "enums.dart";
 // Moves on the cubie level, gives permutation and orientation after the moves U, R, F, D, L, B respectively from a clean cube
 // This will be used to compute move tables and the composition rules
 
-// final List<CCorner> _corner = [
-//   CCorner(Corner.upRightFront, 0),
-//   CCorner(Corner.upFrontLeft, 0),
-//   CCorner(Corner.upLeftBack, 0),
-//   CCorner(Corner.upBackRight, 0),
-//   CCorner(Corner.downFrontRight, 0),
-//   CCorner(Corner.downLeftFront, 0),
-//   CCorner(Corner.downBackLeft, 0),
-//   CCorner(Corner.downRightBack, 0),
-// ];
-// final List<CEdge> _edge = [
-//   CEdge(Edge.upRight, 0),
-//   CEdge(Edge.upFront, 0),
-//   CEdge(Edge.upLeft, 0),
-//   CEdge(Edge.upBack, 0),
-//   CEdge(Edge.downRight, 0),
-//   CEdge(Edge.downFront, 0),
-//   CEdge(Edge.downLeft, 0),
-//   CEdge(Edge.downBack, 0),
-//   CEdge(Edge.frontRight, 0),
-//   CEdge(Edge.frontLeft, 0),
-//   CEdge(Edge.backLeft, 0),
-//   CEdge(Edge.backRight, 0),
-// ];
-
 final List<CCorner> _cornerU = [
   CCorner(Corner.upBackRight, 0),
   CCorner(Corner.upRightFront, 0),

@@ -88,13 +88,6 @@ class SymCoord {
 
     return SymCoord._(sym2raw, raw2sym, symState, sym2raw.length, rawCount, group);
   }
-
-  /// The raw coordinate that class [classIndex] takes under symmetry [s].
-  int rawOf(int classIndex, int s, {required void Function(CubieCube, int) write, required int Function(CubieCube) read}) {
-    final cube = CubieCube();
-    write(cube, sym2raw[classIndex]);
-    return read(conjugate(cube, s));
-  }
 }
 
 /// The 8 symmetries phase 1 reduces over: the even indices of [cubeSym].

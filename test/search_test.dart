@@ -2,7 +2,6 @@ import "package:mochi_cube/kociemba/cube/cubie_cube.dart" as k;
 import "package:mochi_cube/kociemba/cube/enums.dart" as k;
 import "package:mochi_cube/kociemba/cube/face_cube.dart" as k;
 import "package:mochi_cube/puzzle/cube/cubie_cube.dart";
-import "package:mochi_cube/cube/algorithm.dart";
 import "package:mochi_cube/puzzle/cube/moves.dart";
 import "package:mochi_cube/puzzle/algorithm.dart";
 import "package:mochi_cube/solver.dart";

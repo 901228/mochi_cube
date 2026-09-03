@@ -489,7 +489,6 @@ class CubieCube {
   }
 
   int _factorial(int k) {
-    // TODO: Faster algorithm
     if (k < 0) {
       throw ArgumentError.value(k);
     }

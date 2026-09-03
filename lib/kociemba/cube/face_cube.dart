@@ -89,11 +89,6 @@ class FaceCube {
     return FaceCube(List<Face>.from(state));
   }
 
-  CubeVerification isValid() {
-    final cubie = CubieCube.fromFaceCube(this);
-    return cubie.validate();
-  }
-
   @override
   int get hashCode => toString().hashCode;
 

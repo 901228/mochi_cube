@@ -13,15 +13,6 @@ class CCorner {
 
   CCorner(this.permutation, this.orientation) : assert(orientation >= 0 && orientation <= 2);
 
-  List<Facelet> toFacelet() => List.generate(
-    3,
-    (index) => cornerFacelet[permutation.index][(index + orientation) % 3],
-    growable: false,
-  );
-
-  List<Face> toFace() =>
-      List.generate(3, (index) => cornerFace[permutation.index][index], growable: false);
-
   @override
   String toString() {
     final str = cornerToString[permutation.index];
@@ -35,15 +26,6 @@ class CEdge {
   int orientation;
 
   CEdge(this.permutation, this.orientation) : assert(orientation == 0 || orientation == 1);
-
-  List<Facelet> toFacelet() => List.generate(
-    2,
-    (index) => edgeFacelet[permutation.index][(index + orientation) % 2],
-    growable: false,
-  );
-
-  List<Face> toFace() =>
-      List.generate(2, (index) => edgeFace[permutation.index][index], growable: false);
 
   @override
   String toString() {

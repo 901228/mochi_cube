@@ -8,6 +8,7 @@ import "package:mochi_cube/puzzle/search.dart";
 import "package:mochi_cube/solver.dart";
 import "package:mochi_cube/table_storage.dart";
 import "package:mochi_cube/puzzle/cube/cubie_cube.dart";
+import "package:mochi_cube/cube/enums.dart";
 import "package:mochi_cube/cube/algorithm.dart";
 import "package:mochi_cube/puzzle/cube/moves.dart";
 import "package:mochi_cube/puzzle/cube/sym_coord.dart";
@@ -135,6 +136,17 @@ void main() {
         }
         expect(state(c), state(viaKociemba(moves.map(moveToString).join(" "))),
             reason: moves.map(moveToString).join(" "));
+      }
+    });
+
+    test("move(Face) turns that face once, clockwise", () {
+      for (final face in Face.values) {
+        final byFace = CubieCube();
+        byFace.move(face);
+        final byIndex = CubieCube();
+        byIndex.moveIndex(3 * face.index);
+        expect(state(byFace), state(byIndex), reason: face.name);
+        expect(state(byFace), state(viaKociemba(face.letter)), reason: face.name);
       }
     });
 
