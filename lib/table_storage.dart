@@ -137,6 +137,11 @@ PruningTable fillPruningTable({
   return prune;
 }
 
+/// Where the table caches live: the platform's app-data directory.
+///
+/// Every solver in the package writes its cache here, so deleting the `.bin`
+/// files in it forces a full rebuild.
+String get tableDirectory => getAppDirs(application: "cube_solver").data;
 
 /// A cache file holding the raw bytes of a set of tables.
 ///
@@ -164,10 +169,7 @@ class TableFile {
     this.variant = 0,
   });
 
-  File get file {
-    final directory = getAppDirs(application: "cube_solver").data;
-    return File(path.join(directory, name));
-  }
+  File get file => File(path.join(tableDirectory, name));
 
   /// The sections of a usable cache file, or null if there is not one.
   ///

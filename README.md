@@ -1,7 +1,8 @@
 # mochi_cube
 
 Twisty puzzle solvers and scramble generators in pure Dart, no Flutter
-dependency. The 3x3x3, the 2x2x2, the Pyraminx and the Clock so far.
+dependency. The 3x3x3, the 2x2x2, the Pyraminx and the Clock so far, as a
+library and as a [command line tool](#command-line).
 
 For the 3x3x3 there are two solvers. The one you want is a port of Chen Shuang's
 [min2phase](https://github.com/cs0x7f/min2phase); the other is a plainer
@@ -212,6 +213,39 @@ The difference is real. A PLL case covers 16 of the 288 states if it has no
 symmetry, but H, Z, E and N cover 8 or 4, and 51 of the 57 OLLs cover 4
 orientations where two cover only one. `pllCases` and `ollCases` are the
 groupings themselves, 21 and 57 of them.
+
+## Command line
+
+```bash
+dart pub global activate mochi_cube
+```
+
+```
+mochi_cube scramble [3x3|2x2|pyraminx|clock]   a scramble, drawn evenly from every state
+mochi_cube solve <state>                       the moves back; the state says which puzzle
+mochi_cube show <state>                        draw it as a net of letters
+mochi_cube practice <pll|oll|f2l>              a drill scramble
+mochi_cube pattern <name>                      the moves that make a known pattern
+mochi_cube tables                              build the caches, and say where they went
+```
+
+```console
+$ mochi_cube scramble --show
+R F' U2 F2 U B' R2 F' D2 B D2 F2 R D2 L2 F2 D2 R' B2 L' B2
+      U U D
+      R U B
+      D R U
+F D F L U B L R L B F L
+U L L D F L U R D F B B
+D F D R R R F L B R B R
+      B F U
+      L D B
+      F D U
+```
+
+`--seed` repeats a run, `-n` asks for several, `--state` prints the stickers so
+they can be piped back into `solve`. The tool calls the same library a program
+would, so a scramble that is wrong on the command line is wrong in the package.
 
 ## Colours, and drawing it
 

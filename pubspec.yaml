@@ -7,7 +7,11 @@ environment:
   sdk: ^3.8.1
 
 # Add regular dependencies here.
+executables:
+  mochi_cube:
+
 dependencies:
+  args: ^2.7.0
   path: ^1.9.1
   app_dirs: ^0.2.0
   logger: ^2.6.0

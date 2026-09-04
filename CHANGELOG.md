@@ -25,6 +25,22 @@ Also exported for drawing: `cornerFacelet`, `edgeFacelet`, `cornerFace` and
 `edgeFace` for the 3x3x3; `tipSlots`, `vertexSlots`, `edgeSlots`,
 `cornersOfFace` and `edgeBetween` for the Pyraminx; `dialBlock` for the Clock.
 
+### Command line
+
+`dart pub global activate mochi_cube`, then `mochi_cube`. Six commands —
+`scramble`, `solve`, `show`, `practice`, `pattern` and `tables` — over the same
+library a program would call, so the tool cannot drift from it.
+
+- `solve` and `show` work out which puzzle a state is from the state itself:
+  the three sticker strings are different lengths and a clock's is not stickers
+- `--seed` repeats a run, `-n` asks for several, `--state` prints stickers that
+  pipe straight back into `solve`
+- `--show` draws the state as a net of letters
+- `runCli` takes its output sink, so the tests read back what it printed rather
+  than shelling out
+
+`tableDirectory` is now public: where every solver caches its tables.
+
 ### The Clock
 
 `package:mochi_cube/clock.dart`. No search, and no table either: fourteen dials
