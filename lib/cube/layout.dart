@@ -1,3 +1,25 @@
+/// What every layout can say about itself: how big it is, and how to fit it in.
+///
+/// The puzzles do not all draw the same way — a cube is polygons and a Clock is
+/// circles — so this is the part they share, and all a caller needs to size the
+/// box it is going to draw into.
+abstract mixin class Layout {
+  /// The width of the drawing, in the same units as the points.
+  double get width;
+
+  /// The height of the drawing, in the same units as the points.
+  double get height;
+
+  /// How to fit this layout into a box of [boxWidth] by [boxHeight].
+  ///
+  /// Multiply a point by [scale] and then add [dx] and [dy]: the result is the
+  /// layout as large as it will go, centred.
+  ({double scale, double dx, double dy}) fitInto(double boxWidth, double boxHeight) {
+    final scale = boxWidth / width < boxHeight / height ? boxWidth / width : boxHeight / height;
+    return (scale: scale, dx: (boxWidth - width * scale) / 2, dy: (boxHeight - height * scale) / 2);
+  }
+}
+
 /// Where a puzzle's stickers sit when it is drawn flat.
 ///
 /// Geometry and nothing else. There are no colours here, no line widths and no
@@ -11,11 +33,11 @@
 ///
 /// The polygons are index-matched to the facelets, so `stickers[i]` is where
 /// `toFacelets()[i]` goes.
-class PuzzleLayout {
-  /// The width of the drawing, in the same units as the points.
+class PuzzleLayout with Layout {
+  @override
   final double width;
 
-  /// The height of the drawing, in the same units as the points.
+  @override
   final double height;
 
   /// One polygon per sticker, in the facelet order of the puzzle it belongs to.
@@ -31,15 +53,6 @@ class PuzzleLayout {
 
   /// The polygon of one sticker.
   List<Point> operator [](int facelet) => stickers[facelet];
-
-  /// How to fit this layout into a box of [boxWidth] by [boxHeight].
-  ///
-  /// Multiply a point by [scale] and then add [dx] and [dy]: the result is the
-  /// layout as large as it will go, centred.
-  ({double scale, double dx, double dy}) fitInto(double boxWidth, double boxHeight) {
-    final scale = boxWidth / width < boxHeight / height ? boxWidth / width : boxHeight / height;
-    return (scale: scale, dx: (boxWidth - width * scale) / 2, dy: (boxHeight - height * scale) / 2);
-  }
 }
 
 /// A point in a [PuzzleLayout]. `x` runs right and `y` runs down, as on a screen.

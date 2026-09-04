@@ -4,6 +4,7 @@ import "package:mochi_cube/clock.dart";
 import "package:mochi_cube/mochi_cube.dart";
 import "package:mochi_cube/pocket.dart" show PocketFacelets;
 import "package:mochi_cube/pyraminx.dart";
+import "package:mochi_cube/scramblers.dart" show puzzleScramblers;
 import "package:test/test.dart";
 
 /// Run the tool and collect what it printed, one entry per line.
@@ -113,13 +114,31 @@ void main() {
     });
   });
 
-  test("every puzzle answers to its aliases", () {
-    for (final puzzle in CliPuzzle.values) {
-      for (final name in [puzzle.name, ...puzzle.aliases]) {
-        expect(CliPuzzle.byName(name.toUpperCase()), puzzle);
+  group("puzzle names", () {
+    test("every puzzle answers to its id and its aliases", () {
+      for (final puzzle in CliPuzzle.values) {
+        for (final name in [puzzle.name, puzzle.id, ...puzzle.aliases]) {
+          expect(CliPuzzle.byName(name.toUpperCase()), puzzle);
+        }
       }
-    }
-    expect(() => CliPuzzle.byName("megaminx"), throwsFormatException);
+      expect(() => CliPuzzle.byName("megaminx"), throwsFormatException);
+    });
+
+    // The tool and the library have to agree on what a puzzle is called, or a
+    // setting saved by one would not be understood by the other.
+    test("the ids are the library's", () {
+      expect(CliPuzzle.values.map((puzzle) => puzzle.id), puzzleScramblers.keys);
+      for (final puzzle in CliPuzzle.values) {
+        expect(puzzle.scrambler().id, puzzle.id);
+      }
+    });
+
+    test("--random-moves is refused by the puzzles that have no such thing", () {
+      expect(CliPuzzle.cube.scrambler(randomMoves: true).name, contains("random moves"));
+      for (final puzzle in CliPuzzle.values.where((p) => p != CliPuzzle.cube)) {
+        expect(() => puzzle.scrambler(randomMoves: true), throwsFormatException);
+      }
+    });
   });
 }
 

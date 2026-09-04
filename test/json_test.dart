@@ -37,21 +37,36 @@ void main() {
       // Two centres the same colour.
       expect(
         () => CubieCube.fromFaceletString(
-          "UUUUUUUUU" "RRRRURRRR" "FFFFFFFFF" "DDDDDDDDD" "LLLLLLLLL" "BBBBBBBBB",
+          "UUUUUUUUU"
+          "RRRRURRRR"
+          "FFFFFFFFF"
+          "DDDDDDDDD"
+          "LLLLLLLLL"
+          "BBBBBBBBB",
         ),
         throwsFormatException,
       );
       // Ten of one colour, eight of another.
       expect(
         () => CubieCube.fromFaceletString(
-          "UUUUUUUUU" "RRRRRRRRU" "FFFFFFFFF" "DDDDDDDDD" "LLLLLLLLL" "BBBBBBBBB",
+          "UUUUUUUUU"
+          "RRRRRRRRU"
+          "FFFFFFFFF"
+          "DDDDDDDDD"
+          "LLLLLLLLL"
+          "BBBBBBBBB",
         ),
         throwsFormatException,
       );
       // A colour that is not one of the centres.
       expect(
         () => CubieCube.fromFaceletString(
-          "XUUUUUUUU" "RRRRRRRRR" "FFFFFFFFF" "DDDDDDDDD" "LLLLLLLLL" "BBBBBBBBB",
+          "XUUUUUUUU"
+          "RRRRRRRRR"
+          "FFFFFFFFF"
+          "DDDDDDDDD"
+          "LLLLLLLLL"
+          "BBBBBBBBB",
         ),
         throwsFormatException,
       );

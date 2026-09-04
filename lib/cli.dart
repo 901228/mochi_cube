@@ -9,6 +9,7 @@ export "cli/puzzles.dart" show CliPuzzle;
 import "mochi_cube.dart";
 import "pocket.dart" show PocketTables;
 import "pyraminx.dart" show PyraminxTables;
+import "scramblers.dart";
 import "table_storage.dart" show tableDirectory;
 
 /// The `mochi_cube` command line tool.
@@ -183,18 +184,23 @@ class _PracticeCommand extends _Command {
     final rng = random;
     final spread = argResults!.option("spread") == "cases" ? PracticeSpread.cases : PracticeSpread.states;
 
-    final draw = switch (kind) {
-      "pll" => () => pllPracticeScramble(random: rng, spread: spread),
-      "oll" => () => ollPracticeScramble(random: rng, spread: spread),
-      "f2l" => () => f2lPracticeScramble(random: rng, solvedPairs: int.parse(argResults!.option("pairs")!)),
+    final drill = switch (kind) {
+      "pll" => PracticeDrill.pll,
+      "oll" => PracticeDrill.oll,
+      "f2l" => PracticeDrill.f2l,
       _ => usageException("Practice what? One of pll, oll or f2l."),
     };
+    final scrambler = PracticeScrambler(
+      drill,
+      spread: spread,
+      solvedPairs: int.parse(argResults!.option("pairs")!),
+    );
 
     for (var i = 0; i < int.parse(argResults!.option("count")!); i++) {
-      final scramble = draw();
-      emit(scramble.toString());
+      final scramble = scrambler.next(random: rng);
+      emit(scramble.notation);
       if (argResults!.flag("show")) {
-        emit(CliPuzzle.cube.render(scramble.toString()));
+        emit(CliPuzzle.cube.render(scramble.notation));
       }
     }
   }

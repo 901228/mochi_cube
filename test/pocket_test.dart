@@ -33,8 +33,11 @@ void main() {
         for (var i = 0; i < 20; i++) {
           cube.moveIndex(pocketMoves[random.nextInt(pocketMoves.length)]);
         }
-        expect(cube.cornerState[fixedCorner.index], fixedCorner.index,
-            reason: "the fixed corner was disturbed");
+        expect(
+          cube.cornerState[fixedCorner.index],
+          fixedCorner.index,
+          reason: "the fixed corner was disturbed",
+        );
       }
     });
 
@@ -86,8 +89,11 @@ void main() {
       for (var i = 0; i < nStates; i += 7) {
         final d = tables.distance.at(i);
         for (var m = 0; m < pocketMoves.length; m++) {
-          expect((tables.distance.at(tables.successor(i, m)) - d).abs(), lessThanOrEqualTo(1),
-              reason: "state $i");
+          expect(
+            (tables.distance.at(tables.successor(i, m)) - d).abs(),
+            lessThanOrEqualTo(1),
+            reason: "state $i",
+          );
         }
       }
     });
@@ -148,8 +154,7 @@ void main() {
         ..cperm7 = index ~/ nTwist6
         ..twist6 = index % nTwist6;
 
-      expect(pocket.solve(deep.toPocketFaceletString(), maxLength: 10).status,
-          SolveStatus.exceededMaxLength);
+      expect(pocket.solve(deep.toPocketFaceletString(), maxLength: 10).status, SolveStatus.exceededMaxLength);
       expect(pocket.solve(deep.toPocketFaceletString()).status, SolveStatus.foundSolution);
     });
   });
@@ -170,10 +175,11 @@ void main() {
       const scheme = {"U": "W", "R": "R", "F": "G", "D": "Y", "L": "O", "B": "B"};
       for (var seed = 0; seed < 200; seed++) {
         final cube = randomPocketCube(random: Random(seed));
-        final recoloured =
-            cube.toPocketFaceletString().split("").map((c) => scheme[c]!).join();
-        expect(PocketCube.fromFaceletString(recoloured).toPocketFaceletString(),
-            cube.toPocketFaceletString());
+        final recoloured = cube.toPocketFaceletString().split("").map((c) => scheme[c]!).join();
+        expect(
+          PocketCube.fromFaceletString(recoloured).toPocketFaceletString(),
+          cube.toPocketFaceletString(),
+        );
       }
     });
 
@@ -182,21 +188,17 @@ void main() {
     });
 
     test("ignores whitespace", () {
-      expect(PocketCube.fromFaceletString("UUUU RRRR FFFF DDDD LLLL BBBB").toPocketFaceletString(),
-          solved);
+      expect(PocketCube.fromFaceletString("UUUU RRRR FFFF DDDD LLLL BBBB").toPocketFaceletString(), solved);
     });
 
     test("rejects strings that are not a cube", () {
       expect(() => PocketCube.fromFaceletString("UU"), throwsFormatException);
       // Seven colours.
-      expect(() => PocketCube.fromFaceletString("UUUWRRRRFFFFDDDDLLLLBBBB"),
-          throwsFormatException);
+      expect(() => PocketCube.fromFaceletString("UUUWRRRRFFFFDDDDLLLLBBBB"), throwsFormatException);
       // Five of one colour, three of another.
-      expect(() => PocketCube.fromFaceletString("UUUUURRRFFFFDDDDLLLLBBBB"),
-          throwsFormatException);
+      expect(() => PocketCube.fromFaceletString("UUUUURRRFFFFDDDDLLLLBBBB"), throwsFormatException);
       // Six colours, four each, but not arranged as a cube.
-      expect(() => PocketCube.fromFaceletString("URFDLBURFDLBURFDLBURFDLB"),
-          throwsFormatException);
+      expect(() => PocketCube.fromFaceletString("URFDLBURFDLBURFDLBURFDLB"), throwsFormatException);
     });
   });
 
@@ -207,8 +209,11 @@ void main() {
         expect(scramble.length, greaterThanOrEqualTo(4));
 
         final cube = scramble.cube;
-        expect(PocketSearch.distanceOf(cube), scramble.length,
-            reason: "the scramble is not as far from solved as it is long");
+        expect(
+          PocketSearch.distanceOf(cube),
+          scramble.length,
+          reason: "the scramble is not as far from solved as it is long",
+        );
 
         cube.apply(scramble.inverse);
         expect(cube.toPocketFaceletString(), solved);

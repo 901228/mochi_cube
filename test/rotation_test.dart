@@ -41,8 +41,7 @@ void main() {
         for (var n = 0; n < 4; n++) {
           final r = Rotation(axis, n: n);
           final cube = scrambled(12);
-          expect(state(cube.rotated(r).rotated(r.inverse)), state(cube),
-              reason: "$r then ${r.inverse}");
+          expect(state(cube.rotated(r).rotated(r.inverse)), state(cube), reason: "$r then ${r.inverse}");
         }
       }
     });
@@ -117,8 +116,11 @@ void main() {
             final r = Rotation(axis, n: n);
             final rotated = cube.rotated(r);
             rotated.apply(solution.algorithm.rotated(r));
-            expect(rotated.toFaceletString(), CubieCube().toFaceletString(),
-                reason: "$r did not carry the solution over");
+            expect(
+              rotated.toFaceletString(),
+              CubieCube().toFaceletString(),
+              reason: "$r did not carry the solution over",
+            );
           }
         }
       }
@@ -135,8 +137,11 @@ void main() {
         for (final axis in Axis.values) {
           final rotated = cube.rotated(Rotation(axis));
           final solution = Search.solveCube(rotated).solution!;
-          expect((solution.length - direct).abs(), lessThanOrEqualTo(3),
-              reason: "$axis: $direct vs ${solution.length}");
+          expect(
+            (solution.length - direct).abs(),
+            lessThanOrEqualTo(3),
+            reason: "$axis: $direct vs ${solution.length}",
+          );
 
           rotated.apply(solution.algorithm);
           expect(rotated.toFaceletString(), CubieCube().toFaceletString());

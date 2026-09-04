@@ -27,11 +27,12 @@ String state(CubieCube c) => "${c.cornerState}|${c.edgeState}";
 /// The same cube state in the kociemba representation, so kociemba coordinates
 /// can be read off a puzzle cube.
 k.CubieCube toKociemba(CubieCube c) => k.CubieCube(
-      cornerState: List.generate(
-          8, (i) => k.CCorner(k.Corner.values[c.cornerState[i] & 0x7], (c.cornerState[i] >> 3) % 3)),
-      edgeState: List.generate(
-          12, (i) => k.CEdge(k.Edge.values[c.edgeState[i] >> 1], c.edgeState[i] & 1)),
-    );
+  cornerState: List.generate(
+    8,
+    (i) => k.CCorner(k.Corner.values[c.cornerState[i] & 0x7], (c.cornerState[i] >> 3) % 3),
+  ),
+  edgeState: List.generate(12, (i) => k.CEdge(k.Edge.values[c.edgeState[i] >> 1], c.edgeState[i] & 1)),
+);
 
 /// Deterministic generator, so a failure is reproducible.
 int _rng = 12345;
@@ -134,8 +135,11 @@ void main() {
         for (final m in moves) {
           c.moveIndex(m);
         }
-        expect(state(c), state(viaKociemba(moves.map(moveToString).join(" "))),
-            reason: moves.map(moveToString).join(" "));
+        expect(
+          state(c),
+          state(viaKociemba(moves.map(moveToString).join(" "))),
+          reason: moves.map(moveToString).join(" "),
+        );
       }
     });
 
@@ -214,8 +218,11 @@ void main() {
           viaSym.moveIndex(symMove[s][m]);
         }
 
-        expect(state(conjugate(direct, symInv[s])), state(viaSym),
-            reason: "sym $s, ${moves.map(moveToString).join(' ')}");
+        expect(
+          state(conjugate(direct, symInv[s])),
+          state(viaSym),
+          reason: "sym $s, ${moves.map(moveToString).join(' ')}",
+        );
       }
     });
 
@@ -349,35 +356,42 @@ void main() {
         for (var i = 0; i < depth; i++) {
           c.moveIndex(_next(18));
         }
-        expect(t.phase1Cost(c.twist, c.flip, c.udslice), lessThanOrEqualTo(depth),
-            reason: "estimate exceeds a known $depth move solution");
+        expect(
+          t.phase1Cost(c.twist, c.flip, c.udslice),
+          lessThanOrEqualTo(depth),
+          reason: "estimate exceeds a known $depth move solution",
+        );
       }
     });
 
-    test("the combined table equals a raw BFS over the whole (flip, twist) space", () {
-      // This one pairs the two orientations and drops the slice, so the
-      // kociemba tables are no help; the reference is the unreduced search.
-      final rawPrune = fillPruningTable(
-        length: Phase1Tables.nFlip * Phase1Tables.nTwist,
-        stride: Phase1Tables.nTwist,
-        moveCount: Phase1Tables.nMoves,
-        successor: (i, m) =>
-            t.flipMove[(i ~/ Phase1Tables.nTwist, m)] * Phase1Tables.nTwist +
-            t.twistMove[(i % Phase1Tables.nTwist, m)],
-      );
+    test(
+      "the combined table equals a raw BFS over the whole (flip, twist) space",
+      () {
+        // This one pairs the two orientations and drops the slice, so the
+        // kociemba tables are no help; the reference is the unreduced search.
+        final rawPrune = fillPruningTable(
+          length: Phase1Tables.nFlip * Phase1Tables.nTwist,
+          stride: Phase1Tables.nTwist,
+          moveCount: Phase1Tables.nMoves,
+          successor: (i, m) =>
+              t.flipMove[(i ~/ Phase1Tables.nTwist, m)] * Phase1Tables.nTwist +
+              t.twistMove[(i % Phase1Tables.nTwist, m)],
+        );
 
-      var bad = 0;
-      for (var f = 0; f < Phase1Tables.nFlip; f++) {
-        final (cls, sym) = SymCoord.split(flipSym.raw2sym[f]);
-        for (var tw = 0; tw < Phase1Tables.nTwist; tw++) {
-          if (t.twistFlipPrune!.at(cls * Phase1Tables.nTwist + t.twistConj[(tw, symInv[sym])]) !=
-              rawPrune[(f, tw)]) {
-            bad++;
+        var bad = 0;
+        for (var f = 0; f < Phase1Tables.nFlip; f++) {
+          final (cls, sym) = SymCoord.split(flipSym.raw2sym[f]);
+          for (var tw = 0; tw < Phase1Tables.nTwist; tw++) {
+            if (t.twistFlipPrune!.at(cls * Phase1Tables.nTwist + t.twistConj[(tw, symInv[sym])]) !=
+                rawPrune[(f, tw)]) {
+              bad++;
+            }
           }
         }
-      }
-      expect(bad, 0, reason: "of ${Phase1Tables.nFlip * Phase1Tables.nTwist} pairs");
-    }, timeout: Timeout(Duration(minutes: 3)));
+        expect(bad, 0, reason: "of ${Phase1Tables.nFlip * Phase1Tables.nTwist} pairs");
+      },
+      timeout: Timeout(Duration(minutes: 3)),
+    );
 
     test("is much smaller than the raw tables", () {
       final rawEntries = Phase1Tables.nUdslice * (Phase1Tables.nTwist + Phase1Tables.nFlip);
@@ -435,12 +449,10 @@ void main() {
       var edgeBad = 0;
       for (var m = 0; m < Phase2Tables.nMperm; m++) {
         for (var v = 0; v < Phase2Tables.nPerm; v++) {
-          if (t.cpermPrune.at(t.cpermIndex(v, m)) !=
-              raw.edge4CornerPrune[(edge4Of[m], cornerOf[v])]) {
+          if (t.cpermPrune.at(t.cpermIndex(v, m)) != raw.edge4CornerPrune[(edge4Of[m], cornerOf[v])]) {
             cornerBad++;
           }
-          if (t.epermPrune.at(t.epermIndex(v, m)) !=
-              raw.edge4Edge8Prune[(edge4Of[m], edge8Of[v])]) {
+          if (t.epermPrune.at(t.epermIndex(v, m)) != raw.edge4Edge8Prune[(edge4Of[m], edge8Of[v])]) {
             edgeBad++;
           }
         }
@@ -457,8 +469,11 @@ void main() {
         for (var i = 0; i < depth; i++) {
           c.moveIndex(Phase2Tables.moves[_next(Phase2Tables.nMoves)]);
         }
-        expect(t.phase2Cost(c.cperm, c.eperm, c.mperm, c.ccombo), lessThanOrEqualTo(depth),
-            reason: "estimate exceeds a known $depth move solution");
+        expect(
+          t.phase2Cost(c.cperm, c.eperm, c.mperm, c.ccombo),
+          lessThanOrEqualTo(depth),
+          reason: "estimate exceeds a known $depth move solution",
+        );
       }
     });
   });
@@ -496,8 +511,7 @@ void main() {
           }
         }
       }
-      expect(bad, 0,
-          reason: "of ${Phase2Tables.nPerm * Phase2Tables.nCcombo} pairs");
+      expect(bad, 0, reason: "of ${Phase2Tables.nPerm * Phase2Tables.nCcombo} pairs");
     }, timeout: Timeout(Duration(minutes: 3)));
   });
 
@@ -538,8 +552,7 @@ void main() {
           direct.moveIndex(m);
           viaUrf.moveIndex(urfMove[m]);
         }
-        expect(state(urfConjugate(direct)), state(viaUrf),
-            reason: moves.map(moveToString).join(" "));
+        expect(state(urfConjugate(direct)), state(viaUrf), reason: moves.map(moveToString).join(" "));
       }
     });
 
@@ -556,16 +569,25 @@ void main() {
 
   group("toFacelets", () {
     test("renders the solved cube", () {
-      expect(CubieCube().toFaceletString(),
-          "UUUUUUUUU" "RRRRRRRRR" "FFFFFFFFF" "DDDDDDDDD" "LLLLLLLLL" "BBBBBBBBB");
+      expect(
+        CubieCube().toFaceletString(),
+        "UUUUUUUUU"
+        "RRRRRRRRR"
+        "FFFFFFFFF"
+        "DDDDDDDDD"
+        "LLLLLLLLL"
+        "BBBBBBBBB",
+      );
     });
 
     test("agrees with the kociemba renderer on random cubes", () {
       for (var seed = 0; seed < 200; seed++) {
         final kc = k.CubieCube.randomize(seed);
-        expect(CubieCube.fromFacelets(_facelets(kc)).toFaceletString(),
-            k.FaceCube.fromCubieCube(kc).toString(),
-            reason: "seed $seed");
+        expect(
+          CubieCube.fromFacelets(_facelets(kc)).toFaceletString(),
+          k.FaceCube.fromCubieCube(kc).toString(),
+          reason: "seed $seed",
+        );
       }
     });
 

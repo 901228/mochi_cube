@@ -5,8 +5,7 @@ import "package:test/test.dart";
 
 /// Straight from the notation reference, so the format is checked against
 /// something written down elsewhere rather than against this code.
-const String referenceScramble =
-    "UR2- DR5- DL0+ UL1+ U2+ R0+ D3+ L5- ALL5- y2 U4- R3- D1+ L2- ALL3+";
+const String referenceScramble = "UR2- DR5- DL0+ UL1+ U2+ R0+ D3+ L5- ALL5- y2 U4- R3- D1+ L2- ALL3+";
 
 void main() {
   group("notation", () {
@@ -53,25 +52,23 @@ void main() {
     test("a solved clock is every dial at twelve o'clock", () {
       expect(ClockState.solved().isSolved, isTrue);
       expect(ClockState.solved().movesToSolve, 0);
-      expect(ClockState.solved().toString(),
-          "UR0+ DR0+ DL0+ UL0+ U0+ R0+ D0+ L0+ ALL0+ y2 U0+ R0+ D0+ L0+ ALL0+");
+      expect(
+        ClockState.solved().toString(),
+        "UR0+ DR0+ DL0+ UL0+ U0+ R0+ D0+ L0+ ALL0+ y2 U0+ R0+ D0+ L0+ ALL0+",
+      );
     });
 
     test("rejects anything that is not a scramble", () {
       expect(() => ClockState.parse(""), throwsFormatException);
       expect(() => ClockState.parse("UR2+"), throwsFormatException);
       // No y2.
-      expect(() => ClockState.parse(referenceScramble.replaceAll("y2 ", "")),
-          throwsFormatException);
+      expect(() => ClockState.parse(referenceScramble.replaceAll("y2 ", "")), throwsFormatException);
       // A dial out of order.
-      expect(() => ClockState.parse(referenceScramble.replaceFirst("UR2-", "DR2-")),
-          throwsFormatException);
+      expect(() => ClockState.parse(referenceScramble.replaceFirst("UR2-", "DR2-")), throwsFormatException);
       // More than six hours, which should have been written the other way.
-      expect(() => ClockState.parse(referenceScramble.replaceFirst("UR2-", "UR9+")),
-          throwsFormatException);
+      expect(() => ClockState.parse(referenceScramble.replaceFirst("UR2-", "UR9+")), throwsFormatException);
       // Neither clockwise nor anticlockwise.
-      expect(() => ClockState.parse(referenceScramble.replaceFirst("UR2-", "UR2*")),
-          throwsFormatException);
+      expect(() => ClockState.parse(referenceScramble.replaceFirst("UR2-", "UR2*")), throwsFormatException);
     });
   });
 
@@ -113,8 +110,7 @@ void main() {
   group("scrambles", () {
     test("meet the WCA minimum", () {
       for (var seed = 0; seed < 200; seed++) {
-        expect(randomClockScramble(random: Random(seed)).movesToSolve,
-            greaterThanOrEqualTo(2));
+        expect(randomClockScramble(random: Random(seed)).movesToSolve, greaterThanOrEqualTo(2));
       }
     });
 
@@ -149,10 +145,7 @@ void main() {
         for (var i = 0; i < k; i++) {
           coefficient = coefficient * (ClockState.dialCount - i) / (i + 1);
         }
-        return coefficient *
-            pow(11 / 12, k) *
-            pow(1 / 12, ClockState.dialCount - k) *
-            draws;
+        return coefficient * pow(11 / 12, k) * pow(1 / 12, ClockState.dialCount - k) * draws;
       }
 
       for (var k = 10; k <= ClockState.dialCount; k++) {
@@ -200,8 +193,11 @@ void main() {
       for (var move = 0; move < ClockState.dialCount; move++) {
         final dials = List.filled(ClockState.dialCount, 0);
         dials[move] = 1;
-        expect(ClockState(dials).toDials().where((d) => d != 0), hasLength(expected[move]),
-            reason: "move $move (${ClockState.dialNames[move]})");
+        expect(
+          ClockState(dials).toDials().where((d) => d != 0),
+          hasLength(expected[move]),
+          reason: "move $move (${ClockState.dialNames[move]})",
+        );
       }
     });
 
@@ -233,10 +229,8 @@ void main() {
       final good = ClockState.random(random: Random(1)).toDials();
 
       expect(() => ClockDialReading.fromDials([1, 2, 3]), throwsFormatException);
-      expect(() => ClockDialReading.fromDials([...good.sublist(0, 17), 12]),
-          throwsFormatException);
-      expect(() => ClockDialReading.fromDials([...good.sublist(0, 17), -1]),
-          throwsFormatException);
+      expect(() => ClockDialReading.fromDials([...good.sublist(0, 17), 12]), throwsFormatException);
+      expect(() => ClockDialReading.fromDials([...good.sublist(0, 17), -1]), throwsFormatException);
 
       // A corner that disagrees with itself: it is one piece.
       final broken = [...good];
@@ -245,8 +239,7 @@ void main() {
     });
 
     test("reads nicely", () {
-      expect(ClockState.solved().toDialString(),
-          "front 0 0 0  0 0 0  0 0 0 | back 0 0 0  0 0 0  0 0 0");
+      expect(ClockState.solved().toDialString(), "front 0 0 0  0 0 0  0 0 0 | back 0 0 0  0 0 0  0 0 0");
     });
   });
 }

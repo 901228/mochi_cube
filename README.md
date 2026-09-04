@@ -214,6 +214,45 @@ symmetry, but H, Z, E and N cover 8 or 4, and 51 of the 57 OLLs cover 4
 orientations where two cover only one. `pllCases` and `ollCases` are the
 groupings themselves, 21 and 57 of them.
 
+## One interface for all four
+
+The puzzles are kept apart everywhere else on purpose, so their scramble
+functions have different names, different arguments and — for the Clock, whose
+scramble is a set of dial positions rather than a sequence of turns — a
+different return type. That is right for code that knows which puzzle it wants,
+and wrong for a screen with a puzzle picker on it.
+
+```dart
+import "package:mochi_cube/scramblers.dart";
+
+puzzleScramblers;                     // {333: …, 222: …, pyram: …, clock: …}
+
+final scrambler = puzzleScramblers[saved]!;
+final scramble = scrambler.next();
+
+scramble.notation;   // "R U2 F' …", or "UR4+ DR0+ … ALL6+"
+scramble.state;      // one number per piece, index-matched to scrambler.layout
+scramble.algorithm;  // the moves, or null for the Clock
+```
+
+The keys are the WCA event ids — `333`, `222`, `pyram`, `clock` — rather than a
+spelling of our own, since those are what the rest of the speedcubing world
+writes and what the official scrambler is asked for. A saved setting can then
+name a puzzle without depending on the order they happen to be declared in, and
+`.values` is still the order a picker would list them in, since Dart maps keep
+theirs.
+
+`practiceScramblers` is the same three drills behind the same interface, keyed
+`pll`, `oll` and `f2l`, so a drill picker is one more map. `allScramblers` is
+both together.
+
+`scrambler.layout` and `scrambler.solvedState` are there so a picker can draw
+each puzzle before anything has been scrambled. `stateLength` is both the length
+of a state and the number of pieces in the layout, which is checked.
+
+It scrambles and it says how to draw the result; it does not solve. Only two of
+the four puzzles have a `Solver`, and the other two do not need one.
+
 ## Command line
 
 ```bash

@@ -25,6 +25,34 @@ Also exported for drawing: `cornerFacelet`, `edgeFacelet`, `cornerFace` and
 `edgeFace` for the 3x3x3; `tipSlots`, `vertexSlots`, `edgeSlots`,
 `cornersOfFace` and `edgeBetween` for the Pyraminx; `dialBlock` for the Clock.
 
+### One interface for all four puzzles
+
+`package:mochi_cube/scramblers.dart`. The puzzles stay apart everywhere else,
+but a screen with a puzzle picker on it wants a list, not four function names
+with different signatures.
+
+- `Scrambler` — `id`, `name`, `puzzleId`, `layout`, `stateLength`,
+  `solvedState` and `next({random})` — with `CubeScrambler`, `PocketScrambler`,
+  `PyraminxScrambler`, `ClockScrambler` and `PracticeScrambler`
+- `Scramble` — the `notation`, the `state` it leaves, and the `algorithm`,
+  which is null for the Clock since its scramble is not a sequence of turns
+- `puzzleScramblers`, `practiceScramblers` and `allScramblers`: maps, keyed by
+  the WCA event ids `333`, `222`, `pyram` and `clock`, and by `pll`, `oll` and
+  `f2l` for the drills. A saved setting can name a puzzle without depending on
+  declaration order, and `.values` is still a picker's order
+- `Layout`, now a supertype of both `PuzzleLayout` and `ClockLayout`, so a
+  scrambler can name where its pieces are drawn without saying which shape
+
+Narrow on purpose: it scrambles and says how to draw the result, and does not
+solve. Only two of the four puzzles have a `Solver` and the other two do not
+need one.
+
+The notation and the state have to agree, or an app would show a scramble that
+does not match the picture beside it, so that is what the test checks: it
+re-derives the state from the notation through the puzzle itself and compares.
+The command line now goes through these too rather than calling each puzzle's
+function, so the tool and an app cannot scramble differently.
+
 ### Command line
 
 `dart pub global activate mochi_cube`, then `mochi_cube`. Six commands —

@@ -10,22 +10,27 @@ import "package:mochi_cube/puzzle/search.dart";
 import "package:test/test.dart";
 
 const String solved =
-    "UUUUUUUUU" "RRRRRRRRR" "FFFFFFFFF" "DDDDDDDDD" "LLLLLLLLL" "BBBBBBBBB";
+    "UUUUUUUUU"
+    "RRRRRRRRR"
+    "FFFFFFFFF"
+    "DDDDDDDDD"
+    "LLLLLLLLL"
+    "BBBBBBBBB";
 
 /// The kociemba code is verified end to end, so it renders the facelets here.
-List<int> _colours(k.CubieCube c) =>
-    k.FaceCube.fromCubieCube(c).state.map((e) => e.index).toList();
+List<int> _colours(k.CubieCube c) => k.FaceCube.fromCubieCube(c).state.map((e) => e.index).toList();
 
 CubieCube randomCube(int seed) => CubieCube.fromFacelets(_colours(k.CubieCube.randomize(seed)));
 
 String render(CubieCube c) => k.FaceCube.fromCubieCube(
-      k.CubieCube(
-        cornerState: List.generate(
-            8, (i) => k.CCorner(k.Corner.values[c.cornerState[i] & 7], (c.cornerState[i] >> 3) % 3)),
-        edgeState: List.generate(
-            12, (i) => k.CEdge(k.Edge.values[c.edgeState[i] >> 1], c.edgeState[i] & 1)),
-      ),
-    ).toString();
+  k.CubieCube(
+    cornerState: List.generate(
+      8,
+      (i) => k.CCorner(k.Corner.values[c.cornerState[i] & 7], (c.cornerState[i] >> 3) % 3),
+    ),
+    edgeState: List.generate(12, (i) => k.CEdge(k.Edge.values[c.edgeState[i] >> 1], c.edgeState[i] & 1)),
+  ),
+).toString();
 
 void main() {
   group("search", () {
@@ -65,8 +70,7 @@ void main() {
       final r = Search.solution(facelets);
       expect(r.status, SolveStatus.foundSolution);
 
-      final cube = CubieCube.fromFacelets(
-          k.FaceCube.fromString(facelets).state.map((e) => e.index).toList());
+      final cube = CubieCube.fromFacelets(k.FaceCube.fromString(facelets).state.map((e) => e.index).toList());
       for (final m in r.solution!.moves) {
         cube.moveIndex(m);
       }
@@ -96,7 +100,13 @@ void main() {
     test("rejects facelets that are not a cube", () {
       // A bad string is a result, not an exception: solve() reports through its
       // status either way, and the reason comes back in `error`.
-      const bad = "UUUUUUUUU" "RRRRRRRRU" "FFFFFFFFF" "DDDDDDDDD" "LLLLLLLLL" "BBBBBBBBB";
+      const bad =
+          "UUUUUUUUU"
+          "RRRRRRRRU"
+          "FFFFFFFFF"
+          "DDDDDDDDD"
+          "LLLLLLLLL"
+          "BBBBBBBBB";
       expect(Search.solution(bad).status, SolveStatus.invalidCube);
 
       final short = Search.solution("UUU");
@@ -153,8 +163,7 @@ void _algorithmTests() {
     });
 
     test("cube applies the moves to a solved cube", () {
-      expect((Algorithm.parse("R U R' U'") * 6).cube.toFaceletString(),
-          CubieCube().toFaceletString());
+      expect((Algorithm.parse("R U R' U'") * 6).cube.toFaceletString(), CubieCube().toFaceletString());
       expect(Algorithm.empty.cube.toFaceletString(), CubieCube().toFaceletString());
     });
 
@@ -204,8 +213,7 @@ void _algorithmTests() {
 
     test("a time limit ends the search rather than running on", () {
       // Far too short to find anything, so it has to give up.
-      final r = min2phase.solve(randomCube(12).toFaceletString(),
-          maxLength: 21, maxTime: Duration.zero);
+      final r = min2phase.solve(randomCube(12).toFaceletString(), maxLength: 21, maxTime: Duration.zero);
       expect(r.status, SolveStatus.exceededMaxTime);
       expect(r.solution, isNull);
     });
@@ -226,8 +234,7 @@ void _algorithmTests() {
         var previous = 1 << 30;
         var count = 0;
 
-        await for (final solution
-            in Search.solveDeeply(cube, maxTime: Duration(seconds: 2))) {
+        await for (final solution in Search.solveDeeply(cube, maxTime: Duration(seconds: 2))) {
           expect(solution.length, lessThan(previous), reason: "seed $seed did not improve");
           previous = solution.length;
           count++;
@@ -247,8 +254,7 @@ void _algorithmTests() {
         final quick = Search.solveCube(cube).solution!.length;
 
         var best = 1 << 30;
-        await for (final solution
-            in Search.solveDeeply(cube, maxTime: Duration(seconds: 2))) {
+        await for (final solution in Search.solveDeeply(cube, maxTime: Duration(seconds: 2))) {
           best = solution.length;
         }
         expect(best, lessThanOrEqualTo(quick), reason: "seed $seed");
@@ -266,22 +272,25 @@ void _algorithmTests() {
       expect(first.isEmpty, isTrue);
     });
 
-    test("computes nothing until it is listened to, and stops when abandoned", () async {
-      final stream = Search.solveDeeply(randomCube(9));
+    test(
+      "computes nothing until it is listened to, and stops when abandoned",
+      () async {
+        final stream = Search.solveDeeply(randomCube(9));
 
-      // Taking one solution must not run the search to exhaustion.
-      final clock = Stopwatch()..start();
-      final first = await stream.first;
-      clock.stop();
+        // Taking one solution must not run the search to exhaustion.
+        final clock = Stopwatch()..start();
+        final first = await stream.first;
+        clock.stop();
 
-      expect(first.length, lessThanOrEqualTo(Search.defaultMaxLength));
-      expect(clock.elapsed, lessThan(Duration(seconds: 10)));
-    }, timeout: Timeout(Duration(minutes: 1)));
+        expect(first.length, lessThanOrEqualTo(Search.defaultMaxLength));
+        expect(clock.elapsed, lessThan(Duration(seconds: 10)));
+      },
+      timeout: Timeout(Duration(minutes: 1)),
+    );
 
     test("carries the elapsed time, growing with each improvement", () async {
       final times = <Duration>[];
-      await for (final solution
-          in Search.solveDeeply(randomCube(10), maxTime: Duration(seconds: 2))) {
+      await for (final solution in Search.solveDeeply(randomCube(10), maxTime: Duration(seconds: 2))) {
         times.add(solution.elapsedTime);
       }
       expect(times, isNotEmpty);

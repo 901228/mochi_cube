@@ -4,6 +4,7 @@ import "../clock.dart";
 import "../mochi_cube.dart";
 import "../pocket.dart";
 import "../pyraminx.dart";
+import "../scramblers.dart";
 import "render.dart";
 
 /// One puzzle, as the command line deals with it.
@@ -13,15 +14,18 @@ import "render.dart";
 /// command line puts them back together, and the only place that has to know
 /// all four.
 enum CliPuzzle {
-  cube("3x3", ["3x3x3", "333", "cube"]),
-  pocket("2x2", ["2x2x2", "222", "pocket"]),
-  pyraminx("pyraminx", ["pyra", "pyramid"]),
-  clock("clock", []);
+  cube("3x3", "333", ["3x3x3", "cube"]),
+  pocket("2x2", "222", ["2x2x2", "pocket"]),
+  pyraminx("pyraminx", "pyram", ["pyra", "pyramid"]),
+  clock("clock", "clock", []);
 
-  const CliPuzzle(this.name, this.aliases);
+  const CliPuzzle(this.name, this.id, this.aliases);
 
-  /// What to write on the command line.
+  /// What to write on the command line: the friendlier of the two spellings.
   final String name;
+
+  /// The WCA event id, and the key this has in [puzzleScramblers].
+  final String id;
 
   /// Other spellings that mean the same puzzle.
   final List<String> aliases;
@@ -29,7 +33,7 @@ enum CliPuzzle {
   static CliPuzzle byName(String name) {
     final wanted = name.toLowerCase();
     for (final puzzle in values) {
-      if (puzzle.name == wanted || puzzle.aliases.contains(wanted)) {
+      if (puzzle.name == wanted || puzzle.id == wanted || puzzle.aliases.contains(wanted)) {
         return puzzle;
       }
     }
@@ -54,16 +58,27 @@ enum CliPuzzle {
     };
   }
 
+  /// Where this puzzle's scrambles come from.
+  ///
+  /// The command line does not draw its own from each puzzle's function; it
+  /// looks the puzzle up in [puzzleScramblers] by the same event id, so the two
+  /// cannot end up scrambling differently.
+  ///
+  /// [randomMoves] and [moves] mean something only to the 3x3x3. Asking for
+  /// them anywhere else throws, rather than quietly handing back a cube.
+  Scrambler scrambler({bool randomMoves = false, int moves = 20}) {
+    if (!randomMoves) {
+      return puzzleScramblers[id]!;
+    }
+    if (this != cube) {
+      throw FormatException("--random-moves is only for the 3x3, not the $name");
+    }
+    return CubeScrambler(randomMoves: true, moves: moves);
+  }
+
   /// A scramble drawn evenly from every state of this puzzle.
-  String scramble({Random? random, bool randomMoves = false, int moves = 20}) => switch (this) {
-    cube =>
-      randomMoves
-          ? randomScramble(moves: moves, random: random).toString()
-          : randomStateScramble(random: random).toString(),
-    pocket => randomPocketScramble(random: random).toString(),
-    pyraminx => randomPyraminxScramble(random: random).toString(),
-    clock => randomClockScramble(random: random).toString(),
-  };
+  String scramble({Random? random, bool randomMoves = false, int moves = 20}) =>
+      scrambler(randomMoves: randomMoves, moves: moves).next(random: random).notation;
 
   /// The state a scramble leaves, drawn the way this puzzle is drawn.
   String render(String scramble) => switch (this) {

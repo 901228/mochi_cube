@@ -9,11 +9,11 @@ import "dials.dart";
 /// [PuzzleLayout].
 ///
 /// Geometry only, as everywhere else: no colours, no hands, no dial faces.
-class ClockLayout {
-  /// The width of the drawing, in the same units as the points.
+class ClockLayout with Layout {
+  @override
   final double width;
 
-  /// The height of the drawing, in the same units as the points.
+  @override
   final double height;
 
   /// The middle of each of the eighteen dials, in the order `toDials()` gives.
@@ -41,12 +41,6 @@ class ClockLayout {
     required this.pins,
     required this.pinRadius,
   });
-
-  /// How to fit this layout into a box, as [PuzzleLayout.fitInto] does.
-  ({double scale, double dx, double dy}) fitInto(double boxWidth, double boxHeight) {
-    final scale = boxWidth / width < boxHeight / height ? boxWidth / width : boxHeight / height;
-    return (scale: scale, dx: (boxWidth - width * scale) / 2, dy: (boxHeight - height * scale) / 2);
-  }
 }
 
 /// The eighteen dials and eight pins of a Rubik's Clock.

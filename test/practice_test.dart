@@ -104,24 +104,28 @@ void main() {
       }
     }, timeout: Timeout(Duration(minutes: 2)));
 
-    test("there are exactly 288 such states, and it reaches all but the solved one", () {
-      // The two permutations must have the same parity, so half of the 24 by 24
-      // pairs are cubes that exist.
-      final permutations = _permutations([0, 1, 2, 3]);
-      var possible = 0;
-      for (final corners in permutations) {
-        for (final edges in permutations) {
-          if (_isOdd(corners) == _isOdd(edges)) possible++;
+    test(
+      "there are exactly 288 such states, and it reaches all but the solved one",
+      () {
+        // The two permutations must have the same parity, so half of the 24 by 24
+        // pairs are cubes that exist.
+        final permutations = _permutations([0, 1, 2, 3]);
+        var possible = 0;
+        for (final corners in permutations) {
+          for (final edges in permutations) {
+            if (_isOdd(corners) == _isOdd(edges)) possible++;
+          }
         }
-      }
-      expect(possible, 288);
+        expect(possible, 288);
 
-      final seen = <String>{};
-      for (var seed = 0; seed < 4000; seed++) {
-        seen.add(pllPracticeScramble(random: Random(seed)).cube.toFaceletString());
-      }
-      expect(seen, hasLength(possible - 1), reason: "the solved state is excluded");
-    }, timeout: Timeout(Duration(minutes: 3)));
+        final seen = <String>{};
+        for (var seed = 0; seed < 4000; seed++) {
+          seen.add(pllPracticeScramble(random: Random(seed)).cube.toFaceletString());
+        }
+        expect(seen, hasLength(possible - 1), reason: "the solved state is excluded");
+      },
+      timeout: Timeout(Duration(minutes: 3)),
+    );
   });
 
   group("OLL", () {
@@ -130,8 +134,7 @@ void main() {
         final cube = ollPracticeScramble(random: Random(seed)).cube;
         expect(cube.verify(), CubeVerificationStatus.solvable, reason: "seed $seed");
         expect(isF2lSolved(cube), isTrue, reason: "seed $seed broke F2L");
-        expect(isLastLayerOriented(cube), isFalse,
-            reason: "seed $seed had nothing to orient");
+        expect(isLastLayerOriented(cube), isFalse, reason: "seed $seed had nothing to orient");
       }
     }, timeout: Timeout(Duration(minutes: 2)));
   });
@@ -153,9 +156,9 @@ void main() {
           expect(isCrossSolved(cube), isTrue);
 
           final done = f2lPairs
-              .where((pair) =>
-                  cube.cornerState[pair.$1] == pair.$1 &&
-                  cube.edgeState[pair.$2] == pair.$2 << 1)
+              .where(
+                (pair) => cube.cornerState[pair.$1] == pair.$1 && cube.edgeState[pair.$2] == pair.$2 << 1,
+              )
               .length;
           expect(done, greaterThanOrEqualTo(pairs), reason: "asked for $pairs, got $done");
         }
@@ -273,10 +276,7 @@ void main() {
       final counts = List.filled(pllCases.length, 0);
       const draws = 1500;
       for (var seed = 0; seed < draws; seed++) {
-        final cube = pllPracticeScramble(
-          random: Random(seed),
-          spread: PracticeSpread.cases,
-        ).cube;
+        final cube = pllPracticeScramble(random: Random(seed), spread: PracticeSpread.cases).cube;
         final index = caseOf(pllCases, stateKey(cube), stateKey);
         expect(index, greaterThanOrEqualTo(0), reason: "drew a state that is not a case");
         counts[index]++;
@@ -329,10 +329,7 @@ void main() {
       final counts = List.filled(ollCases.length, 0);
       const draws = 2500;
       for (var seed = 0; seed < draws; seed++) {
-        final cube = ollPracticeScramble(
-          random: Random(seed),
-          spread: PracticeSpread.cases,
-        ).cube;
+        final cube = ollPracticeScramble(random: Random(seed), spread: PracticeSpread.cases).cube;
         final index = caseOf(ollCases, orientationKey(cube), orientationKey);
         expect(index, greaterThanOrEqualTo(0));
         counts[index]++;

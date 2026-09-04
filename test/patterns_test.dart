@@ -54,8 +54,11 @@ void main() {
         final scramble = randomScramble(moves: 20, random: random);
         expect(scramble.length, 20);
         for (var i = 1; i < scramble.length; i++) {
-          expect(scramble[i] ~/ 3, isNot(scramble[i - 1] ~/ 3),
-              reason: "two turns of the same face in a row: $scramble");
+          expect(
+            scramble[i] ~/ 3,
+            isNot(scramble[i - 1] ~/ 3),
+            reason: "two turns of the same face in a row: $scramble",
+          );
         }
       }
     });
@@ -110,8 +113,10 @@ void main() {
 
     test("patternizing to a solved cube is just solving", () {
       final cube = randomScramble(random: Random(21)).cube;
-      expect(Search.patternize(cube, CubieCube()).solution!.algorithm,
-          Search.solveCube(cube).solution!.algorithm);
+      expect(
+        Search.patternize(cube, CubieCube()).solution!.algorithm,
+        Search.solveCube(cube).solution!.algorithm,
+      );
     });
 
     test("patternizing a cube to itself needs no moves", () {
@@ -143,14 +148,19 @@ void main() {
   group("CubieCube.random", () {
     test("only produces solvable cubes", () {
       for (var seed = 0; seed < 300; seed++) {
-        expect(CubieCube.random(random: Random(seed)).verify(),
-            CubeVerificationStatus.solvable, reason: "seed $seed");
+        expect(
+          CubieCube.random(random: Random(seed)).verify(),
+          CubeVerificationStatus.solvable,
+          reason: "seed $seed",
+        );
       }
     });
 
     test("is reproducible from a seed, and varies without one", () {
-      expect(CubieCube.random(random: Random(9)).toFaceletString(),
-          CubieCube.random(random: Random(9)).toFaceletString());
+      expect(
+        CubieCube.random(random: Random(9)).toFaceletString(),
+        CubieCube.random(random: Random(9)).toFaceletString(),
+      );
       final many = List.generate(20, (_) => CubieCube.random().toFaceletString()).toSet();
       expect(many, hasLength(20));
     });

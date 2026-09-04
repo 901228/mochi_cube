@@ -2,7 +2,12 @@ import "package:mochi_cube/kociemba.dart";
 import "package:test/test.dart";
 
 const String solved =
-    "UUUUUUUUU" "RRRRRRRRR" "FFFFFFFFF" "DDDDDDDDD" "LLLLLLLLL" "BBBBBBBBB";
+    "UUUUUUUUU"
+    "RRRRRRRRR"
+    "FFFFFFFFF"
+    "DDDDDDDDD"
+    "LLLLLLLLL"
+    "BBBBBBBBB";
 const String knownFacelets = "DLBFUBRFL DDLRRDBRR FUBBFULDU ULRRDBLUF RDUULLDFF UFBRBBDLF";
 
 String faceletsOf(CubieCube c) => FaceCube.fromCubieCube(c).toString();
@@ -118,7 +123,13 @@ void main() {
 
     test("rejects facelets that do not describe a cube", () {
       // Ten U stickers and eight R stickers: no such corner or edge exists.
-      const bad = "UUUUUUUUU" "RRRRRRRRU" "FFFFFFFFF" "DDDDDDDDD" "LLLLLLLLL" "BBBBBBBBB";
+      const bad =
+          "UUUUUUUUU"
+          "RRRRRRRRU"
+          "FFFFFFFFF"
+          "DDDDDDDDD"
+          "LLLLLLLLL"
+          "BBBBBBBBB";
       expect(() => SolveManager(bad), throwsFormatException);
     });
 
@@ -133,8 +144,9 @@ void main() {
 
     test("solves random cubes and every solution restores its cube", () {
       for (var seed = 0; seed < 25; seed++) {
-        final result =
-            SolveManager.fromCubieCube(CubieCube.randomize(seed)).solve(maxLength: 25, maxTime: 60);
+        final result = SolveManager.fromCubieCube(
+          CubieCube.randomize(seed),
+        ).solve(maxLength: 25, maxTime: 60);
         expect(result.status, SolverStatus.foundSolution, reason: "seed $seed");
 
         final c = CubieCube.randomize(seed);

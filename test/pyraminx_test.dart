@@ -148,9 +148,7 @@ void main() {
         expect(check.isSolved, isTrue, reason: "seed $seed: $solution");
 
         // The layer part is still optimal, and each tip costs at most one more.
-        final layers = solution.moves
-            .where((m) => pyraminxMoves.axisOf(m) < PyraminxCube.vertexCount)
-            .length;
+        final layers = solution.moves.where((m) => pyraminxMoves.axisOf(m) < PyraminxCube.vertexCount).length;
         expect(layers, PyraminxSearch.distanceOf(cube), reason: "seed $seed");
         expect(solution.length - layers, lessThanOrEqualTo(PyraminxCube.vertexCount));
       }
@@ -167,9 +165,7 @@ void main() {
     test("are as far from solved as they are long, and their inverse undoes them", () {
       for (var seed = 0; seed < 100; seed++) {
         final scramble = randomPyraminxScramble(random: Random(seed));
-        final layers = scramble.moves
-            .where((m) => pyraminxMoves.axisOf(m) < PyraminxCube.vertexCount)
-            .length;
+        final layers = scramble.moves.where((m) => pyraminxMoves.axisOf(m) < PyraminxCube.vertexCount).length;
         expect(layers, greaterThanOrEqualTo(6), reason: "seed $seed is too easy");
 
         final cube = PyraminxCube()..apply(scramble);
@@ -195,10 +191,7 @@ void main() {
 
     test("can be asked to leave the tips alone", () {
       final scramble = randomPyraminxScramble(random: Random(1), tips: false);
-      expect(
-        scramble.moves.every((m) => pyraminxMoves.axisOf(m) < PyraminxCube.vertexCount),
-        isTrue,
-      );
+      expect(scramble.moves.every((m) => pyraminxMoves.axisOf(m) < PyraminxCube.vertexCount), isTrue);
     });
 
     test("respects a raised minimum", () {
@@ -213,8 +206,7 @@ void main() {
         states.add(tables.stateOf(randomPyraminxCube(random: Random(i))));
       }
       // Nearly every draw should be new out of 933120.
-      final expected = PyraminxTables.nStates *
-          (1 - exp(-draws / PyraminxTables.nStates));
+      final expected = PyraminxTables.nStates * (1 - exp(-draws / PyraminxTables.nStates));
       expect(states.length, greaterThan(expected * 0.98));
     });
   });
@@ -261,8 +253,13 @@ void main() {
 
   group("facelets", () {
     test("a solved puzzle is nine of each colour, one per face", () {
-      expect(PyraminxCube().toFaceletString(),
-          "AAAAAAAAA" "BBBBBBBBB" "CCCCCCCCC" "DDDDDDDDD");
+      expect(
+        PyraminxCube().toFaceletString(),
+        "AAAAAAAAA"
+        "BBBBBBBBB"
+        "CCCCCCCCC"
+        "DDDDDDDDD",
+      );
       expect(nPyraminxFacelets, 36);
     });
 
@@ -278,8 +275,11 @@ void main() {
             if (before[i] != after[i]) i,
         ];
         expect(moved, hasLength(12), reason: "vertex $vertex");
-        expect(moved.map((i) => i ~/ 9), isNot(contains(vertex)),
-            reason: "the turn touched the face opposite it");
+        expect(
+          moved.map((i) => i ~/ 9),
+          isNot(contains(vertex)),
+          reason: "the turn touched the face opposite it",
+        );
       }
     });
 
@@ -287,10 +287,14 @@ void main() {
       for (var vertex = 0; vertex < PyraminxCube.vertexCount; vertex++) {
         final before = PyraminxCube().toFacelets();
         final after = (PyraminxCube()..turnTip(vertex)).toFacelets();
-        expect([
-          for (var i = 0; i < nPyraminxFacelets; i++)
-            if (before[i] != after[i]) i,
-        ], hasLength(3), reason: "vertex $vertex");
+        expect(
+          [
+            for (var i = 0; i < nPyraminxFacelets; i++)
+              if (before[i] != after[i]) i,
+          ],
+          hasLength(3),
+          reason: "vertex $vertex",
+        );
       }
     });
 
@@ -331,8 +335,7 @@ void main() {
       const scheme = {"A": "R", "B": "G", "C": "B", "D": "Y"};
       for (var trial = 0; trial < 200; trial++) {
         final cube = randomPyraminxCube(random: Random(trial));
-        final recoloured =
-            cube.toFaceletString().split("").map((c) => scheme[c]!).join();
+        final recoloured = cube.toFaceletString().split("").map((c) => scheme[c]!).join();
         expect(PyraminxFacelet.fromFaceletString(recoloured).toString(), cube.toString());
       }
     });
@@ -347,12 +350,7 @@ void main() {
     });
 
     test("ignores whitespace", () {
-      expect(
-        PyraminxFacelet.fromFaceletString(
-          "AAAAAAAAA BBBBBBBBB CCCCCCCCC DDDDDDDDD",
-        ).isSolved,
-        isTrue,
-      );
+      expect(PyraminxFacelet.fromFaceletString("AAAAAAAAA BBBBBBBBB CCCCCCCCC DDDDDDDDD").isSolved, isTrue);
     });
 
     test("rejects strings that are not a Pyraminx", () {
@@ -360,21 +358,30 @@ void main() {
       // Five colours.
       expect(
         () => PyraminxFacelet.fromFaceletString(
-          "AAAAAAAAE" "BBBBBBBBB" "CCCCCCCCC" "DDDDDDDDD",
+          "AAAAAAAAE"
+          "BBBBBBBBB"
+          "CCCCCCCCC"
+          "DDDDDDDDD",
         ),
         throwsFormatException,
       );
       // Ten of one colour, eight of another.
       expect(
         () => PyraminxFacelet.fromFaceletString(
-          "AAAAAAAAA" "BBBBBBBBA" "CCCCCCCCC" "DDDDDDDDD",
+          "AAAAAAAAA"
+          "BBBBBBBBA"
+          "CCCCCCCCC"
+          "DDDDDDDDD",
         ),
         throwsFormatException,
       );
       // Four colours, nine each, but not arranged as a puzzle.
       expect(
         () => PyraminxFacelet.fromFaceletString(
-          "ABCDABCDA" "BCDABCDAB" "CDABCDABC" "DABCDABCD",
+          "ABCDABCDA"
+          "BCDABCDAB"
+          "CDABCDABC"
+          "DABCDABCD",
         ),
         throwsFormatException,
       );
