@@ -10,5 +10,6 @@ export "kociemba/cube/cubie_cube.dart" show CubieCube;
 export "kociemba/cube/enums.dart";
 export "kociemba/cube/face_cube.dart" show FaceCube;
 export "cube/algorithm.dart" show Algorithm;
+export "cube/layout.dart" show Point, PuzzleLayout, cubeLayout;
 export "kociemba/solver.dart" show KociembaSolver, SolveManager, SolverResult, SolverStatus, kociemba;
 export "solver.dart" show SolveResult, SolveStatus, Solution, Solver;

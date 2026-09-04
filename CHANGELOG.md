@@ -1,5 +1,30 @@
 ## Unreleased
 
+### Drawing
+
+Sticker geometry, so a front end does not have to work a net out again. Which
+sticker is next to which is puzzle knowledge; colours and line widths are not,
+and are still left out.
+
+- `PuzzleLayout` — one polygon per sticker, index-matched to `toFacelets()` —
+  with `cubeLayout`, `pocketLayout` and `pyraminxLayout`
+- `ClockLayout` and `clockLayout` for the eighteen dials and eight pins, which
+  are circles rather than polygons
+- `fitInto`, the scale and offset that centre a layout in a box
+- `cubeNetPosition`, the usual cross; read that way no face needs turning or
+  reflecting, since a face's first sticker is the top left of its square
+
+The Pyraminx net is derived, not drawn by hand. A tetrahedron's six net points
+are its three edge midpoints, each shared by three faces, and three outer
+corners which are all the same vertex seen three times; vertex `v` is on every
+face but `v`, so the vertex the middle face lacks is the one outside, and that
+places all four faces at once. The tests then check the folds: the two stickers
+of one edge piece share a full side, and the tips of a vertex meet at a point.
+
+Also exported for drawing: `cornerFacelet`, `edgeFacelet`, `cornerFace` and
+`edgeFace` for the 3x3x3; `tipSlots`, `vertexSlots`, `edgeSlots`,
+`cornersOfFace` and `edgeBetween` for the Pyraminx; `dialBlock` for the Clock.
+
 ### The Clock
 
 `package:mochi_cube/clock.dart`. No search, and no table either: fourteen dials
@@ -8,7 +33,6 @@ is the group `(Z12)^14` and its notation is its state.
 
 - `ClockState`, with `parse`, `inverse`, `+`, `movesToSolve` and `isSolved`
 - `randomClockScramble`, which draws fourteen numbers and writes them down
-
 - `toDials` and `ClockDialReading.fromDials` for the eighteen dials you can see
 
 Every state is reachable, so nothing can be invalid, and the fewest moves to

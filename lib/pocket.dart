@@ -15,6 +15,8 @@ library;
 
 export "cube/algorithm.dart" show Algorithm, invertMove, moveToString, parseMove;
 export "cube/enums.dart" show Corner, Face, FaceExtension;
+export "cube/layout.dart"
+    show Point, PuzzleLayout, cubeNetLayout, cubeNetPosition, pocketLayout;
 export "pocket/coordinates.dart"
     show PocketCoordinates, fixedCorner, nCperm7, nStates, nTwist6, pocketMoves;
 export "pocket/facelets.dart" show PocketCube, PocketFacelets, nPocketFacelets;

@@ -26,6 +26,9 @@ export "puzzle/coord_tables.dart" show Phase1Tables;
 export "puzzle/cube/cubie_cube.dart"
     show CoordinatesExtension, CubeVerificationStatus, CubieCube;
 export "cube/enums.dart" show Corner, Edge, Face, FaceExtension, Facelet;
+export "cube/enums.dart" show cornerFace, cornerFacelet, edgeFace, edgeFacelet;
+export "cube/layout.dart"
+    show Point, PuzzleLayout, cubeLayout, cubeNetLayout, cubeNetPosition;
 export "puzzle/cube/moves.dart" show MoveExtension, moveCube;
 export "puzzle/patterns.dart" show Patterns, randomScramble, randomStateScramble;
 export "puzzle/practice.dart"

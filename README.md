@@ -213,16 +213,51 @@ symmetry, but H, Z, E and N cover 8 or 4, and 51 of the 57 OLLs cover 4
 orientations where two cover only one. `pllCases` and `ollCases` are the
 groupings themselves, 21 and 57 of them.
 
-## Colours and rendering
+## Colours, and drawing it
 
-Neither is built in, on purpose.
+Colours are not built in, on purpose.
 
 `CubieCube.fromFaceletString` reads the six centres to name the colours, so any
 six distinct letters work — `"UUU…RRR…"`, `"WWW…RRR…"`, `"111…222…"` all parse
 to the same cube. Pick whatever scheme suits your UI.
 
-`toFacelets()` returns the 54 stickers as face indices, which is everything a
-renderer needs. Drawing them is left to the caller.
+What *is* built in is the geometry, because which sticker is next to which is
+puzzle knowledge rather than a drawing preference — and for a Pyraminx, working
+the net out again is real work. `toFacelets()` gives the stickers and a layout
+gives the polygons, index for index:
+
+```dart
+final facelets = cube.toFacelets();
+final fit = cubeLayout.fitInto(size.width, size.height);
+
+for (var i = 0; i < facelets.length; i++) {
+  final path = Path()..addPolygon([
+    for (final (x, y) in cubeLayout[i])
+      Offset(x * fit.scale + fit.dx, y * fit.scale + fit.dy),
+  ], true);
+  canvas.drawPath(path, Paint()..color = myColours[facelets[i]]);
+}
+```
+
+| puzzle   | layout            | shape                          |
+| -------- | ----------------- | ------------------------------ |
+| 3x3x3    | `cubeLayout`      | 54 squares, the usual cross net |
+| 2x2x2    | `pocketLayout`    | 24 squares, the same net        |
+| Pyraminx | `pyraminxLayout`  | 36 triangles, the tetrahedron net |
+| Clock    | `clockLayout`     | 18 dials and 8 pins, as circles |
+
+No colours, no line widths and no gaps between stickers: a gap is one inset of
+your own, and a colour scheme is yours to choose. The same points also do
+hit testing, so tapping a sticker to enter a state is the polygon you already
+drew.
+
+The Pyraminx net is checked rather than eyeballed. A tetrahedron unfolds into
+one triangle of four, and its six net points are the three edge midpoints —
+each shared by three faces — and three outer corners which are all the same
+vertex seen three times; vertex `v` is on every face but `v`, so the vertex the
+middle face lacks is the one on the outside, and that pins all four faces down
+at once. The test then asks that each fold be drawn joined: the two stickers of
+one edge piece share a full side.
 
 ## The rest of it
 
