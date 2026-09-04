@@ -165,10 +165,7 @@ final List<List<CubieCube>> ollCases = _groupOllCases();
 ///
 /// Some of those are a U turn from solved. That is a real PLL case, not a bad
 /// draw, so it is kept.
-Algorithm pllPracticeScramble({
-  Random? random,
-  PracticeSpread spread = PracticeSpread.states,
-}) {
+Algorithm pllPracticeScramble({Random? random, PracticeSpread spread = PracticeSpread.states}) {
   if (spread == PracticeSpread.cases) {
     final rng = random ?? Random.secure();
     final group = pllCases[rng.nextInt(pllCases.length)];
@@ -193,10 +190,7 @@ Algorithm pllPracticeScramble({
 ///
 /// States where the last layer already happens to be oriented are drawn again:
 /// there would be no OLL to do.
-Algorithm ollPracticeScramble({
-  Random? random,
-  PracticeSpread spread = PracticeSpread.states,
-}) {
+Algorithm ollPracticeScramble({Random? random, PracticeSpread spread = PracticeSpread.states}) {
   if (spread == PracticeSpread.cases) {
     final rng = random ?? Random.secure();
     final group = ollCases[rng.nextInt(ollCases.length)];
@@ -363,12 +357,7 @@ List<List<CubieCube>> _groupOllCases() {
 }
 
 /// Write the permutation numbered [index] into [positions].
-void _writePermutation(
-  List<int> state,
-  List<int> positions,
-  int index, {
-  required bool isEdge,
-}) {
+void _writePermutation(List<int> state, List<int> positions, int index, {required bool isEdge}) {
   final remaining = [...positions];
   var rest = index;
   for (var i = 0; i < positions.length; i++) {
@@ -421,8 +410,7 @@ bool isF2lSolved(CubieCube cube) {
 }
 
 /// Whether the cross is solved.
-bool isCrossSolved(CubieCube cube) =>
-    crossEdges.every((edge) => cube.edgeState[edge] == edge << 1);
+bool isCrossSolved(CubieCube cube) => crossEdges.every((edge) => cube.edgeState[edge] == edge << 1);
 
 /// Whether every sticker of the last layer faces up.
 bool isLastLayerOriented(CubieCube cube) =>

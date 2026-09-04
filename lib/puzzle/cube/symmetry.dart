@@ -130,20 +130,10 @@ List<List<int>> _initSymMove() {
 /// that needs many moves to reach the phase 2 subgroup one way round often
 /// needs far fewer another way, and taking the best of three is most of what
 /// makes min2phase quick.
-final CubieCube urf1 = CubieCube.fromCoordinates(
-  cperm: 2531,
-  twist: 1373,
-  eperm: 67026819,
-  flip: 1367,
-);
+final CubieCube urf1 = CubieCube.fromCoordinates(cperm: 2531, twist: 1373, eperm: 67026819, flip: 1367);
 
 /// The inverse of [urf1], equal to `urf1 * urf1`.
-final CubieCube urf2 = CubieCube.fromCoordinates(
-  cperm: 2089,
-  twist: 1906,
-  eperm: 322752913,
-  flip: 2040,
-);
+final CubieCube urf2 = CubieCube.fromCoordinates(cperm: 2089, twist: 1906, eperm: 322752913, flip: 2040);
 
 /// `urf2 * a * urf1`, the cube seen with the axes rotated once.
 CubieCube urfConjugate(CubieCube a) {

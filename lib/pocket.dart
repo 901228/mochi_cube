@@ -15,13 +15,10 @@ library;
 
 export "cube/algorithm.dart" show Algorithm, invertMove, moveToString, parseMove;
 export "cube/enums.dart" show Corner, Face, FaceExtension;
-export "cube/layout.dart"
-    show Point, PuzzleLayout, cubeNetLayout, cubeNetPosition, pocketLayout;
-export "pocket/coordinates.dart"
-    show PocketCoordinates, fixedCorner, nCperm7, nStates, nTwist6, pocketMoves;
+export "cube/layout.dart" show Point, PuzzleLayout, cubeNetLayout, cubeNetPosition, pocketLayout;
+export "pocket/coordinates.dart" show PocketCoordinates, fixedCorner, nCperm7, nStates, nTwist6, pocketMoves;
 export "pocket/facelets.dart" show PocketCube, PocketFacelets, nPocketFacelets;
-export "pocket/search.dart"
-    show PocketSearch, PocketSolver, pocket, randomPocketCube, randomPocketScramble;
+export "pocket/search.dart" show PocketSearch, PocketSolver, pocket, randomPocketCube, randomPocketScramble;
 export "pocket/tables.dart" show PocketTables;
 export "puzzle/cube/cubie_cube.dart" show CubieCube;
 export "puzzle/algorithm.dart" show AlgorithmCubeExtension, AlgorithmExtension;

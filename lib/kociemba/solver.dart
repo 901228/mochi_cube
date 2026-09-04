@@ -316,16 +316,8 @@ class KociembaSolver implements Solver {
         solution: Solution(Algorithm.parse(result.solution), elapsedTime: clock.elapsed),
         error: null,
       ),
-      SolverStatus.exceededMaxTime => (
-        status: SolveStatus.exceededMaxTime,
-        solution: null,
-        error: null,
-      ),
-      SolverStatus.exceededMaxLength => (
-        status: SolveStatus.exceededMaxLength,
-        solution: null,
-        error: null,
-      ),
+      SolverStatus.exceededMaxTime => (status: SolveStatus.exceededMaxTime, solution: null, error: null),
+      SolverStatus.exceededMaxLength => (status: SolveStatus.exceededMaxLength, solution: null, error: null),
     };
   }
 }

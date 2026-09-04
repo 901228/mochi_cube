@@ -23,12 +23,10 @@
 library;
 
 export "puzzle/coord_tables.dart" show Phase1Tables;
-export "puzzle/cube/cubie_cube.dart"
-    show CoordinatesExtension, CubeVerificationStatus, CubieCube;
+export "puzzle/cube/cubie_cube.dart" show CoordinatesExtension, CubeVerificationStatus, CubieCube;
 export "cube/enums.dart" show Corner, Edge, Face, FaceExtension, Facelet;
 export "cube/enums.dart" show cornerFace, cornerFacelet, edgeFace, edgeFacelet;
-export "cube/layout.dart"
-    show Point, PuzzleLayout, cubeLayout, cubeNetLayout, cubeNetPosition;
+export "cube/layout.dart" show Point, PuzzleLayout, cubeLayout, cubeNetLayout, cubeNetPosition;
 export "puzzle/cube/moves.dart" show MoveExtension, moveCube;
 export "puzzle/patterns.dart" show Patterns, randomScramble, randomStateScramble;
 export "puzzle/practice.dart"
@@ -47,11 +45,9 @@ export "puzzle/practice.dart"
         pllCases,
         pllPracticeScramble,
         randomStateWith;
-export "puzzle/cube/rotation.dart"
-    show Axis, Rotation, RotationAlgorithmExtension, RotationExtension;
+export "puzzle/cube/rotation.dart" show Axis, Rotation, RotationAlgorithmExtension, RotationExtension;
 export "puzzle/phase2_tables.dart" show Phase2Tables;
-export "cube/algorithm.dart"
-    show Algorithm, invertMove, moveCount, moveToString, parseMove;
+export "cube/algorithm.dart" show Algorithm, invertMove, moveCount, moveToString, parseMove;
 export "puzzle/algorithm.dart" show AlgorithmCubeExtension, AlgorithmExtension;
 export "puzzle/search.dart" show Min2PhaseSolver, Search, min2phase;
 export "solver.dart" show SolveResult, SolveStatus, Solution, Solver;

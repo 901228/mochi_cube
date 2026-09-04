@@ -43,12 +43,60 @@ extension FaceExtension on Face {
 ///          +--------+
 /// ```
 enum Facelet {
-  u1, u2, u3, u4, u5, u6, u7, u8, u9, //
-  r1, r2, r3, r4, r5, r6, r7, r8, r9, //
-  f1, f2, f3, f4, f5, f6, f7, f8, f9, //
-  d1, d2, d3, d4, d5, d6, d7, d8, d9, //
-  l1, l2, l3, l4, l5, l6, l7, l8, l9, //
-  b1, b2, b3, b4, b5, b6, b7, b8, b9,
+  u1,
+  u2,
+  u3,
+  u4,
+  u5,
+  u6,
+  u7,
+  u8,
+  u9, //
+  r1,
+  r2,
+  r3,
+  r4,
+  r5,
+  r6,
+  r7,
+  r8,
+  r9, //
+  f1,
+  f2,
+  f3,
+  f4,
+  f5,
+  f6,
+  f7,
+  f8,
+  f9, //
+  d1,
+  d2,
+  d3,
+  d4,
+  d5,
+  d6,
+  d7,
+  d8,
+  d9, //
+  l1,
+  l2,
+  l3,
+  l4,
+  l5,
+  l6,
+  l7,
+  l8,
+  l9, //
+  b1,
+  b2,
+  b3,
+  b4,
+  b5,
+  b6,
+  b7,
+  b8,
+  b9,
 }
 
 /*
@@ -161,5 +209,4 @@ const List<List<Face>> edgeFace = [
 
 /// Short names used when printing a cube's pieces.
 const List<String> cornerToString = ["URF", "UFL", "ULB", "UBR", "DFR", "DLF", "DBL", "DRB"];
-const List<String> edgeToString =
-    ["UR", "UF", "UL", "UB", "DR", "DF", "DL", "DB", "FR", "FL", "BL", "BR"];
+const List<String> edgeToString = ["UR", "UF", "UL", "UB", "DR", "DF", "DL", "DB", "FR", "FL", "BL", "BR"];

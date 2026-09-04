@@ -255,11 +255,15 @@ class _TablesCommand extends _Command {
 
   @override
   void run() {
-    final directory = Directory(tableDirectory);
-    if (argResults!.flag("rebuild") && directory.existsSync()) {
-      for (final file in directory.listSync().whereType<File>()) {
-        if (file.path.endsWith(".bin")) {
-          file.deleteSync();
+    // Always a real directory here: the tool only runs where dart:io does.
+    final where = tableDirectory;
+    if (argResults!.flag("rebuild") && where != null) {
+      final directory = Directory(where);
+      if (directory.existsSync()) {
+        for (final file in directory.listSync().whereType<File>()) {
+          if (file.path.endsWith(".bin")) {
+            file.deleteSync();
+          }
         }
       }
     }
@@ -276,7 +280,7 @@ class _TablesCommand extends _Command {
       final bytes = build();
       emit("${what.padRight(20)} ${_kilobytes(bytes).padLeft(9)}  ${clock.elapsedMilliseconds}ms");
     }
-    emit("cached in $tableDirectory");
+    emit("cached in ${where ?? "nowhere; this platform has no filesystem"}");
   }
 }
 

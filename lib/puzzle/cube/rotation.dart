@@ -57,8 +57,7 @@ class Rotation {
   }
 
   @override
-  bool operator ==(Object other) =>
-      other is Rotation && other.n == n && (n == 0 || other.axis == axis);
+  bool operator ==(Object other) => other is Rotation && other.n == n && (n == 0 || other.axis == axis);
 
   @override
   int get hashCode => n == 0 ? 0 : Object.hash(axis, n);
@@ -180,10 +179,7 @@ final List<List<CubieCube>> _cubes = [
 
 final List<List<List<int>>> _moveMaps = [
   for (var axis = 0; axis < 3; axis++)
-    [
-      for (var n = 0; n < 4; n++)
-        List.generate(moveCount, (m) => _mappedMove(_cubes[axis][n], m)),
-    ],
+    [for (var n = 0; n < 4; n++) List.generate(moveCount, (m) => _mappedMove(_cubes[axis][n], m))],
 ];
 
 CubieCube _rotationCube(Axis axis, int n) => _cubes[axis.index][n];

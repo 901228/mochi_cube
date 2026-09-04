@@ -1,10 +1,11 @@
-import "dart:io";
 import "dart:typed_data";
 
-import "package:app_dirs/app_dirs.dart";
-import "package:path/path.dart" as path;
-
+import "cache/table_store.dart" if (dart.library.io) "cache/table_store_io.dart";
 import "logger.dart";
+
+export "cache/table_store.dart"
+    if (dart.library.io) "cache/table_store_io.dart"
+    show readTableBytes, tableDirectory, tablePath, writeTableBytes;
 
 /// A `rows * columns` grid of small non-negative integers, stored flat.
 ///
@@ -137,12 +138,6 @@ PruningTable fillPruningTable({
   return prune;
 }
 
-/// Where the table caches live: the platform's app-data directory.
-///
-/// Every solver in the package writes its cache here, so deleting the `.bin`
-/// files in it forces a full rebuild.
-String get tableDirectory => getAppDirs(application: "cube_solver").data;
-
 /// A cache file holding the raw bytes of a set of tables.
 ///
 /// The tables are written host-endian, so the header carries a byte order mark
@@ -162,29 +157,17 @@ class TableFile {
   final int version;
   final int variant;
 
-  const TableFile({
-    required this.name,
-    required this.magic,
-    required this.version,
-    this.variant = 0,
-  });
+  const TableFile({required this.name, required this.magic, required this.version, this.variant = 0});
 
-  File get file => File(path.join(tableDirectory, name));
+  /// Where this cache is kept, for logging.
+  String get location => tablePath(name);
 
   /// The sections of a usable cache file, or null if there is not one.
   ///
   /// [sectionLengths] must describe exactly what [write] was given.
   List<Uint8List>? read(List<int> sectionLengths) {
-    final target = file;
-    if (!target.existsSync()) {
-      return null;
-    }
-
-    final Uint8List bytes;
-    try {
-      bytes = target.readAsBytesSync();
-    } on FileSystemException catch (e) {
-      Logging().warning("Cannot read $name: $e");
+    final bytes = readTableBytes(name);
+    if (bytes == null) {
       return null;
     }
 
@@ -243,13 +226,8 @@ class TableFile {
       offset += section.length;
     }
 
-    final target = file;
-    final parent = target.parent;
-    if (!parent.existsSync()) {
-      parent.createSync(recursive: true);
-    }
-    target.writeAsBytesSync(bytes, flush: true);
-    Logging().info("Wrote ${total ~/ 1024} KB to ${target.path}");
+    writeTableBytes(name, bytes);
+    Logging().info("Wrote ${total ~/ 1024} KB of $name to ${tableDirectory ?? "nowhere"}");
   }
 }
 

@@ -109,11 +109,7 @@ const List<int> phase1Syms = [0, 2, 4, 6, 8, 10, 12, 14];
 /// Corner orientation, unlike edge flip, does survive the mirrors: the full
 /// group is conflict-free against the raw distances and halves the table, 168
 /// classes against the 324 min2phase uses.
-final SymCoord twistSym = SymCoord.reduce(
-  rawCount: 2187,
-  write: (c, v) => c.twist = v,
-  read: (c) => c.twist,
-);
+final SymCoord twistSym = SymCoord.reduce(rawCount: 2187, write: (c, v) => c.twist = v, read: (c) => c.twist);
 
 /// Corner orientation reduced over [phase1Syms], matching min2phase. Raw[0, 2187)
 ///

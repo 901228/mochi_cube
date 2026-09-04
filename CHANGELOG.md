@@ -1,5 +1,28 @@
 ## Unreleased
 
+### Works on the web
+
+The package did not compile for dart2js at all, so a Flutter app could not build
+for web against it.
+
+- min2phase's permutation coordinates kept the values still to be placed in a
+  64-bit register, four bits each. On the web a Dart `int` is a double with 53
+  bits of mantissa and the bitwise operators truncate to 32, so
+  `0xFEDCBA9876543210` is neither representable nor shiftable. It is a small
+  reused list now — same coordinates, checked by the same exhaustive comparison
+  against the kociemba tables.
+- The table cache is behind a conditional import. `dart:io` and `app_dirs` live
+  in `cache/table_store_io.dart`, and `cache/table_store.dart` is the version
+  for platforms with no filesystem, which keeps nothing and fails at nothing.
+  The tables are then built in memory at each start, about 600ms once per
+  session.
+- `tableDirectory` is `String?` — null where there is nowhere to cache.
+
+`test/web_test.dart` is the guard: it compiles the package with dart2js and,
+where there is a JavaScript engine to hand, runs it and compares every answer
+against the VM's, seeded. Neither of these bugs showed up in any other test,
+because every other test runs on the VM.
+
 ### Drawing
 
 Sticker geometry, so a front end does not have to work a net out again. Which

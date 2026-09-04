@@ -69,22 +69,18 @@ class ClockState {
     }
 
     final read = [...tokens]..removeAt(frontDials);
-    return ClockState([
-      for (var i = 0; i < dialCount; i++) _parseDial(read[i], dialNames[i], i),
-    ]);
+    return ClockState([for (var i = 0; i < dialCount; i++) _parseDial(read[i], dialNames[i], i)]);
   }
 
   /// The moves that undo this state.
   ///
   /// Turning every dial back the way it came, which is the whole of solving a
   /// clock.
-  ClockState get inverse =>
-      ClockState([for (final dial in dials) (positions - dial) % positions]);
+  ClockState get inverse => ClockState([for (final dial in dials) (positions - dial) % positions]);
 
   /// This state followed by [other]: the dials added up.
-  ClockState operator +(ClockState other) => ClockState([
-    for (var i = 0; i < dialCount; i++) (dials[i] + other.dials[i]) % positions,
-  ]);
+  ClockState operator +(ClockState other) =>
+      ClockState([for (var i = 0; i < dialCount; i++) (dials[i] + other.dials[i]) % positions]);
 
   int operator [](int dial) => dials[dial];
 
@@ -111,8 +107,7 @@ class ClockState {
 
   @override
   bool operator ==(Object other) =>
-      other is ClockState &&
-      Iterable.generate(dialCount).every((i) => other.dials[i] == dials[i]);
+      other is ClockState && Iterable.generate(dialCount).every((i) => other.dials[i] == dials[i]);
 
   @override
   int get hashCode => Object.hashAll(dials);

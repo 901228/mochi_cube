@@ -41,8 +41,7 @@ extension PocketFacelets on CubieCube {
   }
 
   /// The 24 stickers as a string of face letters.
-  String toPocketFaceletString() =>
-      toPocketFacelets().map((f) => FaceExtension.faceToString[f]).join();
+  String toPocketFaceletString() => toPocketFacelets().map((f) => FaceExtension.faceToString[f]).join();
 }
 
 /// Reading a 2x2x2 from its stickers.

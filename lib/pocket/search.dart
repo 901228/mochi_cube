@@ -46,8 +46,7 @@ abstract final class PocketSearch {
   }
 
   /// How many moves [cube] is from solved, as a 2x2x2. Exact, not a bound.
-  static int distanceOf(CubieCube cube) =>
-      PocketTables().distanceOf(cube.cperm7, cube.twist6);
+  static int distanceOf(CubieCube cube) => PocketTables().distanceOf(cube.cperm7, cube.twist6);
 }
 
 /// A 2x2x2 drawn evenly from all 3674160 states.

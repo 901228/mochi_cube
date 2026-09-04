@@ -27,5 +27,4 @@ class CoordCube {
       corner: cube.corner,
     );
   }
-
 }

@@ -1,8 +1,4 @@
-import "dart:io";
 import "dart:typed_data";
-
-import "package:app_dirs/app_dirs.dart";
-import "package:path/path.dart" as path;
 
 import "../logger.dart";
 import "../table_storage.dart";
@@ -70,25 +66,22 @@ class Table {
 
   int get _expectedBytes => _headerBytes + _sectionLengths.reduce((a, b) => a + b);
 
-  void _load() {
-    final appDirectory = getAppDirs(application: "cube_solver").data;
-    final tablePath = path.join(appDirectory, "tables.bin");
-    final tableFile = File(tablePath);
+  /// What the cache is called, wherever the platform keeps it.
+  static const String _fileName = "tables.bin";
 
-    if (tableFile.existsSync() && _tryRead(tableFile)) {
-      Logging().info("Loaded the tables from $tablePath");
+  void _load() {
+    final where = tablePath(_fileName);
+    final cached = readTableBytes(_fileName);
+    if (cached != null && _tryRead(cached)) {
+      Logging().info("Loaded the tables from $where");
       return;
     }
 
-    Logging().info("Building the tables (no usable cache at $tablePath)");
+    Logging().info("Building the tables (no usable cache at $where)");
     _build();
 
-    final parentDirectory = tableFile.parent;
-    if (!parentDirectory.existsSync()) {
-      parentDirectory.createSync(recursive: true);
-    }
-    tableFile.writeAsBytesSync(_serialise(), flush: true);
-    Logging().info("Wrote the tables into $tablePath (${_expectedBytes ~/ 1024} KB)");
+    writeTableBytes(_fileName, _serialise());
+    Logging().info("Wrote the tables into $where (${_expectedBytes ~/ 1024} KB)");
   }
 
   void _build() {
@@ -142,16 +135,8 @@ class Table {
     return bytes;
   }
 
-  /// Returns true when the file was a cache this build can use.
-  bool _tryRead(File file) {
-    final Uint8List bytes;
-    try {
-      bytes = file.readAsBytesSync();
-    } on FileSystemException catch (e) {
-      Logging().warning("Cannot read the tables file: $e");
-      return false;
-    }
-
+  /// Returns true when [bytes] were a cache this build can use.
+  bool _tryRead(Uint8List bytes) {
     if (bytes.length != _expectedBytes) {
       Logging().warning("Tables file has the wrong size, rebuilding");
       return false;

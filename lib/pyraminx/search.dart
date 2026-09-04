@@ -80,10 +80,7 @@ PyraminxCube randomPyraminxCube({Random? random}) {
     vertices ~/= 3;
   }
 
-  cube.edges.setAll(
-    0,
-    PyraminxTables.evenPermutations[rng.nextInt(PyraminxTables.nEdgePerms)],
-  );
+  cube.edges.setAll(0, PyraminxTables.evenPermutations[rng.nextInt(PyraminxTables.nEdgePerms)]);
 
   var flips = rng.nextInt(PyraminxTables.nEdgeFlips);
   var total = 0;
@@ -107,11 +104,7 @@ PyraminxCube randomPyraminxCube({Random? random}) {
 /// moves from solved and counts the tips among them.
 ///
 /// Set [tips] to false to leave them out.
-Algorithm randomPyraminxScramble({
-  Random? random,
-  int minimumMoves = 6,
-  bool tips = true,
-}) {
+Algorithm randomPyraminxScramble({Random? random, int minimumMoves = 6, bool tips = true}) {
   final rng = random ?? Random.secure();
 
   while (true) {

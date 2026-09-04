@@ -13,8 +13,7 @@ import "search.dart";
 abstract final class Patterns {
   static final Algorithm checkerboard = Algorithm.parse("U2 D2 F2 B2 L2 R2");
   static final Algorithm cubeInCube = Algorithm.parse("F L F U' R U F2 L2 U' L' B D' B' L2 U");
-  static final Algorithm cubeInCubeInCube =
-      Algorithm.parse("U' L' U' F' R2 B' R F U B2 U B' L U' F U R F'");
+  static final Algorithm cubeInCubeInCube = Algorithm.parse("U' L' U' F' R2 B' R F U B2 U B' L U' F U R F'");
   static final Algorithm anaconda = Algorithm.parse("L U B' U' R L' B R' F B' D R D' F'");
   static final Algorithm python = Algorithm.parse("F2 R' B' U R' L F' L F' B D' R B L2");
   static final Algorithm crossOne = Algorithm.parse("R2 L' D F2 R' D' R' L U' D R D B2 R' U D2");

@@ -37,7 +37,7 @@ class PocketTables {
       cpermMove = movingTableFromBytes(cached[0], nCperm7, nPocketMoves);
       twistMove = movingTableFromBytes(cached[1], nTwist6, nPocketMoves);
       distance = PruningTable(cached[2], nTwist6, nStates);
-      Logging().info("Loaded the pocket cube tables from ${_cache.file.path}");
+      Logging().info("Loaded the pocket cube tables from ${_cache.location}");
       return;
     }
 
@@ -51,11 +51,7 @@ class PocketTables {
           cpermMove[(index ~/ nTwist6, move)] * nTwist6 + twistMove[(index % nTwist6, move)],
     );
 
-    _cache.write([
-      movingTableBytes(cpermMove),
-      movingTableBytes(twistMove),
-      distance.data,
-    ]);
+    _cache.write([movingTableBytes(cpermMove), movingTableBytes(twistMove), distance.data]);
   }
 
   /// Coordinate after each of the nine turns.
@@ -75,8 +71,7 @@ class PocketTables {
   int successor(int index, int move) =>
       cpermMove[(index ~/ nTwist6, move)] * nTwist6 + twistMove[(index % nTwist6, move)];
 
-  int get lengthInBytes =>
-      cpermMove.lengthInBytes + twistMove.lengthInBytes + distance.lengthInBytes;
+  int get lengthInBytes => cpermMove.lengthInBytes + twistMove.lengthInBytes + distance.lengthInBytes;
 }
 
 MovingTable _moveTable(

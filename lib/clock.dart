@@ -17,11 +17,4 @@ export "clock/clock.dart" show ClockState, randomClockScramble;
 export "clock/layout.dart" show ClockLayout, clockLayout;
 export "cube/layout.dart" show Point;
 export "clock/dials.dart"
-    show
-        ClockDialReading,
-        ClockDials,
-        clockCorners,
-        clockMoveEffect,
-        dialBlock,
-        mirroredDial,
-        nClockDials;
+    show ClockDialReading, ClockDials, clockCorners, clockMoveEffect, dialBlock, mirroredDial, nClockDials;

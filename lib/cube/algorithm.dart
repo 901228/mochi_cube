@@ -1,7 +1,5 @@
 import "dart:collection";
 
-
-
 /// A sequence of face turns, in standard notation.
 ///
 /// This is the currency the rest of the package deals in: a scramble, a
@@ -31,15 +29,11 @@ class Algorithm extends IterableBase<int> {
   /// Whitespace between moves is ignored; an empty string gives [empty].
   factory Algorithm.parse(String notation, {MoveSet moveSet = MoveSet.cube}) {
     final tokens = notation.split(RegExp(r"\s+")).where((token) => token.isNotEmpty);
-    return Algorithm(
-      [for (final token in tokens) moveSet.parse(token)],
-      moveSet: moveSet,
-    );
+    return Algorithm([for (final token in tokens) moveSet.parse(token)], moveSet: moveSet);
   }
 
   /// The moves that undo this algorithm: reversed, each one inverted.
-  Algorithm get inverse =>
-      Algorithm(moves.reversed.map(moveSet.invert).toList(), moveSet: moveSet);
+  Algorithm get inverse => Algorithm(moves.reversed.map(moveSet.invert).toList(), moveSet: moveSet);
 
   /// This algorithm followed by [other].
   ///
@@ -110,10 +104,7 @@ class MoveSet {
   const MoveSet({required this.axes, required this.amounts});
 
   /// Six faces turned clockwise, twice, or anticlockwise.
-  static const MoveSet cube = MoveSet(
-    axes: ["U", "R", "F", "D", "L", "B"],
-    amounts: ["", "2", "'"],
-  );
+  static const MoveSet cube = MoveSet(axes: ["U", "R", "F", "D", "L", "B"], amounts: ["", "2", "'"]);
 
   int get count => axes.length * amounts.length;
 
@@ -157,8 +148,7 @@ class MoveSet {
   /// the start, so the first and last undo each other, the second and second
   /// last, and a middle one undoes itself. On a 3x3x3 that is `U` against `U'`
   /// with `U2` its own inverse; on a Pyraminx, `U` against `U'`.
-  int invert(int move) =>
-      axisOf(move) * amounts.length + (amounts.length - 1 - amountOf(move));
+  int invert(int move) => axisOf(move) * amounts.length + (amounts.length - 1 - amountOf(move));
 }
 
 /// The number of face turns of a 3x3x3: six faces, three amounts each.

@@ -286,6 +286,22 @@ D F D R R R F L B R B R
 they can be piped back into `solve`. The tool calls the same library a program
 would, so a scramble that is wrong on the command line is wrong in the package.
 
+## The web
+
+It runs there, and a test keeps it that way: the package is compiled with
+dart2js and its answers compared against the VM's, seeded so that the two have
+something to disagree about.
+
+Two things had to give. min2phase keeps a permutation's remaining values in a
+64-bit register, four bits each, and on the web a Dart `int` is a double with 53
+bits of mantissa whose bitwise operators truncate to 32 — so that register is a
+small reused list here instead. And there is no filesystem, so the table cache
+is behind a conditional import: `tableDirectory` is `String?` and comes back
+null, and the tables are built in memory at each start rather than kept. That
+costs about 600ms on the first solve of a session and nothing after it.
+
+Neither shows up in any other test, because every other test runs on the VM.
+
 ## Colours, and drawing it
 
 Colours are not built in, on purpose.

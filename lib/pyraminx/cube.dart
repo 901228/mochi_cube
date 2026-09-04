@@ -168,10 +168,7 @@ class PyraminxCube {
 /// The four vertices in capitals and the four tips in lower case, each turned
 /// one step or, with a prime, two. Tip moves are part of a scramble but not of
 /// the puzzle's difficulty, so the tables leave them out.
-const MoveSet pyraminxMoves = MoveSet(
-  axes: ["U", "L", "R", "B", "u", "l", "r", "b"],
-  amounts: ["", "'"],
-);
+const MoveSet pyraminxMoves = MoveSet(axes: ["U", "L", "R", "B", "u", "l", "r", "b"], amounts: ["", "'"]);
 
 /// The eight layer moves, the ones a solver cares about.
 const int layerMoveCount = 8;

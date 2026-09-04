@@ -82,7 +82,7 @@ class Phase1Tables {
       twistFlipPrune = _useTwistFlipPrune
           ? PruningTable(cached[i++], nTwist, flipSym.classCount * nTwist)
           : null;
-      Logging().info("Loaded the phase 1 tables from ${_cache.file.path}");
+      Logging().info("Loaded the phase 1 tables from ${_cache.location}");
       return;
     }
 
@@ -94,8 +94,7 @@ class Phase1Tables {
 
     twistPrune = _buildPrune(twistSym, twistMove, udsliceMove, udsliceConj, nUdslice);
     flipPrune = _buildPrune(flipSym, flipMove, udsliceMove, udsliceConj, nUdslice);
-    twistFlipPrune =
-        _useTwistFlipPrune ? _buildPrune(flipSym, flipMove, twistMove, twistConj, nTwist) : null;
+    twistFlipPrune = _useTwistFlipPrune ? _buildPrune(flipSym, flipMove, twistMove, twistConj, nTwist) : null;
 
     _cache.write([
       movingTableBytes(twistMove),

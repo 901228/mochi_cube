@@ -159,10 +159,7 @@ abstract final class ClockDialReading {
     // moves that produce them.
     final rows = [
       for (final dial in _pivots)
-        [
-          for (var move = 0; move < ClockState.dialCount; move++)
-            clockMoveEffect[move][dial],
-        ],
+        [for (var move = 0; move < ClockState.dialCount; move++) clockMoveEffect[move][dial]],
     ];
     final targets = [for (final dial in _pivots) shown[dial]];
     final state = ClockState(_solveMod12(rows, targets));

@@ -49,7 +49,7 @@ class PyraminxTables {
       permMove = movingTableFromBytes(cached[1], nEdgePerms, layerMoveCount);
       flipMove = movingTableFromBytes(cached[2], nEdgeFlips, layerMoveCount);
       distance = PruningTable(cached[3], nEdgeFlips, nStates);
-      Logging().info("Loaded the pyraminx tables from ${_cache.file.path}");
+      Logging().info("Loaded the pyraminx tables from ${_cache.location}");
       return;
     }
 
@@ -79,8 +79,7 @@ class PyraminxTables {
   late final PruningTable distance;
 
   /// The flat index of a state.
-  int indexOf(int vertices, int perm, int flips) =>
-      (vertices * nEdgePerms + perm) * nEdgeFlips + flips;
+  int indexOf(int vertices, int perm, int flips) => (vertices * nEdgePerms + perm) * nEdgeFlips + flips;
 
   /// The state of [cube], as an index.
   int stateOf(PyraminxCube cube) {
@@ -96,21 +95,14 @@ class PyraminxTables {
     final flips = index % nEdgeFlips;
     final perm = (index ~/ nEdgeFlips) % nEdgePerms;
     final vertices = index ~/ (nEdgePerms * nEdgeFlips);
-    return indexOf(
-      vertexMove[(vertices, move)],
-      permMove[(perm, move)],
-      flipMove[(flips, move)],
-    );
+    return indexOf(vertexMove[(vertices, move)], permMove[(perm, move)], flipMove[(flips, move)]);
   }
 
   /// Turns needed to solve [cube]. Exact, not a bound.
   int distanceOf(PyraminxCube cube) => distance.at(stateOf(cube));
 
   int get lengthInBytes =>
-      vertexMove.lengthInBytes +
-      permMove.lengthInBytes +
-      flipMove.lengthInBytes +
-      distance.lengthInBytes;
+      vertexMove.lengthInBytes + permMove.lengthInBytes + flipMove.lengthInBytes + distance.lengthInBytes;
 
   // ==========================
   // Coordinates

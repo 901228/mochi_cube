@@ -71,12 +71,7 @@ class Search {
       return (status: SolveStatus.invalidCube, solution: null, error: e);
     }
 
-    return solveCube(
-      cube,
-      maxLength: maxLength,
-      probeLimit: probeLimit,
-      maxTime: maxTime,
-    );
+    return solveCube(cube, maxLength: maxLength, probeLimit: probeLimit, maxTime: maxTime);
   }
 
   /// Solve a cube already in cubie form.
@@ -176,14 +171,8 @@ class Search {
     final difference = to.inverse();
     difference.multiply(from);
 
-    return solveCube(
-      difference,
-      maxLength: maxLength,
-      probeLimit: probeLimit,
-      maxTime: maxTime,
-    );
+    return solveCube(difference, maxLength: maxLength, probeLimit: probeLimit, maxTime: maxTime);
   }
-
 }
 
 /// The six views of one cube, advanced together.
@@ -272,8 +261,7 @@ class _Session {
 
 /// The search over one of the six views of the cube.
 class _Solver {
-  _Solver(this._start, this._maxLength, this._probeLimit, this._clock, this._maxTime,
-      this._stopAtFirst)
+  _Solver(this._start, this._maxLength, this._probeLimit, this._clock, this._maxTime, this._stopAtFirst)
     : _limit = _maxLength,
       _reported = _maxLength + 1;
 
@@ -434,8 +422,8 @@ class _Solver {
 
   int _cost2(int n) {
     final eInv = _symInvFlat[_epermSymIdx[n]];
-    final cIndex = _cpermClass[n] * Phase2Tables.nMperm +
-        _t2.mpermConj[(_mperm[n], _symInvFlat[_cpermSymIdx[n]])];
+    final cIndex =
+        _cpermClass[n] * Phase2Tables.nMperm + _t2.mpermConj[(_mperm[n], _symInvFlat[_cpermSymIdx[n]])];
     final eIndex = _epermClass[n] * Phase2Tables.nMperm + _t2.mpermConj[(_mperm[n], eInv)];
     final kIndex = _epermClass[n] * Phase2Tables.nCcombo + _t2.ccomboConj[(_ccombo[n], eInv)];
 
@@ -499,11 +487,8 @@ class Min2PhaseSolver implements Solver {
   int get defaultMaxLength => Search.defaultMaxLength;
 
   @override
-  SolveResult solve(
-    String facelets, {
-    int maxLength = Search.defaultMaxLength,
-    Duration? maxTime,
-  }) => Search.solution(facelets, maxLength: maxLength, maxTime: maxTime);
+  SolveResult solve(String facelets, {int maxLength = Search.defaultMaxLength, Duration? maxTime}) =>
+      Search.solution(facelets, maxLength: maxLength, maxTime: maxTime);
 }
 
 /// The default [Min2PhaseSolver].

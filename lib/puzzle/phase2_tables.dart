@@ -66,7 +66,7 @@ class Phase2Tables {
       cpermPrune = PruningTable(cached[i++], nMperm, cpermSym.classCount * nMperm);
       epermPrune = PruningTable(cached[i++], nMperm, epermSym.classCount * nMperm);
       ccomboPrune = PruningTable(cached[i++], nCcombo, epermSym.classCount * nCcombo);
-      Logging().info("Loaded the phase 2 tables from ${_cache.file.path}");
+      Logging().info("Loaded the phase 2 tables from ${_cache.location}");
       return;
     }
 

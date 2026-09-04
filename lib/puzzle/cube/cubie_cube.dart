@@ -1,4 +1,5 @@
 import "dart:math";
+import "dart:typed_data";
 
 import "enums.dart";
 
@@ -283,8 +284,7 @@ class CubieCube {
 
   /// The 54 stickers as a string of face letters, the form [Search.solution]
   /// takes.
-  String toFaceletString() =>
-      toFacelets().map((f) => FaceExtension.faceToString[f]).join();
+  String toFaceletString() => toFacelets().map((f) => FaceExtension.faceToString[f]).join();
 
   /// Check a cubiecube for solvability
   ///
@@ -371,7 +371,6 @@ extension CoordinatesExtension on CubieCube {
     edgeState[CubieCube.edgeLength - 1] = (edgeState[CubieCube.edgeLength - 1] & 0xfe) | parity;
   }
 
-
   /// Twist : Orientation of 8 Corners. Raw[0, 2187) Sym[0, 324 * 8)
   int get twist {
     int idx = 0;
@@ -392,7 +391,6 @@ extension CoordinatesExtension on CubieCube {
     cornerState[CubieCube.cornerLength - 1] =
         (cornerState[CubieCube.cornerLength - 1] & 0x7 | (twst % 3) << 3);
   }
-
 
   static final List<List<int>> _cnk = initCnk();
   static List<List<int>> initCnk() {
@@ -450,43 +448,73 @@ extension CoordinatesExtension on CubieCube {
   // ==================== Phase 2 Coordnates ====================
   // ============================================================
 
+  /// The values still to be placed, and the factorial digits that place them.
+  ///
+  /// min2phase keeps both in a single 64 bit register, four bits per entry, and
+  /// that cannot be ported as it stands: on the web a Dart `int` is a double
+  /// with 53 bits of mantissa, and the bitwise operators truncate to 32, so
+  /// `0xFEDCBA9876543210` is neither representable nor shiftable. They are
+  /// small lists here instead.
+  ///
+  /// Reused rather than allocated per call, because [cperm] and [eperm] are
+  /// read once per node of the search. Static fields are per isolate and
+  /// neither method calls anything that could re-enter, so sharing them is
+  /// safe. The two must be different lists: [_setNPerm] uses both at once.
+  static final Uint8List _values = Uint8List(16);
+  static final Uint8List _digits = Uint8List(16);
+
+  /// Which of the `n!` orderings [arr] holds, as a factorial number.
   static int _getNPerm(List<int> arr, int n, bool isEdge) {
-    int idx = 0;
-    int val = 0xFEDCBA9876543210;
-    for (int i = 0; i < n - 1; i++) {
-      int v = _getVal(arr[i], isEdge) << 2;
-      idx = (n - i) * idx + (val >> v & 0xf);
-      val -= 0x1111111111111110 << v;
+    for (var i = 0; i < n; i++) {
+      _values[i] = i;
+    }
+
+    var idx = 0;
+    for (var i = 0; i < n - 1; i++) {
+      final piece = _getVal(arr[i], isEdge);
+      // How far down the values left over this one is.
+      idx = (n - i) * idx + _values[piece];
+      // Taking it out moves everything above it down a place.
+      for (var above = piece + 1; above < n; above++) {
+        _values[above]--;
+      }
     }
     return idx;
   }
 
+  /// Put [arr] into the ordering [idx] names.
   static void _setNPerm(List<int> arr, int idx, int n, bool isEdge) {
-    int val = 0xFEDCBA9876543210;
-    int extract = 0;
-    for (int p = 2; p <= n; p++) {
-      extract = extract << 4 | idx % p;
-      idx ~/= p;
+    for (var i = 0; i < n; i++) {
+      _values[i] = i;
     }
-    for (int i = 0; i < n - 1; i++) {
-      int v = (extract & 0xf) << 2;
-      extract >>= 4;
-      arr[i] = _setVal(arr[i], (val >> v & 0xf), isEdge);
-      int m = (1 << v) - 1;
-      val = val & m | val >> 4 & ~m;
+
+    // The digits of idx in the factorial number system, largest radix first,
+    // which is the order they are used in.
+    var rest = idx;
+    for (var radix = 2; radix <= n; radix++) {
+      _digits[n - radix] = rest % radix;
+      rest ~/= radix;
     }
-    arr[n - 1] = _setVal(arr[n - 1], (val & 0xf), isEdge);
+
+    var left = n;
+    for (var i = 0; i < n - 1; i++) {
+      final digit = _digits[i];
+      arr[i] = _setVal(arr[i], _values[digit], isEdge);
+      for (var j = digit; j < left - 1; j++) {
+        _values[j] = _values[j + 1];
+      }
+      left--;
+    }
+    arr[n - 1] = _setVal(arr[n - 1], _values[0], isEdge);
   }
 
   /// Cperm : Permutations of 8 Corners. Raw[0, 40320) Sym[0, 2187 * 16)
   int get cperm => _getNPerm(cornerState, 8, false);
   set cperm(int idx) => _setNPerm(cornerState, idx, 8, false);
 
-
   /// EPerm : Permutations of 8 UD Edges. Raw[0, 40320) Sym[0, 2187 * 16)
   int get eperm => _getNPerm(edgeState, 8, true);
   set eperm(int idx) => _setNPerm(edgeState, idx, 8, true);
-
 
   /// MPerm : Permutations of 4 UDSlice Edges. [0, 24)
   int get mperm => _getNPerm(edgeState, 12, true) % 24;

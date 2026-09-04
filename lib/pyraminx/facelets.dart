@@ -81,8 +81,7 @@ extension PyraminxFacelets on PyraminxCube {
   }
 
   /// The 36 stickers as a string of face letters, `A` to `D`.
-  String toFaceletString() =>
-      toFacelets().map((face) => pyraminxFaceNames[face]).join();
+  String toFaceletString() => toFacelets().map((face) => pyraminxFaceNames[face]).join();
 
   /// The colour a piece at vertex [vertex] shows on [face] when twisted [amount].
   ///
