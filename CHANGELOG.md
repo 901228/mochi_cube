@@ -9,8 +9,9 @@ for web against it.
   64-bit register, four bits each. On the web a Dart `int` is a double with 53
   bits of mantissa and the bitwise operators truncate to 32, so
   `0xFEDCBA9876543210` is neither representable nor shiftable. It is a small
-  reused list now — same coordinates, checked by the same exhaustive comparison
-  against the kociemba tables.
+  reused list now. `test/nperm_test.dart` says the numbering did not change with
+  it: both directions against min2phase's original register arithmetic, over all
+  40320 orderings of eight and a sample of the 479001600 of twelve.
 - The table cache is behind a conditional import. `dart:io` and `app_dirs` live
   in `cache/table_store_io.dart`, and `cache/table_store.dart` is the version
   for platforms with no filesystem, which keeps nothing and fails at nothing.
