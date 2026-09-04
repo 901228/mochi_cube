@@ -28,45 +28,49 @@ List<int> stateFromNotation(Scrambler scrambler, Scramble scramble) => switch (s
 };
 
 void main() {
-  test("a state is as long as its layout has pieces", () {
+  test("a state is as long as its layout has pieces", () async {
     for (final scrambler in all) {
       expect(piecesOf(scrambler.layout), scrambler.stateLength, reason: scrambler.name);
       expect(scrambler.solvedState, hasLength(scrambler.stateLength), reason: scrambler.name);
-      expect(scrambler.next().state, hasLength(scrambler.stateLength), reason: scrambler.name);
+      expect((await scrambler.next()).state, hasLength(scrambler.stateLength), reason: scrambler.name);
     }
   });
 
   // The point of the interface is that the notation and the state agree. If a
   // scrambler ever built one from a different cube than the other, an app would
   // show a scramble that does not match the picture beside it.
-  test("the state is what the notation leaves", () {
+  test("the state is what the notation leaves", () async {
     for (final scrambler in all) {
       for (var i = 0; i < 5; i++) {
-        final scramble = scrambler.next();
+        final scramble = await scrambler.next();
         expect(scramble.state, stateFromNotation(scrambler, scramble), reason: scrambler.name);
       }
     }
   });
 
-  test("a scramble leaves something to do", () {
+  test("a scramble leaves something to do", () async {
     for (final scrambler in all) {
-      expect(scrambler.next().state, isNot(scrambler.solvedState), reason: scrambler.name);
+      expect((await scrambler.next()).state, isNot(scrambler.solvedState), reason: scrambler.name);
     }
   });
 
-  test("only the Clock has no algorithm, since it has no moves", () {
+  test("only the Clock has no algorithm, since it has no moves", () async {
     for (final scrambler in all) {
-      expect(scrambler.next().algorithm == null, scrambler.puzzleId == "clock", reason: scrambler.name);
+      expect(
+        (await scrambler.next()).algorithm == null,
+        scrambler.puzzleId == "clock",
+        reason: scrambler.name,
+      );
     }
   });
 
-  test("a seed repeats the run", () {
+  test("a seed repeats the run", () async {
     // Not the 3x3x3 ones: their scramble is a solve, and the search draws on
     // Random.secure of its own.
     for (final scrambler in [const PocketScrambler(), const PyraminxScrambler(), const ClockScrambler()]) {
       expect(
-        scrambler.next(random: Random(42)).notation,
-        scrambler.next(random: Random(42)).notation,
+        (await scrambler.next(random: Random(42))).notation,
+        (await scrambler.next(random: Random(42))).notation,
         reason: scrambler.name,
       );
     }
@@ -91,25 +95,22 @@ void main() {
     }
   });
 
-  test("a drill leaves less to do than a whole scramble", () {
+  test("a drill leaves less to do than a whole scramble", () async {
     // Every drill keeps the cross solved, which a full scramble does not.
     for (final scrambler in practiceScramblers.values) {
-      final cube = Algorithm.parse(scrambler.next().notation).cube;
+      final cube = Algorithm.parse((await scrambler.next()).notation).cube;
       expect(isCrossSolved(cube), isTrue, reason: scrambler.name);
     }
   });
 
-  test("the options are wired through", () {
-    expect(const CubeScrambler(randomMoves: true, moves: 12).next().algorithm, hasLength(12));
-    expect(
-      const PyraminxScrambler(
-        tips: false,
-      ).next().algorithm!.every((move) => pyraminxMoves.axisOf(move) < PyraminxCube.vertexCount),
-      isTrue,
-    );
-    expect(
-      const PracticeScrambler(PracticeDrill.pll, spread: PracticeSpread.cases).next().state,
-      hasLength(54),
-    );
+  test("the options are wired through", () async {
+    final short = await const CubeScrambler(randomMoves: true, moves: 12).next();
+    expect(short.algorithm, hasLength(12));
+
+    final tipless = await const PyraminxScrambler(tips: false).next();
+    expect(tipless.algorithm!.every((move) => pyraminxMoves.axisOf(move) < PyraminxCube.vertexCount), isTrue);
+
+    final oneCase = await const PracticeScrambler(PracticeDrill.pll, spread: PracticeSpread.cases).next();
+    expect(oneCase.state, hasLength(54));
   });
 }

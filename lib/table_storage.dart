@@ -7,6 +7,14 @@ export "cache/table_store.dart"
     if (dart.library.io) "cache/table_store_io.dart"
     show readTableBytes, tableDirectory, tablePath, writeTableBytes;
 
+/// Hand the event loop a turn.
+///
+/// A microtask is not enough. Flutter paints from the timer queue, so a wait
+/// that only goes through the microtask queue never lets a frame out and a
+/// progress indicator sits frozen — which is the whole reason a table build is
+/// cut into steps at all.
+Future<void> yieldToEventLoop() => Future<void>.delayed(Duration.zero);
+
 /// A `rows * columns` grid of small non-negative integers, stored flat.
 ///
 /// Indexed by a record, `table[(row, column)]`, so that a lookup never

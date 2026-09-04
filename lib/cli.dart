@@ -76,12 +76,12 @@ class _ScrambleCommand extends _Command {
   String get invocation => "mochi_cube scramble [puzzle]";
 
   @override
-  void run() {
+  Future<void> run() async {
     final puzzle = CliPuzzle.byName(argResults!.rest.firstOrNull ?? CliPuzzle.cube.name);
     final rng = random;
 
     for (var i = 0; i < int.parse(argResults!.option("count")!); i++) {
-      final scramble = puzzle.scramble(
+      final scramble = await puzzle.scramble(
         random: rng,
         randomMoves: argResults!.flag("random-moves"),
         moves: int.parse(argResults!.option("moves")!),
@@ -179,7 +179,7 @@ class _PracticeCommand extends _Command {
   String get invocation => "mochi_cube practice <pll|oll|f2l>";
 
   @override
-  void run() {
+  Future<void> run() async {
     final kind = argResults!.rest.firstOrNull?.toLowerCase();
     final rng = random;
     final spread = argResults!.option("spread") == "cases" ? PracticeSpread.cases : PracticeSpread.states;
@@ -197,7 +197,7 @@ class _PracticeCommand extends _Command {
     );
 
     for (var i = 0; i < int.parse(argResults!.option("count")!); i++) {
-      final scramble = scrambler.next(random: rng);
+      final scramble = await scrambler.next(random: rng);
       emit(scramble.notation);
       if (argResults!.flag("show")) {
         emit(CliPuzzle.cube.render(scramble.notation));

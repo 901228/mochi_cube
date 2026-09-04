@@ -1,5 +1,26 @@
 ## Unreleased
 
+### `Scrambler.next` is a future
+
+**Breaking.** `next` returns `Future<Scramble>`, so an app can show a progress
+indicator instead of freezing on the first tap. The first scramble of a session
+builds the puzzle's tables and is much slower than the rest — under dart2js,
+1780ms against 24ms for the 3x3x3, 1003ms against 0.1ms for the 2x2x2.
+
+It does not move the work off the thread; the web has none to move it to.
+Awaiting yields once, which is enough for the indicator to be painted, and then
+holds the thread until the tables are built. Animating through the build would
+mean building the tables a step at a time, which is not done here.
+
+`CliPuzzle.scramble` follows, and `yieldToEventLoop` in `table_storage.dart` is
+the one-line helper — a `Duration.zero` timer rather than a microtask, since
+Flutter paints from the timer queue and a microtask never lets a frame out.
+
+Also fixed in `test/web_test.dart`: node defines no `self`, which dart2js
+reaches for to schedule a timer, so the compiled program used to print nothing
+at all rather than fail. It gets the shim now, and the comparison against the VM
+covers asynchronous code again.
+
 ### Works on the web
 
 The package did not compile for dart2js at all, so a Flutter app could not build

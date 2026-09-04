@@ -13,9 +13,9 @@ import "package:mochi_cube/scramblers.dart";
 /// register, which the web does not have.
 const String marker = "| ";
 
-void main() {
+Future<void> main() async {
   for (final entry in allScramblers.entries) {
-    final scramble = entry.value.next(random: Random(1));
+    final scramble = await entry.value.next(random: Random(1));
     print("$marker${entry.key} ${scramble.notation}");
     print("$marker${entry.key} ${scramble.state.join(",")}");
   }

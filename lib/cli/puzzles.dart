@@ -77,8 +77,8 @@ enum CliPuzzle {
   }
 
   /// A scramble drawn evenly from every state of this puzzle.
-  String scramble({Random? random, bool randomMoves = false, int moves = 20}) =>
-      scrambler(randomMoves: randomMoves, moves: moves).next(random: random).notation;
+  Future<String> scramble({Random? random, bool randomMoves = false, int moves = 20}) async =>
+      (await scrambler(randomMoves: randomMoves, moves: moves).next(random: random)).notation;
 
   /// The state a scramble leaves, drawn the way this puzzle is drawn.
   String render(String scramble) => switch (this) {

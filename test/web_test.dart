@@ -1,3 +1,4 @@
+import "dart:convert";
 import "dart:io";
 
 import "package:path/path.dart" as path;
@@ -38,7 +39,13 @@ void main() {
       return;
     }
 
-    final onNode = Process.runSync("node", [compiled]);
+    // node defines no `self`, and dart2js reaches for it to schedule a timer,
+    // so without this an `await` never resumes and the program prints nothing
+    // at all. A browser needs no such help.
+    final onNode = Process.runSync("node", [
+      "-e",
+      "globalThis.self = globalThis; require(${jsonEncode(compiled)});",
+    ]);
     expect(onNode.exitCode, 0, reason: "${onNode.stdout}\n${onNode.stderr}");
     expect(results(onNode.stdout as String), results(onVm.stdout as String));
   }, timeout: const Timeout(Duration(minutes: 3)));

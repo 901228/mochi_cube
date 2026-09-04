@@ -8,7 +8,7 @@
 ///
 /// ```dart
 /// final scrambler = puzzleScramblers["333"]!;
-/// final scramble = scrambler.next();
+/// final scramble = await scrambler.next();
 ///
 /// Text(scramble.notation);                       // R U2 F' …
 /// CustomPaint(painter: MyPainter(scrambler.layout, scramble.state));
@@ -25,6 +25,7 @@ import "cube/layout.dart";
 import "mochi_cube.dart";
 import "pocket.dart";
 import "pyraminx.dart";
+import "table_storage.dart" show yieldToEventLoop;
 
 export "clock/layout.dart" show ClockLayout;
 export "cube/layout.dart" show Layout, Point, PuzzleLayout;
@@ -69,7 +70,20 @@ abstract interface class Scrambler {
   ///
   /// [random] defaults to [Random.secure]; pass a seeded [Random] to reproduce
   /// one.
-  Scramble next({Random? random});
+  ///
+  /// A future so a caller can put a progress indicator up, because the first
+  /// call is far slower than the rest: it builds the puzzle's tables. On the
+  /// web, where there is no cache to load them from, that is about 1.8s for the
+  /// 3x3x3, 1.0s for the 2x2x2 and 0.3s for the Pyraminx, against 24ms and
+  /// well under a millisecond afterwards.
+  ///
+  /// **It does not make the work happen elsewhere.** Dart has no threads on the
+  /// web, so awaiting this yields once — long enough for the indicator to be
+  /// painted — and then holds the thread until the tables are built. The
+  /// indicator appears rather than the tap seeming to do nothing, but it will
+  /// not animate through the build. Moving that off the frame would mean
+  /// building the tables a step at a time, which is a bigger change than this.
+  Future<Scramble> next({Random? random});
 }
 
 /// One scramble: how it is written, and the state it leaves.
@@ -128,7 +142,8 @@ class CubeScrambler implements Scrambler {
   List<int> get solvedState => CubieCube().toFacelets();
 
   @override
-  Scramble next({Random? random}) {
+  Future<Scramble> next({Random? random}) async {
+    await yieldToEventLoop();
     final algorithm = randomMoves
         ? randomScramble(moves: moves, random: random)
         : randomStateScramble(random: random);
@@ -159,7 +174,8 @@ class PocketScrambler implements Scrambler {
   List<int> get solvedState => CubieCube().toPocketFacelets();
 
   @override
-  Scramble next({Random? random}) {
+  Future<Scramble> next({Random? random}) async {
+    await yieldToEventLoop();
     final algorithm = randomPocketScramble(random: random);
     return Scramble(
       notation: algorithm.toString(),
@@ -195,7 +211,8 @@ class PyraminxScrambler implements Scrambler {
   List<int> get solvedState => PyraminxCube().toFacelets();
 
   @override
-  Scramble next({Random? random}) {
+  Future<Scramble> next({Random? random}) async {
+    await yieldToEventLoop();
     final algorithm = randomPyraminxScramble(random: random, tips: tips);
     return Scramble(
       notation: algorithm.toString(),
@@ -228,7 +245,8 @@ class ClockScrambler implements Scrambler {
   List<int> get solvedState => ClockState.solved().toDials();
 
   @override
-  Scramble next({Random? random}) {
+  Future<Scramble> next({Random? random}) async {
+    await yieldToEventLoop();
     final state = randomClockScramble(random: random);
     // No algorithm: a clock's scramble is where its dials end up, not a
     // sequence of turns that got them there.
@@ -275,7 +293,8 @@ class PracticeScrambler implements Scrambler {
   List<int> get solvedState => CubieCube().toFacelets();
 
   @override
-  Scramble next({Random? random}) {
+  Future<Scramble> next({Random? random}) async {
+    await yieldToEventLoop();
     final algorithm = switch (drill) {
       PracticeDrill.pll => pllPracticeScramble(random: random, spread: spread),
       PracticeDrill.oll => ollPracticeScramble(random: random, spread: spread),

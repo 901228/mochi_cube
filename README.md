@@ -228,7 +228,7 @@ import "package:mochi_cube/scramblers.dart";
 puzzleScramblers;                     // {333: …, 222: …, pyram: …, clock: …}
 
 final scrambler = puzzleScramblers[saved]!;
-final scramble = scrambler.next();
+final scramble = await scrambler.next();
 
 scramble.notation;   // "R U2 F' …", or "UR4+ DR0+ … ALL6+"
 scramble.state;      // one number per piece, index-matched to scrambler.layout
@@ -245,6 +245,28 @@ theirs.
 `practiceScramblers` is the same three drills behind the same interface, keyed
 `pll`, `oll` and `f2l`, so a drill picker is one more map. `allScramblers` is
 both together.
+
+### Why `next` is a future
+
+The first scramble of a session is far slower than the rest, because it builds
+the puzzle's tables:
+
+| | first | then |
+| --- | --- | --- |
+| `333` | 1780ms | 24ms |
+| `222` | 1003ms | 0.1ms |
+| `pyram` | 333ms | 0.1ms |
+| `clock` | 1ms | 0ms |
+
+Measured under dart2js, where there is no cache to load them from; on a platform
+with a filesystem only the very first run pays it. A future means a caller can
+put a progress indicator up rather than freezing on a tap.
+
+It does **not** move the work elsewhere. Dart has no threads on the web, so
+awaiting yields once — long enough for the indicator to be painted — and then
+holds the thread until the tables are built. The indicator appears; it will not
+animate through the build. Making it animate would mean building the tables a
+step at a time, which is a larger change and is not done here.
 
 `scrambler.layout` and `scrambler.solvedState` are there so a picker can draw
 each puzzle before anything has been scrambled. `stateLength` is both the length
