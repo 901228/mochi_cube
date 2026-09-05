@@ -14,7 +14,6 @@ final List<Scrambler> all = allScramblers.values.toList();
 int piecesOf(Layout layout) => switch (layout) {
   PuzzleLayout() => layout.length,
   ClockLayout() => layout.dials.length,
-  _ => throw StateError("Unknown layout ${layout.runtimeType}"),
 };
 
 /// The state the notation of [scramble] actually leaves, worked out from the

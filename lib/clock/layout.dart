@@ -1,47 +1,7 @@
-import "../cube/layout.dart";
+import "../layout.dart";
 import "dials.dart";
 
-/// Where a Rubik's Clock's dials sit when it is drawn flat.
-///
-/// The two sides side by side, front on the left, each a three by three grid of
-/// dials with the four pins at the middles of its four corner blocks. Nothing
-/// here is a polygon, so unlike the other puzzles this is circles rather than a
-/// [PuzzleLayout].
-///
-/// Geometry only, as everywhere else: no colours, no hands, no dial faces.
-class ClockLayout with Layout {
-  @override
-  final double width;
-
-  @override
-  final double height;
-
-  /// The middle of each of the eighteen dials, in the order `toDials()` gives.
-  final List<Point> dials;
-
-  /// How big a dial is.
-  final double dialRadius;
-
-  /// The middle of each pin: the four of the front, then the four of the back.
-  ///
-  /// In the order [clockCorners] gives, so pin `i` is the one that drives the
-  /// block of dials at corner `clockCorners[i]`. Which way a pin is pushed is
-  /// not part of a clock's state and so is not here; these are only where they
-  /// are.
-  final List<Point> pins;
-
-  /// How big a pin is.
-  final double pinRadius;
-
-  const ClockLayout({
-    required this.width,
-    required this.height,
-    required this.dials,
-    required this.dialRadius,
-    required this.pins,
-    required this.pinRadius,
-  });
-}
+export "../layout.dart" show ClockLayout;
 
 /// The eighteen dials and eight pins of a Rubik's Clock.
 final ClockLayout clockLayout = _build();

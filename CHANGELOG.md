@@ -1,5 +1,19 @@
 ## Unreleased
 
+### `Layout` is sealed
+
+**Breaking.** `Layout` was an `abstract mixin class`; it is now `sealed`, so a
+`switch` over `PuzzleLayout` and `ClockLayout` is exhaustive and needs no default
+branch. Code that mixed `Layout` in from outside the package no longer compiles —
+nothing in the package did, and a caller draws with a layout rather than defining
+one.
+
+The three types moved to `lib/layout.dart`, since a sealed type's subtypes must
+share its library. Imports do not change: `cube/layout.dart` and
+`clock/layout.dart` re-export the types they use, and the instances
+(`cubeLayout`, `pocketLayout`, `pyraminxLayout`, `clockLayout`) stay where they
+were.
+
 ### `Scrambler.next` is a future
 
 **Breaking.** `next` returns `Future<Scramble>`, so an app can show a progress

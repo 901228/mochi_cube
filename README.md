@@ -357,6 +357,16 @@ for (var i = 0; i < facelets.length; i++) {
 | Pyraminx | `pyraminxLayout`  | 36 triangles, the tetrahedron net |
 | Clock    | `clockLayout`     | 18 dials and 8 pins, as circles |
 
+`Layout` is sealed, so a switch over the two kinds needs no default branch and
+the compiler will tell you if a third kind ever appears:
+
+```dart
+Widget paint(Scrambler scrambler, List<int> state) => switch (scrambler.layout) {
+  final PuzzleLayout layout => CustomPaint(painter: StickerPainter(layout, state)),
+  final ClockLayout layout => CustomPaint(painter: DialPainter(layout, state)),
+};
+```
+
 No colours, no line widths and no gaps between stickers: a gap is one inset of
 your own, and a colour scheme is yours to choose. The same points also do
 hit testing, so tapping a sticker to enter a state is the polygon you already
