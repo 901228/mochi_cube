@@ -27,6 +27,9 @@ import "pocket.dart";
 import "pyraminx.dart";
 import "table_storage.dart" show yieldToEventLoop;
 
+// Algorithm and MoveSet are part of this library's own surface: a Scramble
+// carries one, and stateOf takes one.
+export "cube/algorithm.dart" show Algorithm, MoveSet;
 export "clock/layout.dart" show ClockLayout;
 export "cube/layout.dart" show Layout, Point, PuzzleLayout;
 
@@ -65,6 +68,32 @@ abstract interface class Scrambler {
   /// The state of the solved puzzle, for drawing one that has not been
   /// scrambled yet.
   List<int> get solvedState;
+
+  /// The state [algorithm] leaves the puzzle in, starting from solved.
+  ///
+  /// A prefix of a scramble gives the state part way through it, which is what
+  /// a viewer stepping along a scramble asks for. [Algorithm.empty] gives
+  /// [solvedState].
+  ///
+  /// Throws [UnsupportedError] on the Clock, whose scramble is a set of dial
+  /// positions rather than a sequence of turns — the same reason its
+  /// [Scramble.algorithm] is null.
+  List<int> stateOf(Algorithm algorithm);
+
+  /// The notation broken into the steps a viewer can stop at.
+  ///
+  /// One entry per token of [Scramble.notation], so a picker can lay the two
+  /// out together. Scramble-level rather than [Algorithm]-level because the
+  /// Clock has no algorithm and still has steps: its notation is fourteen dial
+  /// turns and the `y2` that separates the two sides.
+  List<String> stepsOf(Scramble scramble);
+
+  /// The state after the first [steps] of [stepsOf], starting from solved.
+  ///
+  /// `stateAfter(scramble, 0)` is [solvedState] and passing the whole length
+  /// gives [Scramble.state] back. This is what a viewer walking a scramble
+  /// asks for.
+  List<int> stateAfter(Scramble scramble, int steps);
 
   /// A scramble, drawn evenly from every state of the puzzle.
   ///
@@ -110,8 +139,27 @@ class Scramble {
   String toString() => notation;
 }
 
+/// Stepping along a scramble that is a sequence of moves.
+///
+/// Every puzzle here works this way apart from the Clock, whose scramble is a
+/// set of dial positions instead. They differ only in how a state is read off
+/// a cube, which is [Scrambler.stateOf]; the walking is the same.
+mixin _AlgorithmSteps implements Scrambler {
+  @override
+  List<String> stepsOf(Scramble scramble) {
+    final algorithm = scramble.algorithm!;
+    return [for (final move in algorithm.moves) algorithm.moveSet.render(move)];
+  }
+
+  @override
+  List<int> stateAfter(Scramble scramble, int steps) {
+    final algorithm = scramble.algorithm!;
+    return stateOf(Algorithm(algorithm.moves.sublist(0, steps), moveSet: algorithm.moveSet));
+  }
+}
+
 /// The 3x3x3.
-class CubeScrambler implements Scrambler {
+class CubeScrambler with _AlgorithmSteps implements Scrambler {
   /// Turn random faces instead of solving a random state.
   ///
   /// Cheap, but not how a competition scrambles: the states it reaches are not
@@ -142,17 +190,20 @@ class CubeScrambler implements Scrambler {
   List<int> get solvedState => CubieCube().toFacelets();
 
   @override
+  List<int> stateOf(Algorithm algorithm) => algorithm.cube.toFacelets();
+
+  @override
   Future<Scramble> next({Random? random}) async {
     await yieldToEventLoop();
     final algorithm = randomMoves
         ? randomScramble(moves: moves, random: random)
         : randomStateScramble(random: random);
-    return Scramble(notation: algorithm.toString(), state: algorithm.cube.toFacelets(), algorithm: algorithm);
+    return Scramble(notation: algorithm.toString(), state: stateOf(algorithm), algorithm: algorithm);
   }
 }
 
 /// The 2x2x2.
-class PocketScrambler implements Scrambler {
+class PocketScrambler with _AlgorithmSteps implements Scrambler {
   const PocketScrambler();
 
   @override
@@ -174,19 +225,18 @@ class PocketScrambler implements Scrambler {
   List<int> get solvedState => CubieCube().toPocketFacelets();
 
   @override
+  List<int> stateOf(Algorithm algorithm) => algorithm.cube.toPocketFacelets();
+
+  @override
   Future<Scramble> next({Random? random}) async {
     await yieldToEventLoop();
     final algorithm = randomPocketScramble(random: random);
-    return Scramble(
-      notation: algorithm.toString(),
-      state: algorithm.cube.toPocketFacelets(),
-      algorithm: algorithm,
-    );
+    return Scramble(notation: algorithm.toString(), state: stateOf(algorithm), algorithm: algorithm);
   }
 }
 
 /// The Pyraminx.
-class PyraminxScrambler implements Scrambler {
+class PyraminxScrambler with _AlgorithmSteps implements Scrambler {
   /// Whether to set the four tips as well.
   final bool tips;
 
@@ -211,14 +261,13 @@ class PyraminxScrambler implements Scrambler {
   List<int> get solvedState => PyraminxCube().toFacelets();
 
   @override
+  List<int> stateOf(Algorithm algorithm) => (PyraminxCube()..apply(algorithm)).toFacelets();
+
+  @override
   Future<Scramble> next({Random? random}) async {
     await yieldToEventLoop();
     final algorithm = randomPyraminxScramble(random: random, tips: tips);
-    return Scramble(
-      notation: algorithm.toString(),
-      state: (PyraminxCube()..apply(algorithm)).toFacelets(),
-      algorithm: algorithm,
-    );
+    return Scramble(notation: algorithm.toString(), state: stateOf(algorithm), algorithm: algorithm);
   }
 }
 
@@ -245,6 +294,30 @@ class ClockScrambler implements Scrambler {
   List<int> get solvedState => ClockState.solved().toDials();
 
   @override
+  List<int> stateOf(Algorithm algorithm) =>
+      throw UnsupportedError("A Clock scramble is a set of dial positions, not a sequence of turns");
+
+  @override
+  List<String> stepsOf(Scramble scramble) => scramble.notation.split(" ");
+
+  @override
+  List<int> stateAfter(Scramble scramble, int steps) {
+    // Parsing is the documented inverse of ClockState.toString, and the
+    // notation is the only place the fourteen dials survive: Scramble.state
+    // holds the eighteen that get drawn, which are an image of them.
+    final scrambled = ClockState.parse(scramble.notation);
+
+    // The y2 sits between the ninth dial and the tenth. It flips the puzzle
+    // rather than turning anything, so stopping on it is stopping after the
+    // ninth dial.
+    final turned = steps <= ClockState.frontDials ? steps : steps - 1;
+
+    return ClockState([
+      for (var dial = 0; dial < ClockState.dialCount; dial++) dial < turned ? scrambled.dials[dial] : 0,
+    ]).toDials();
+  }
+
+  @override
   Future<Scramble> next({Random? random}) async {
     await yieldToEventLoop();
     final state = randomClockScramble(random: random);
@@ -258,7 +331,7 @@ class ClockScrambler implements Scrambler {
 enum PracticeDrill { pll, oll, f2l }
 
 /// A 3x3x3 drill: the same puzzle, scrambled only part of the way.
-class PracticeScrambler implements Scrambler {
+class PracticeScrambler with _AlgorithmSteps implements Scrambler {
   /// What is left to do.
   final PracticeDrill drill;
 
@@ -293,6 +366,9 @@ class PracticeScrambler implements Scrambler {
   List<int> get solvedState => CubieCube().toFacelets();
 
   @override
+  List<int> stateOf(Algorithm algorithm) => algorithm.cube.toFacelets();
+
+  @override
   Future<Scramble> next({Random? random}) async {
     await yieldToEventLoop();
     final algorithm = switch (drill) {
@@ -300,7 +376,7 @@ class PracticeScrambler implements Scrambler {
       PracticeDrill.oll => ollPracticeScramble(random: random, spread: spread),
       PracticeDrill.f2l => f2lPracticeScramble(random: random, solvedPairs: solvedPairs),
     };
-    return Scramble(notation: algorithm.toString(), state: algorithm.cube.toFacelets(), algorithm: algorithm);
+    return Scramble(notation: algorithm.toString(), state: stateOf(algorithm), algorithm: algorithm);
   }
 }
 

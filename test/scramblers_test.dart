@@ -102,6 +102,29 @@ void main() {
     }
   });
 
+  test("stepping along a scramble ends where the scramble does", () async {
+    for (final scrambler in all) {
+      final scramble = await scrambler.next();
+      final steps = scrambler.stepsOf(scramble);
+      final reason = scrambler.name;
+
+      expect(steps, scramble.notation.split(" "), reason: reason);
+      expect(scrambler.stateAfter(scramble, 0), scrambler.solvedState, reason: reason);
+      expect(scrambler.stateAfter(scramble, steps.length), scramble.state, reason: reason);
+    }
+  });
+
+  test("every step of the way is a state the puzzle could be in", () async {
+    for (final scrambler in all) {
+      final scramble = await scrambler.next();
+      for (var step = 0; step <= scrambler.stepsOf(scramble).length; step++) {
+        final state = scrambler.stateAfter(scramble, step);
+        expect(state, hasLength(scrambler.stateLength), reason: "${scrambler.name} at $step");
+        expect(state.every((piece) => piece >= 0), isTrue, reason: "${scrambler.name} at $step");
+      }
+    }
+  });
+
   test("the options are wired through", () async {
     final short = await const CubeScrambler(randomMoves: true, moves: 12).next();
     expect(short.algorithm, hasLength(12));
