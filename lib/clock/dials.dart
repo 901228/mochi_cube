@@ -15,6 +15,10 @@ import "clock.dart";
 /// The back is what you see having turned the puzzle over about its vertical
 /// axis, so front position `(r, c)` is behind back position `(r, 2 - c)`.
 ///
+/// Each side is read clockwise as you look at it. A corner is one spindle with
+/// a hand on each face, so the same turn reads `+n` from the front and `-n`
+/// from the back: the two never show the same hour unless both are at twelve.
+///
 /// These are a picture of the state rather than the state itself. A
 /// [ClockState] is fourteen numbers, and the eighteen are a linear image of
 /// them — which is why the puzzle has 12^14 positions and not 12^18.
@@ -26,7 +30,9 @@ int mirroredDial(int front) => (front ~/ 3) * 3 + (2 - front % 3);
 /// The corners of a 3x3 grid, as `UL`, `UR`, `DL`, `DR`.
 const List<int> clockCorners = [0, 2, 6, 8];
 
-/// How far each of the fourteen moves turns each of the eighteen dials.
+/// How far each of the fourteen moves turns each of the eighteen dials, as a
+/// multiplier: `1` for a dial on the side being driven, `-1` for the corner
+/// showing through the other side, `0` for the rest.
 ///
 /// Worked out from the mechanism rather than written down. Each corner carries
 /// a pin, and the pin says which side that corner's wheel drives: turning it
@@ -36,9 +42,9 @@ const List<int> clockCorners = [0, 2, 6, 8];
 ///
 /// Three things fall out of that, and all three are checked in the tests. The
 /// fourteen rows are independent over Z12, so the moves really do reach 12^14
-/// states. Exactly four dials always move together with their opposite number,
-/// and they are exactly the four corners. And 18 - 4 leaves the 14 the puzzle
-/// is known to have.
+/// states. Exactly four dials always move against their opposite number, and
+/// they are exactly the four corners. And 18 - 4 leaves the 14 the puzzle is
+/// known to have.
 final List<List<int>> clockMoveEffect = _buildEffect();
 
 /// The 2x2 block of dials at [corner] of a 3x3 grid.
@@ -82,13 +88,15 @@ List<List<int>> _buildEffect() {
             for (final dial in dialBlock(corner)) {
               effect[dial] = 1;
             }
-            // The corner is one piece, so it shows through the back as well.
-            effect[9 + mirroredDial(corner)] = 1;
+            // The corner is one spindle, so it shows through the back as
+            // well — turning the other way round, since the back is read from
+            // the other side.
+            effect[9 + mirroredDial(corner)] = -1;
           } else {
             for (final dial in dialBlock(mirroredDial(corner))) {
               effect[9 + dial] = 1;
             }
-            effect[corner] = 1;
+            effect[corner] = -1;
           }
         }
         return effect;
@@ -108,7 +116,7 @@ extension ClockDials on ClockState {
       final effect = clockMoveEffect[move];
       for (var dial = 0; dial < nClockDials; dial++) {
         if (effect[dial] != 0) {
-          shown[dial] = (shown[dial] + amount) % ClockState.positions;
+          shown[dial] = (shown[dial] + amount * effect[dial]) % ClockState.positions;
         }
       }
     }
@@ -131,8 +139,8 @@ abstract final class ClockDialReading {
   /// The state showing these eighteen dials.
   ///
   /// Only 12^14 of the 12^18 ways to set eighteen dials are a real clock: the
-  /// four corner dials are single pieces, so each has to read the same through
-  /// both sides. Anything else is rejected.
+  /// four corner dials are single spindles, so each reads the negative of what
+  /// it reads through the other side. Anything else is rejected.
   ///
   /// Throws [FormatException] if there are not eighteen numbers, if one is out
   /// of range, or if a corner disagrees with itself.
@@ -147,10 +155,10 @@ abstract final class ClockDialReading {
     }
     for (final corner in clockCorners) {
       final behind = shown[9 + mirroredDial(corner)];
-      if (shown[corner] != behind) {
+      if ((shown[corner] + behind) % ClockState.positions != 0) {
         throw FormatException(
           "Corner $corner reads ${shown[corner]} at the front and $behind at the back, "
-          "but it is one piece",
+          "but it is one spindle and the two are read from opposite sides",
         );
       }
     }

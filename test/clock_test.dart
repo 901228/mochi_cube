@@ -168,15 +168,15 @@ void main() {
       expect(nClockDials, 18);
     });
 
-    test("exactly four dials are locked to their opposite number, at the corners", () {
+    test("exactly four dials are locked against their opposite number, at the corners", () {
       // This is the mechanism, and it is what makes eighteen dials only
       // fourteen numbers. It is not asserted anywhere in the effect table; it
-      // comes out of it.
+      // comes out of it. Against, not with: one spindle read from both sides.
       final locked = <int>[];
       for (var dial = 0; dial < 9; dial++) {
         final together = [
           for (var move = 0; move < ClockState.dialCount; move++)
-            clockMoveEffect[move][dial] == clockMoveEffect[move][9 + mirroredDial(dial)],
+            clockMoveEffect[move][dial] == -clockMoveEffect[move][9 + mirroredDial(dial)],
         ];
         if (together.every((x) => x)) locked.add(dial);
       }
@@ -222,6 +222,23 @@ void main() {
       for (var seed = 0; seed < 200; seed++) {
         final state = ClockState.random(random: Random(seed));
         expect((state + state.inverse).toDials(), List.filled(nClockDials, 0));
+      }
+    });
+
+    test("a corner reads the opposite hour through the back", () {
+      // Turn every front dial three hours clockwise. The front reads three; the
+      // four corners show through the back, where the same turn is three hours
+      // the other way.
+      final allFront = ClockState.parse("UR0+ DR0+ DL0+ UL0+ U0+ R0+ D0+ L0+ ALL3+ y2 U0+ R0+ D0+ L0+ ALL0+");
+      final shown = allFront.toDials();
+
+      expect(shown.sublist(0, 9), List.filled(9, 3));
+      for (final corner in clockCorners) {
+        expect(shown[9 + mirroredDial(corner)], 9, reason: "corner $corner");
+      }
+      for (var dial = 0; dial < 9; dial++) {
+        if (clockCorners.contains(dial)) continue;
+        expect(shown[9 + mirroredDial(dial)], 0, reason: "dial $dial does not show through");
       }
     });
 
