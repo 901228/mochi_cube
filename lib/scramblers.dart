@@ -145,15 +145,23 @@ class Scramble {
 /// set of dial positions instead. They differ only in how a state is read off
 /// a cube, which is [Scrambler.stateOf]; the walking is the same.
 mixin _AlgorithmSteps implements Scrambler {
+  /// The moves of a scramble this scrambler could have made.
+  ///
+  /// Throws [ArgumentError] rather than a null check failure when handed
+  /// another puzzle's scramble, which is the shape a stale one arrives in.
+  Algorithm _movesOf(Scramble scramble) =>
+      scramble.algorithm ??
+      (throw ArgumentError.value(scramble, "scramble", "has no moves, so it is not $name's"));
+
   @override
   List<String> stepsOf(Scramble scramble) {
-    final algorithm = scramble.algorithm!;
+    final algorithm = _movesOf(scramble);
     return [for (final move in algorithm.moves) algorithm.moveSet.render(move)];
   }
 
   @override
   List<int> stateAfter(Scramble scramble, int steps) {
-    final algorithm = scramble.algorithm!;
+    final algorithm = _movesOf(scramble);
     return stateOf(Algorithm(algorithm.moves.sublist(0, steps), moveSet: algorithm.moveSet));
   }
 }
