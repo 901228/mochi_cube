@@ -67,11 +67,11 @@ class Table {
   int get _expectedBytes => _headerBytes + _sectionLengths.reduce((a, b) => a + b);
 
   /// What the cache is called, wherever the platform keeps it.
-  static const String _fileName = "tables.bin";
+  static const String _fileName = TableFiles.kociemba;
 
   void _load() {
     final where = tablePath(_fileName);
-    final cached = readTableBytes(_fileName);
+    final cached = cachedTableBytes(_fileName);
     if (cached != null && _tryRead(cached)) {
       Logging().info("Loaded the tables from $where");
       return;

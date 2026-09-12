@@ -49,7 +49,7 @@ class Phase1Tables {
 
   /// The cache file. Bump the version whenever a builder below changes.
   static TableFile get _cache => TableFile(
-    name: "min2phase-phase1.bin",
+    name: TableFiles.phase1,
     magic: const [0x4D, 0x32, 0x50, 0x31], // "M2P1"
     version: 1,
     variant: _useTwistFlipPrune ? 1 : 0,

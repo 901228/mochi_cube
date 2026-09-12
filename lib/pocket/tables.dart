@@ -20,7 +20,7 @@ class PocketTables {
 
   /// The cache file. Bump the version whenever a builder below changes.
   static TableFile get _cache => const TableFile(
-    name: "pocket.bin",
+    name: TableFiles.pocket,
     magic: [0x50, 0x4B, 0x54, 0x32], // "PKT2"
     version: 1,
   );

@@ -36,7 +36,7 @@ class Phase2Tables {
 
   /// The cache file. Bump the version whenever a builder below changes.
   static TableFile get _cache => const TableFile(
-    name: "min2phase-phase2.bin",
+    name: TableFiles.phase2,
     magic: [0x4D, 0x32, 0x50, 0x32], // "M2P2"
     version: 1,
   );

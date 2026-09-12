@@ -2,6 +2,7 @@ import "dart:io";
 import "dart:math";
 
 import "package:args/command_runner.dart";
+import "package:path/path.dart" as path;
 
 import "cli/puzzles.dart";
 
@@ -10,7 +11,7 @@ import "mochi_cube.dart";
 import "pocket.dart" show PocketTables;
 import "pyraminx.dart" show PyraminxTables;
 import "scramblers.dart";
-import "table_storage.dart" show tableDirectory;
+import "table_storage.dart" show TableFiles, tableDirectory;
 
 /// The `mochi_cube` command line tool.
 ///
@@ -244,7 +245,9 @@ class _PatternCommand extends _Command {
 
 class _TablesCommand extends _Command {
   _TablesCommand(super.emit) {
-    argParser.addFlag("rebuild", help: "Delete the cached tables first.");
+    argParser
+      ..addFlag("rebuild", help: "Delete the cached tables first.")
+      ..addOption("out", help: "Also copy the built tables into this directory, for shipping them prebuilt.");
   }
 
   @override
@@ -281,6 +284,20 @@ class _TablesCommand extends _Command {
       emit("${what.padRight(20)} ${_kilobytes(bytes).padLeft(9)}  ${clock.elapsedMilliseconds}ms");
     }
     emit("cached in ${where ?? "nowhere; this platform has no filesystem"}");
+
+    // The copy is what a host bundles as an asset. Host endian and versioned,
+    // so a table built by a different tool or a stale one is rejected on load
+    // and rebuilt rather than trusted.
+    if (argResults!.option("out") case final out? when where != null) {
+      Directory(out).createSync(recursive: true);
+      for (final name in TableFiles.all) {
+        final source = File(path.join(where, name));
+        if (source.existsSync()) {
+          source.copySync(path.join(out, name));
+          emit("copied $name to $out");
+        }
+      }
+    }
   }
 }
 

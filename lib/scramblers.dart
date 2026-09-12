@@ -25,11 +25,14 @@ import "cube/layout.dart";
 import "mochi_cube.dart";
 import "pocket.dart";
 import "pyraminx.dart";
-import "table_storage.dart" show yieldToEventLoop;
+import "table_storage.dart" show TableFiles, loadTables;
 
 // Algorithm and MoveSet are part of this library's own surface: a Scramble
 // carries one, and stateOf takes one.
 export "cube/algorithm.dart" show Algorithm, MoveSet;
+// Shipping the tables prebuilt is a scrambler-level decision: it is [next] that
+// would otherwise build them.
+export "table_storage.dart" show TableBytesLoader, TableFiles, useTableBytesLoader;
 export "clock/layout.dart" show ClockLayout;
 export "cube/layout.dart" show Layout, Point, PuzzleLayout;
 
@@ -95,6 +98,12 @@ abstract interface class Scrambler {
   /// asks for.
   List<int> stateAfter(Scramble scramble, int steps);
 
+  /// The table files this puzzle's scrambler needs, for a host that ships them
+  /// prebuilt rather than letting the first scramble build them.
+  ///
+  /// Empty for the Clock, which has no tables. See [useTableBytesLoader].
+  List<String> get tables;
+
   /// A scramble, drawn evenly from every state of the puzzle.
   ///
   /// [random] defaults to [Random.secure]; pass a seeded [Random] to reproduce
@@ -110,8 +119,12 @@ abstract interface class Scrambler {
   /// web, so awaiting this yields once — long enough for the indicator to be
   /// painted — and then holds the thread until the tables are built. The
   /// indicator appears rather than the tap seeming to do nothing, but it will
-  /// not animate through the build. Moving that off the frame would mean
-  /// building the tables a step at a time, which is a bigger change than this.
+  /// not animate through the build.
+  ///
+  /// Which is why a host that cannot afford that pause should ship the tables
+  /// prebuilt: [useTableBytesLoader] with the files [tables] names, and this
+  /// awaits the bytes instead of building them. That is the web answer, since
+  /// awaiting a download does leave the frame free.
   Future<Scramble> next({Random? random});
 }
 
@@ -201,8 +214,11 @@ class CubeScrambler with _AlgorithmSteps implements Scrambler {
   List<int> stateOf(Algorithm algorithm) => algorithm.cube.toFacelets();
 
   @override
+  List<String> get tables => const [TableFiles.phase1, TableFiles.phase2];
+
+  @override
   Future<Scramble> next({Random? random}) async {
-    await yieldToEventLoop();
+    await loadTables(tables);
     final algorithm = randomMoves
         ? randomScramble(moves: moves, random: random)
         : randomStateScramble(random: random);
@@ -236,8 +252,11 @@ class PocketScrambler with _AlgorithmSteps implements Scrambler {
   List<int> stateOf(Algorithm algorithm) => algorithm.cube.toPocketFacelets();
 
   @override
+  List<String> get tables => const [TableFiles.pocket];
+
+  @override
   Future<Scramble> next({Random? random}) async {
-    await yieldToEventLoop();
+    await loadTables(tables);
     final algorithm = randomPocketScramble(random: random);
     return Scramble(notation: algorithm.toString(), state: stateOf(algorithm), algorithm: algorithm);
   }
@@ -272,8 +291,11 @@ class PyraminxScrambler with _AlgorithmSteps implements Scrambler {
   List<int> stateOf(Algorithm algorithm) => (PyraminxCube()..apply(algorithm)).toFacelets();
 
   @override
+  List<String> get tables => const [TableFiles.pyraminx];
+
+  @override
   Future<Scramble> next({Random? random}) async {
-    await yieldToEventLoop();
+    await loadTables(tables);
     final algorithm = randomPyraminxScramble(random: random, tips: tips);
     return Scramble(notation: algorithm.toString(), state: stateOf(algorithm), algorithm: algorithm);
   }
@@ -326,8 +348,11 @@ class ClockScrambler implements Scrambler {
   }
 
   @override
+  List<String> get tables => const [];
+
+  @override
   Future<Scramble> next({Random? random}) async {
-    await yieldToEventLoop();
+    await loadTables(tables);
     final state = randomClockScramble(random: random);
     // No algorithm: a clock's scramble is where its dials end up, not a
     // sequence of turns that got them there.
@@ -377,8 +402,11 @@ class PracticeScrambler with _AlgorithmSteps implements Scrambler {
   List<int> stateOf(Algorithm algorithm) => algorithm.cube.toFacelets();
 
   @override
+  List<String> get tables => const [TableFiles.phase1, TableFiles.phase2];
+
+  @override
   Future<Scramble> next({Random? random}) async {
-    await yieldToEventLoop();
+    await loadTables(tables);
     final algorithm = switch (drill) {
       PracticeDrill.pll => pllPracticeScramble(random: random, spread: spread),
       PracticeDrill.oll => ollPracticeScramble(random: random, spread: spread),

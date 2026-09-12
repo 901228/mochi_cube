@@ -30,7 +30,7 @@ class PyraminxTables {
 
   /// The cache file. Bump the version whenever a builder below changes.
   static TableFile get _cache => const TableFile(
-    name: "pyraminx.bin",
+    name: TableFiles.pyraminx,
     magic: [0x50, 0x59, 0x52, 0x41], // "PYRA"
     version: 1,
   );

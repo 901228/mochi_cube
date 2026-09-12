@@ -15,6 +15,82 @@ export "cache/table_store.dart"
 /// cut into steps at all.
 Future<void> yieldToEventLoop() => Future<void>.delayed(Duration.zero);
 
+/// The names of the cache files, so a host that ships them prebuilt can name
+/// them without repeating the spelling each table class uses.
+abstract final class TableFiles {
+  /// The 3x3x3's phase 1 tables, and so the 3x3x3 drills'.
+  static const String phase1 = "min2phase-phase1.bin";
+
+  /// The 3x3x3's phase 2 tables.
+  static const String phase2 = "min2phase-phase2.bin";
+
+  /// The 2x2x2's tables.
+  static const String pocket = "pocket.bin";
+
+  /// The Pyraminx's tables.
+  static const String pyraminx = "pyraminx.bin";
+
+  /// The older Kociemba solver's tables. Not needed by any scrambler.
+  static const String kociemba = "tables.bin";
+
+  /// Every file the scramblers ask for, for a host bundling the lot.
+  static const List<String> all = [phase1, phase2, pocket, pyraminx];
+}
+
+/// Fetches the bytes of a prebuilt table file, or null where there are none.
+///
+/// See [useTableBytesLoader].
+typedef TableBytesLoader = Future<Uint8List?> Function(String name);
+
+TableBytesLoader? _loader;
+final Map<String, Uint8List> _supplied = {};
+
+/// Take prebuilt tables from [loader] rather than building them on first use.
+///
+/// For the web above all, where there is no filesystem to cache to and every
+/// page load would otherwise rebuild the tables on the one thread the UI runs
+/// on. A host that ships the `.bin` files as assets points this at them;
+/// [loadTables], which every `Scrambler.next` awaits, then pulls in what that
+/// puzzle needs before the synchronous build would have started, and the build
+/// finds the bytes already in memory and skips.
+///
+/// Pass null to go back to building them.
+///
+/// Returning null for a name is not an error: that table is built as usual. The
+/// files are written host endian and carry a version, so bytes from another
+/// machine's byte order or an older builder are rejected on load and rebuilt
+/// rather than trusted.
+void useTableBytesLoader(TableBytesLoader? loader) => _loader = loader;
+
+/// Pull [names] in through the loader set by [useTableBytesLoader].
+///
+/// Does nothing beyond yielding once when there is no loader, or when the bytes
+/// are already in hand. A loader takes precedence over the platform's own
+/// cache: a host that ships the tables has said which copy it wants used.
+Future<void> loadTables(Iterable<String> names) async {
+  if (_loader case final loader?) {
+    for (final name in names) {
+      if (_supplied.containsKey(name)) {
+        continue;
+      }
+      final bytes = await loader(name);
+      if (bytes != null) {
+        _supplied[name] = bytes;
+      }
+    }
+  }
+
+  await yieldToEventLoop();
+}
+
+/// The bytes of [name] from wherever they are to be had: the ones a host
+/// supplied, else the platform's own cache.
+///
+/// Supplied bytes are handed over rather than kept, since the caller is about
+/// to unpack them into typed lists and holding both would double the memory a
+/// table costs.
+Uint8List? cachedTableBytes(String name) => _supplied.remove(name) ?? readTableBytes(name);
+
 /// A `rows * columns` grid of small non-negative integers, stored flat.
 ///
 /// Indexed by a record, `table[(row, column)]`, so that a lookup never
@@ -174,7 +250,7 @@ class TableFile {
   ///
   /// [sectionLengths] must describe exactly what [write] was given.
   List<Uint8List>? read(List<int> sectionLengths) {
-    final bytes = readTableBytes(name);
+    final bytes = cachedTableBytes(name);
     if (bytes == null) {
       return null;
     }
