@@ -14,3 +14,5 @@ CLAUDE.md
 # Editor settings. FVM rewrites dart.flutterSdkPath here on `fvm use`,
 # and the rest of the file is personal.
 .vscode/
+
+/build/
