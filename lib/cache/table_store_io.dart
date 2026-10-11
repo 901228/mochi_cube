@@ -13,14 +13,22 @@ import "package:path/path.dart" as path;
 
 import "../logger.dart";
 
-/// Where the tables are cached: the platform's app-data directory.
-String? get tableDirectory => getAppDirs(application: "cube_solver").data;
+/// Where the tables are cached: the platform's app-data directory, or null on
+/// iOS and Android, whose apps are given no HOME to find one from.
+String? get tableDirectory =>
+    Platform.isIOS || Platform.isAndroid ? null : getAppDirs(application: "cube_solver").data;
 
-/// Where [name] is kept.
-String tablePath(String name) => path.join(tableDirectory!, name);
+/// Where [name] is kept, or just its name where there is no [tableDirectory].
+String tablePath(String name) => switch (tableDirectory) {
+  final directory? => path.join(directory, name),
+  null => name,
+};
 
 /// The bytes last written under [name], or null if there are none to be had.
 Uint8List? readTableBytes(String name) {
+  if (tableDirectory == null) {
+    return null;
+  }
   final file = File(tablePath(name));
   if (!file.existsSync()) {
     return null;
@@ -38,6 +46,9 @@ Uint8List? readTableBytes(String name) {
 /// A cache that cannot be written is a slow start, not a failure, so this warns
 /// rather than throwing.
 void writeTableBytes(String name, Uint8List bytes) {
+  if (tableDirectory == null) {
+    return;
+  }
   final file = File(tablePath(name));
   try {
     final parent = file.parent;
