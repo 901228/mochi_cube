@@ -98,6 +98,17 @@ abstract interface class Scrambler {
   /// asks for.
   List<int> stateAfter(Scramble scramble, int steps);
 
+  /// The scramble [notation] writes, as if this scrambler had made it.
+  ///
+  /// For a scramble that was stored as text, such as a record's, and has to be
+  /// drawn or stepped along again. Needs no tables: it replays the notation
+  /// rather than searching for anything.
+  ///
+  /// [Scramble.notation] comes back in this puzzle's own spelling, so extra
+  /// whitespace is gone and [stepsOf] splits it the way it splits one from
+  /// [next]. Throws [FormatException] when [notation] is not this puzzle's.
+  Scramble parse(String notation);
+
   /// The table files this puzzle's scrambler needs, for a host that ships them
   /// prebuilt rather than letting the first scramble build them.
   ///
@@ -165,6 +176,15 @@ mixin _AlgorithmSteps implements Scrambler {
   Algorithm _movesOf(Scramble scramble) =>
       scramble.algorithm ??
       (throw ArgumentError.value(scramble, "scramble", "has no moves, so it is not $name's"));
+
+  /// What this puzzle's moves are called. A 3x3x3's, unless it says otherwise.
+  MoveSet get _moveSet => MoveSet.cube;
+
+  @override
+  Scramble parse(String notation) {
+    final algorithm = Algorithm.parse(notation, moveSet: _moveSet);
+    return Scramble(notation: algorithm.toString(), state: stateOf(algorithm), algorithm: algorithm);
+  }
 
   @override
   List<String> stepsOf(Scramble scramble) {
@@ -291,6 +311,9 @@ class PyraminxScrambler with _AlgorithmSteps implements Scrambler {
   List<int> stateOf(Algorithm algorithm) => (PyraminxCube()..apply(algorithm)).toFacelets();
 
   @override
+  MoveSet get _moveSet => pyraminxMoves;
+
+  @override
   List<String> get tables => const [TableFiles.pyraminx];
 
   @override
@@ -326,6 +349,12 @@ class ClockScrambler implements Scrambler {
   @override
   List<int> stateOf(Algorithm algorithm) =>
       throw UnsupportedError("A Clock scramble is a set of dial positions, not a sequence of turns");
+
+  @override
+  Scramble parse(String notation) {
+    final state = ClockState.parse(notation);
+    return Scramble(notation: state.toString(), state: state.toDials());
+  }
 
   @override
   List<String> stepsOf(Scramble scramble) => scramble.notation.split(" ");

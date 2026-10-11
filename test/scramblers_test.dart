@@ -125,6 +125,37 @@ void main() {
     }
   });
 
+  test("parsing a scramble's notation gives the scramble back", () async {
+    for (final scrambler in all) {
+      final scramble = await scrambler.next();
+      final parsed = scrambler.parse(scramble.notation);
+      final reason = scrambler.name;
+
+      expect(parsed.notation, scramble.notation, reason: reason);
+      expect(parsed.state, scramble.state, reason: reason);
+      expect(parsed.algorithm, scramble.algorithm, reason: reason);
+      expect(scrambler.stepsOf(parsed), scrambler.stepsOf(scramble), reason: reason);
+    }
+  });
+
+  test("parsing tidies the spacing", () {
+    final scramble = const CubeScrambler().parse("  R   U2\tF' ");
+    expect(scramble.notation, "R U2 F'");
+    expect(const CubeScrambler().stepsOf(scramble), ["R", "U2", "F'"]);
+  });
+
+  test("parsing an empty notation gives the solved puzzle", () {
+    for (final scrambler in all.where((scrambler) => scrambler.puzzleId != "clock")) {
+      expect(scrambler.parse("").state, scrambler.solvedState, reason: scrambler.name);
+    }
+  });
+
+  test("parsing another puzzle's notation throws", () {
+    expect(() => const CubeScrambler().parse("R U X"), throwsFormatException);
+    expect(() => const PyraminxScrambler().parse("R U2"), throwsFormatException);
+    expect(() => const ClockScrambler().parse("R U R'"), throwsFormatException);
+  });
+
   test("the options are wired through", () async {
     final short = await const CubeScrambler(randomMoves: true, moves: 12).next();
     expect(short.algorithm, hasLength(12));
