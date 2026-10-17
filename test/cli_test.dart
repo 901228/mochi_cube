@@ -5,6 +5,7 @@ import "package:mochi_cube/mochi_cube.dart";
 import "package:mochi_cube/pocket.dart" show PocketFacelets;
 import "package:mochi_cube/pyraminx.dart";
 import "package:mochi_cube/scramblers.dart" show puzzleScramblers;
+import "package:mochi_cube/skewb.dart" show SkewbCube, skewbMoves;
 import "package:test/test.dart";
 
 /// Run the tool and collect what it printed, one entry per line.
@@ -28,8 +29,8 @@ void main() {
 
     test("a seed makes the run repeat", () async {
       // Not the 3x3x3, whose scramble draws from Random.secure inside the
-      // solver's own tie breaking; the other three are drawn and nothing else.
-      for (final puzzle in [CliPuzzle.pocket, CliPuzzle.pyraminx, CliPuzzle.clock]) {
+      // solver's own tie breaking; the others are drawn and nothing else.
+      for (final puzzle in [CliPuzzle.pocket, CliPuzzle.pyraminx, CliPuzzle.skewb, CliPuzzle.clock]) {
         final once = await run(["scramble", puzzle.name, "--seed", "42"]);
         final again = await run(["scramble", puzzle.name, "--seed", "42"]);
         expect(once, again, reason: puzzle.name);
@@ -50,6 +51,7 @@ void main() {
       expect(_solvesCube(await run(["scramble"])), isTrue);
       expect(_solvesPocket(await run(["scramble", "2x2"])), isTrue);
       expect(_solvesPyraminx(await run(["scramble", "pyraminx"])), isTrue);
+      expect(_solvesSkewb(await run(["scramble", "skewb"])), isTrue);
       expect(_solvesClock(await run(["scramble", "clock"])), isTrue);
     });
 
@@ -72,6 +74,12 @@ void main() {
     test("draws a solved clock as eighteen noons", () async {
       final lines = await run(["show", ClockState.solved().toString()]);
       expect(lines.skip(1).join(" ").split(RegExp(r"\s+")).where((t) => t == "0"), hasLength(18));
+    });
+
+    test("draws a solved Skewb as an X on every face", () async {
+      final net = (await run(["show", SkewbCube().toFaceletString()])).join("\n");
+      expect(net, contains("L   L F   F R   R B   B"));
+      expect(net, contains("  L     F     R     B"));
     });
 
     test("draws a Pyraminx as four named faces", () async {
@@ -159,6 +167,11 @@ bool _solvesPyraminx(List<String> scramble) {
   final solution = CliPuzzle.pyraminx.solve(CliPuzzle.pyraminx.stateOf(scramble.first));
   final cube = PyraminxCube()..apply(Algorithm.parse("${scramble.first} $solution", moveSet: pyraminxMoves));
   return cube.toFaceletString() == PyraminxCube().toFaceletString();
+}
+
+bool _solvesSkewb(List<String> scramble) {
+  final solution = CliPuzzle.skewb.solve(CliPuzzle.skewb.stateOf(scramble.first));
+  return (SkewbCube()..apply(Algorithm.parse("${scramble.first} $solution", moveSet: skewbMoves))).isSolved;
 }
 
 bool _solvesClock(List<String> scramble) {

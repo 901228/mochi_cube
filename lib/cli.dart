@@ -11,6 +11,7 @@ import "mochi_cube.dart";
 import "pocket.dart" show PocketTables;
 import "pyraminx.dart" show PyraminxTables;
 import "scramblers.dart";
+import "skewb.dart" show SkewbTables;
 import "table_storage.dart" show TableFiles, tableDirectory;
 
 /// The `mochi_cube` command line tool.
@@ -276,6 +277,7 @@ class _TablesCommand extends _Command {
       "min2phase phase 2": () => Phase2Tables().lengthInBytes,
       "2x2x2": () => PocketTables().lengthInBytes,
       "pyraminx": () => PyraminxTables().lengthInBytes,
+      "skewb": () => SkewbTables().lengthInBytes,
     };
 
     for (final MapEntry(key: what, value: build) in builders.entries) {

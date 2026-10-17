@@ -2,6 +2,7 @@ import "../clock.dart";
 import "../mochi_cube.dart";
 import "../pocket.dart" show nPocketFacelets;
 import "../pyraminx.dart";
+import "../skewb.dart" show nSkewbFacelets;
 
 /// Drawing a puzzle in a terminal.
 ///
@@ -32,6 +33,19 @@ abstract final class Ascii {
     }
 
     return grid.map((row) => row.join(" ").trimRight()).join("\n");
+  }
+
+  /// A Skewb's net: the 3x3x3's, with the edge tiles left blank.
+  ///
+  /// The Skewb's slots are the 3x3x3's tiles 0, 2, 4, 6 and 8, so each letter
+  /// lands where that tile would and the faces show their X.
+  static String skewbNet(String facelets) {
+    if (facelets.length != nSkewbFacelets) {
+      throw FormatException("Not a Skewb's stickers: ${facelets.length} of them");
+    }
+    return cubeNet(
+      [for (var i = 0; i < 54; i++) i % 9 % 2 == 0 ? facelets[i ~/ 9 * 5 + i % 9 ~/ 2] : " "].join(),
+    );
   }
 
   /// A Pyraminx's four faces, each as a triangle of nine letters.

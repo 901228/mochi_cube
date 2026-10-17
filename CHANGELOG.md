@@ -1,5 +1,15 @@
 ## Unreleased
 
+### The Skewb
+
+`package:mochi_cube/skewb.dart`: `SkewbCube`, `SkewbSearch` and
+`randomSkewbScramble`, in WCA notation with the up-front-right corner held still.
+One breadth-first search covers all 3,149,280 states, so every solution is
+optimal; the distance histogram matches the published one. `SkewbScrambler` is
+filed as `skewb` in `puzzleScramblers`, `skewbLayout` draws it on the cube's
+cross, and the command line scrambles, solves and shows it. The table is cached
+as `skewb.bin`, 1.5 MB.
+
 ### `Layout` is sealed
 
 **Breaking.** `Layout` was an `abstract mixin class`; it is now `sealed`, so a

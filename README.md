@@ -1,8 +1,8 @@
 # mochi_cube
 
 Twisty puzzle solvers and scramble generators in pure Dart, no Flutter
-dependency. The 3x3x3, the 2x2x2, the Pyraminx and the Clock so far, as a
-library and as a [command line tool](#command-line).
+dependency. The 3x3x3, the 2x2x2, the Pyraminx, the Skewb and the Clock so far,
+as a library and as a [command line tool](#command-line).
 
 For the 3x3x3 there are two solvers. The one you want is a port of Chen Shuang's
 [min2phase](https://github.com/cs0x7f/min2phase); the other is a plainer
@@ -145,6 +145,40 @@ where a 3x3x3 turns six faces by three, so `MoveSet` now says what the axes and
 amounts are called, and an `Algorithm` carries the one it is written in. The
 2x2x2 needed none of that, because its turns are the 3x3x3's.
 
+## The Skewb
+
+`package:mochi_cube/skewb.dart`. The third puzzle small enough to hold the exact
+distance for every state, so again solving is a walk downhill and the answer is
+always optimal.
+
+```dart
+import "package:mochi_cube/skewb.dart";
+
+final scramble = randomSkewbScramble();
+// R U' B L' R B' U L
+
+final cube = SkewbCube()..apply(scramble);
+print(SkewbSearch.solve(cube)); // the shortest way back
+```
+
+| | |
+| ---------- | ----------------------------------------- |
+| solve      | 2.4μs, and always optimal                 |
+| turns      | 8.4 average, 11 at worst                  |
+| table      | 1.5 MB, built in ~600ms, loaded in ~100ms |
+
+3,149,280 states, God's number 11, and the distance histogram matches the
+published one. The notation is WCA regulation 12h: `R`, `U`, `L` and `B` turn
+the corners down-back-right, up-back-left, down-front-left and down-back-left,
+so the up-front-right corner never moves and holds the puzzle still.
+
+The cube is kept as its 30 stickers, and each turn is worked out from where the
+stickers are in space rather than written down. The corners and the centres are
+then numbered by walking every turn from solved, so there is no parity or twist
+rule to get wrong: 8748 corner states and 360 centre states, which multiply to
+the published count. Reading stickers back takes the colours from the corner
+that never moves, as the 2x2x2 does.
+
 ## The Clock
 
 `package:mochi_cube/clock.dart`, and the odd one out: no search, and no table
@@ -214,7 +248,7 @@ symmetry, but H, Z, E and N cover 8 or 4, and 51 of the 57 OLLs cover 4
 orientations where two cover only one. `pllCases` and `ollCases` are the
 groupings themselves, 21 and 57 of them.
 
-## One interface for all four
+## One interface for all five
 
 The puzzles are kept apart everywhere else on purpose, so their scramble
 functions have different names, different arguments and — for the Clock, whose
@@ -225,7 +259,7 @@ and wrong for a screen with a puzzle picker on it.
 ```dart
 import "package:mochi_cube/scramblers.dart";
 
-puzzleScramblers;                     // {333: …, 222: …, pyram: …, clock: …}
+puzzleScramblers;                     // {333: …, 222: …, pyram: …, skewb: …, clock: …}
 
 final scrambler = puzzleScramblers[saved]!;
 final scramble = await scrambler.next();
@@ -235,8 +269,8 @@ scramble.state;      // one number per piece, index-matched to scrambler.layout
 scramble.algorithm;  // the moves, or null for the Clock
 ```
 
-The keys are the WCA event ids — `333`, `222`, `pyram`, `clock` — rather than a
-spelling of our own, since those are what the rest of the speedcubing world
+The keys are the WCA event ids — `333`, `222`, `pyram`, `skewb`, `clock` — rather
+than a spelling of our own, since those are what the rest of the speedcubing world
 writes and what the official scrambler is asked for. A saved setting can then
 name a puzzle without depending on the order they happen to be declared in, and
 `.values` is still the order a picker would list them in, since Dart maps keep
@@ -256,6 +290,7 @@ the puzzle's tables:
 | `333` | 1780ms | 24ms |
 | `222` | 1003ms | 0.1ms |
 | `pyram` | 333ms | 0.1ms |
+| `skewb` | 593ms | 0.1ms |
 | `clock` | 1ms | 0ms |
 
 Measured under dart2js, where there is no cache to load them from; on a platform
@@ -273,7 +308,7 @@ each puzzle before anything has been scrambled. `stateLength` is both the length
 of a state and the number of pieces in the layout, which is checked.
 
 It scrambles and it says how to draw the result; it does not solve. Only two of
-the four puzzles have a `Solver`, and the other two do not need one.
+the five puzzles have a `Solver`, and the other three do not need one.
 
 ## Command line
 
@@ -282,12 +317,12 @@ dart pub global activate mochi_cube
 ```
 
 ```
-mochi_cube scramble [3x3|2x2|pyraminx|clock]   a scramble, drawn evenly from every state
-mochi_cube solve <state>                       the moves back; the state says which puzzle
-mochi_cube show <state>                        draw it as a net of letters
-mochi_cube practice <pll|oll|f2l>              a drill scramble
-mochi_cube pattern <name>                      the moves that make a known pattern
-mochi_cube tables                              build the caches, and say where they went
+mochi_cube scramble [3x3|2x2|pyraminx|skewb|clock]   a scramble, drawn evenly from every state
+mochi_cube solve <state>                             the moves back; the state says which puzzle
+mochi_cube show <state>                              draw it as a net of letters
+mochi_cube practice <pll|oll|f2l>                    a drill scramble
+mochi_cube pattern <name>                            the moves that make a known pattern
+mochi_cube tables                                    build the caches, and say where they went
 ```
 
 ```console
@@ -355,6 +390,7 @@ for (var i = 0; i < facelets.length; i++) {
 | 3x3x3    | `cubeLayout`      | 54 squares, the usual cross net |
 | 2x2x2    | `pocketLayout`    | 24 squares, the same net        |
 | Pyraminx | `pyraminxLayout`  | 36 triangles, the tetrahedron net |
+| Skewb    | `skewbLayout`     | 30 pieces, the cube's cross net  |
 | Clock    | `clockLayout`     | 18 dials and 8 pins, as circles |
 
 `Layout` is sealed, so a switch over the two kinds needs no default branch and
@@ -429,11 +465,11 @@ it has to use an 8-element subgroup; and a breadth-first search that ignores
 inadmissible and lets the search miss solutions. Neither shows up without an
 exhaustive comparison.
 
-213 tests, `dart test`.
+296 tests, `dart test`.
 
 ## Roadmap
 
-The 3x3x3, the 2x2x2, the Pyraminx and the Clock are implemented. Everything
+The 3x3x3, the 2x2x2, the Pyraminx, the Skewb and the Clock are implemented. Everything
 below is wanted but not written.
 
 ### Other puzzles
@@ -452,15 +488,12 @@ and reversed, as above. Where it cannot, it is random turns.
 | 7x7x7        | random turns | 100 turns                                        |
 | Pyraminx     | random state | **done**                                         |
 | Megaminx     | random turns | 70 turns, in the fixed `R++ D--` pattern         |
-| Skewb        | random state | one breadth-first search over 3,149,280 states   |
+| Skewb        | random state | **done**                                         |
 | Square-1     | random state | a two-phase search, shape then permutation       |
 | Clock        | random state | **done**                                         |
 | FTO          | random state | its own solver                                   |
 
-Skewb should go the way the 2x2x2 and the Pyraminx did: its state space is small
-enough to hold the exact distance to solved for every state, so no two-phase
-search is needed and `fillPruningTable` already does the work. 5x5x5 and up are
-the *easiest* to scramble, since random turns need no solver at all; it is
+5x5x5 and up are the *easiest* to scramble, since random turns need no solver at all; it is
 solving them that is out of reach.
 
 Each has its own minimum, per WCA regulation 4b3: 2x2x2 four moves, Pyraminx

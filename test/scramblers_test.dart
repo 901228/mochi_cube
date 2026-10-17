@@ -5,6 +5,7 @@ import "package:mochi_cube/mochi_cube.dart";
 import "package:mochi_cube/pocket.dart" show PocketFacelets;
 import "package:mochi_cube/pyraminx.dart";
 import "package:mochi_cube/scramblers.dart";
+import "package:mochi_cube/skewb.dart" show SkewbCube, skewbMoves;
 import "package:test/test.dart";
 
 /// Every scrambler there is, drills included.
@@ -22,6 +23,7 @@ List<int> stateFromNotation(Scrambler scrambler, Scramble scramble) => switch (s
   "333" => Algorithm.parse(scramble.notation).cube.toFacelets(),
   "222" => Algorithm.parse(scramble.notation).cube.toPocketFacelets(),
   "pyram" => (PyraminxCube()..apply(Algorithm.parse(scramble.notation, moveSet: pyraminxMoves))).toFacelets(),
+  "skewb" => (SkewbCube()..apply(Algorithm.parse(scramble.notation, moveSet: skewbMoves))).toFacelets(),
   "clock" => ClockState.parse(scramble.notation).toDials(),
   _ => throw StateError("Unknown puzzle ${scrambler.puzzleId}"),
 };
@@ -66,7 +68,12 @@ void main() {
   test("a seed repeats the run", () async {
     // Not the 3x3x3 ones: their scramble is a solve, and the search draws on
     // Random.secure of its own.
-    for (final scrambler in [const PocketScrambler(), const PyraminxScrambler(), const ClockScrambler()]) {
+    for (final scrambler in [
+      const PocketScrambler(),
+      const PyraminxScrambler(),
+      const SkewbScrambler(),
+      const ClockScrambler(),
+    ]) {
       expect(
         (await scrambler.next(random: Random(42))).notation,
         (await scrambler.next(random: Random(42))).notation,
@@ -77,7 +84,7 @@ void main() {
 
   test("a scrambler is filed under its own id", () {
     allScramblers.forEach((key, scrambler) => expect(scrambler.id, key));
-    expect(puzzleScramblers.keys, ["333", "222", "pyram", "clock"]);
+    expect(puzzleScramblers.keys, ["333", "222", "pyram", "skewb", "clock"]);
     expect(practiceScramblers.keys, ["pll", "oll", "f2l"]);
     expect(allScramblers, hasLength(puzzleScramblers.length + practiceScramblers.length));
   });

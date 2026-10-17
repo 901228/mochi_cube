@@ -4,6 +4,7 @@ import "package:mochi_cube/clock.dart";
 import "package:mochi_cube/mochi_cube.dart";
 import "package:mochi_cube/pocket.dart" show pocketLayout;
 import "package:mochi_cube/pyraminx.dart";
+import "package:mochi_cube/skewb.dart" show nSkewbFacelets, skewbCornerOf, skewbLayout;
 import "package:test/test.dart";
 
 /// How close two points have to be to count as the same corner.
@@ -24,6 +25,16 @@ double _area(List<Point> polygon) {
     total += x1 * y2 - x2 * y1;
   }
   return total.abs() / 2;
+}
+
+/// Whether [point] is inside the convex [polygon], wound clockwise on screen.
+bool _inside(Point point, List<Point> polygon) {
+  for (var i = 0; i < polygon.length; i++) {
+    final (x1, y1) = polygon[i];
+    final (x2, y2) = polygon[(i + 1) % polygon.length];
+    if ((x2 - x1) * (point.$2 - y1) - (y2 - y1) * (point.$1 - x1) < 0) return false;
+  }
+  return true;
 }
 
 void _staysInsideTheBox(PuzzleLayout layout) {
@@ -84,6 +95,42 @@ void main() {
       expect(fit.scale, closeTo(100, 1e-9)); // 400 / 4 is tighter than 400 / 3
       expect(fit.dx, closeTo(0, 1e-9));
       expect(fit.dy, closeTo(50, 1e-9));
+    });
+  });
+
+  group("skewb net", () {
+    test("has one polygon per facelet, covering six faces exactly", () {
+      expect(skewbLayout.length, nSkewbFacelets);
+      _staysInsideTheBox(skewbLayout);
+      expect(skewbLayout.stickers.map(_area).reduce((a, b) => a + b), closeTo(6, 1e-9));
+    });
+
+    test("each sticker covers the 3x3x3 tile it stands for", () {
+      for (var facelet = 0; facelet < nSkewbFacelets; facelet++) {
+        final tile = cubeLayout[(facelet ~/ 5) * 9 + const [0, 2, 4, 6, 8][facelet % 5]];
+        final centre = (
+          tile.map((p) => p.$1).reduce((a, b) => a + b) / 4,
+          tile.map((p) => p.$2).reduce((a, b) => a + b) / 4,
+        );
+        expect(_inside(centre, skewbLayout[facelet]), isTrue, reason: "facelet $facelet");
+      }
+    });
+
+    // As for the cube: a corner whose faces are side by side in the net must be
+    // drawn in one piece. Five face boundaries are joined, two corners each. Two
+    // faces meeting only at a corner of the cross touch at a point, which is
+    // the one share that is neither apart nor joined.
+    test("corners that are not split by the net are drawn joined", () {
+      var joined = 0;
+      for (var a = 0; a < nSkewbFacelets; a++) {
+        for (var b = a + 1; b < nSkewbFacelets; b++) {
+          if (skewbCornerOf(a) == null || skewbCornerOf(a) != skewbCornerOf(b)) continue;
+          final shared = _sharedCorners(skewbLayout[a], skewbLayout[b]);
+          expect(shared, anyOf(0, 1, 2), reason: "stickers $a and $b share $shared corners");
+          if (shared == 2) joined++;
+        }
+      }
+      expect(joined, 10);
     });
   });
 

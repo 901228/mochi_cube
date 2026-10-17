@@ -5,18 +5,20 @@ import "../mochi_cube.dart";
 import "../pocket.dart";
 import "../pyraminx.dart";
 import "../scramblers.dart";
+import "../skewb.dart";
 import "render.dart";
 
 /// One puzzle, as the command line deals with it.
 ///
-/// The library keeps the four puzzles apart on purpose — they have different
+/// The library keeps the five puzzles apart on purpose — they have different
 /// cube models and, in the Clock's case, no cube at all — so this is where the
 /// command line puts them back together, and the only place that has to know
-/// all four.
+/// all five.
 enum CliPuzzle {
   cube("3x3", "333", ["3x3x3", "cube"]),
   pocket("2x2", "222", ["2x2x2", "pocket"]),
   pyraminx("pyraminx", "pyram", ["pyra", "pyramid"]),
+  skewb("skewb", "skewb", []),
   clock("clock", "clock", []);
 
   const CliPuzzle(this.name, this.id, this.aliases);
@@ -42,7 +44,7 @@ enum CliPuzzle {
 
   /// Which puzzle a state describes, worked out from the state itself.
   ///
-  /// The three sticker strings are different lengths and a clock's is not
+  /// The four sticker strings are different lengths and a clock's is not
   /// stickers at all, so there is nothing to ask the user.
   static CliPuzzle of(String state) {
     final stickers = state.replaceAll(RegExp(r"\s"), "");
@@ -50,10 +52,11 @@ enum CliPuzzle {
       54 => cube,
       nPocketFacelets => pocket,
       nPyraminxFacelets => pyraminx,
+      nSkewbFacelets => skewb,
       _ when state.contains("y2") => clock,
       _ => throw FormatException(
-        "Cannot tell what '$state' is: expected 54, $nPocketFacelets or "
-        "$nPyraminxFacelets stickers, or a clock scramble",
+        "Cannot tell what '$state' is: expected 54, $nPocketFacelets, "
+        "$nPyraminxFacelets or $nSkewbFacelets stickers, or a clock scramble",
       ),
     };
   }
@@ -87,6 +90,7 @@ enum CliPuzzle {
     pyraminx => Ascii.pyraminxFaces(
       (PyraminxCube()..apply(Algorithm.parse(scramble, moveSet: pyraminxMoves))).toFaceletString(),
     ),
+    skewb => Ascii.skewbNet(_skewbAfter(scramble).toFaceletString()),
     clock => Ascii.clockDials(ClockState.parse(scramble)),
   };
 
@@ -95,6 +99,7 @@ enum CliPuzzle {
     cube => Algorithm.parse(scramble).cube.toFaceletString(),
     pocket => Algorithm.parse(scramble).cube.toPocketFaceletString(),
     pyraminx => (PyraminxCube()..apply(Algorithm.parse(scramble, moveSet: pyraminxMoves))).toFaceletString(),
+    skewb => _skewbAfter(scramble).toFaceletString(),
     clock => ClockState.parse(scramble).toDials().join(" "),
   };
 
@@ -105,13 +110,14 @@ enum CliPuzzle {
       cube => Ascii.cubeNet(CubieCube.fromFaceletString(stickers).toFaceletString()),
       pocket => Ascii.cubeNet(PocketCube.fromFaceletString(stickers).toPocketFaceletString()),
       pyraminx => Ascii.pyraminxFaces(PyraminxFacelet.fromFaceletString(stickers).toFaceletString()),
+      skewb => Ascii.skewbNet(SkewbFacelet.fromFaceletString(stickers).toFaceletString()),
       clock => Ascii.clockDials(ClockState.parse(state)),
     };
   }
 
   /// The moves that solve the state described by [state].
   ///
-  /// Optimal for the 2x2x2, the Pyraminx and the Clock, since all three know
+  /// Optimal for the 2x2x2, the Pyraminx, the Skewb and the Clock, since all four know
   /// the exact distance; near optimal for the 3x3x3, which searches.
   String solve(String state, {int? maxLength}) {
     final stickers = state.replaceAll(RegExp(r"\s"), "");
@@ -126,10 +132,14 @@ enum CliPuzzle {
         return PocketSearch.solve(PocketCube.fromFaceletString(stickers)).toString();
       case pyraminx:
         return PyraminxSearch.solve(PyraminxFacelet.fromFaceletString(stickers)).toString();
+      case skewb:
+        return SkewbSearch.solve(SkewbFacelet.fromFaceletString(stickers)).toString();
       case clock:
         return ClockState.parse(state).inverse.toString();
     }
   }
 }
+
+SkewbCube _skewbAfter(String scramble) => SkewbCube()..apply(Algorithm.parse(scramble, moveSet: skewbMoves));
 
 String _because(SolveResult result) => result.error == null ? "" : " (${result.error})";
