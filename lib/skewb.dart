@@ -16,3 +16,5 @@ export "skewb/cube.dart"
         skewbFaceletPosition,
         skewbMoves;
 export "skewb/facelets.dart" show SkewbFacelet;
+export "skewb/search.dart" show SkewbSearch, randomSkewbCube, randomSkewbScramble;
+export "skewb/tables.dart" show SkewbTables;

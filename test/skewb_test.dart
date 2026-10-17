@@ -165,4 +165,73 @@ void main() {
       expect(() => SkewbFacelet.fromFaceletString(twisted.join()), throwsFormatException);
     });
   });
+
+  group("distance table", () {
+    late SkewbTables tables;
+    setUpAll(() => tables = SkewbTables());
+
+    test("covers the 3149280 states and reaches eleven at the deepest", () {
+      // Published for the puzzle (cubeman.org/fullcube.txt, matching the
+      // average of 8.3636 on Jaap's page), so this compares against something
+      // worked out independently of this code.
+      const expected = [1, 8, 48, 288, 1728, 10248, 59304, 315198, 1225483, 1455856, 81028, 90];
+
+      final histogram = List.filled(16, 0);
+      for (var i = 0; i < SkewbTables.nStates; i++) {
+        histogram[tables.distance.at(i)]++;
+      }
+
+      expect(histogram.sublist(0, expected.length), expected);
+      expect(histogram.skip(expected.length), everyElement(0));
+    });
+
+    test("the state index follows the puzzle move for move", () {
+      final random = Random(3);
+      for (var trial = 0; trial < 200; trial++) {
+        final cube = SkewbCube();
+        var index = tables.stateOf(cube);
+        for (var step = 0; step < 15; step++) {
+          final move = random.nextInt(skewbMoves.count);
+          cube.applyMove(move);
+          index = tables.successor(index, move);
+          expect(tables.stateOf(cube), index, reason: "diverged after $step turns");
+        }
+      }
+    });
+  });
+
+  group("solver", () {
+    test("the solution is optimal and solves the cube", () {
+      for (var seed = 0; seed < 500; seed++) {
+        final cube = randomSkewbCube(random: Random(seed));
+        final solution = SkewbSearch.solve(cube);
+
+        expect(solution.length, SkewbSearch.distanceOf(cube), reason: "seed $seed");
+        expect(solution.length, lessThanOrEqualTo(11));
+        expect(solution.moveSet, skewbMoves);
+        expect((SkewbCube.from(cube)..apply(solution)).isSolved, isTrue, reason: "seed $seed: $solution");
+      }
+    });
+
+    test("a scramble leaves the state it was drawn for, at least seven moves out", () {
+      for (var seed = 0; seed < 100; seed++) {
+        final scramble = randomSkewbScramble(random: Random(seed));
+        final cube = SkewbCube()..apply(scramble);
+        expect(SkewbSearch.distanceOf(cube), scramble.length, reason: "seed $seed");
+        expect(scramble.length, greaterThanOrEqualTo(7));
+      }
+    });
+
+    test("random cubes are spread over the whole state space", () {
+      // Coupon collector: draws spread evenly over `bins` fill about
+      // `bins * (1 - e^(-draws / bins))` of them.
+      const draws = 5000;
+      final bins = SkewbPart.corners.length;
+      final random = Random(4);
+      final seen = {
+        for (var i = 0; i < draws; i++) SkewbPart.corners.indexOf(randomSkewbCube(random: random).facelets),
+      };
+      expect(seen.length, closeTo(bins * (1 - exp(-draws / bins)), 100));
+    });
+  });
 }

@@ -30,11 +30,14 @@ abstract final class TableFiles {
   /// The Pyraminx's tables.
   static const String pyraminx = "pyraminx.bin";
 
+  /// The Skewb's tables.
+  static const String skewb = "skewb.bin";
+
   /// The older Kociemba solver's tables. Not needed by any scrambler.
   static const String kociemba = "tables.bin";
 
   /// Every file the scramblers ask for, for a host bundling the lot.
-  static const List<String> all = [phase1, phase2, pocket, pyraminx];
+  static const List<String> all = [phase1, phase2, pocket, pyraminx, skewb];
 }
 
 /// Fetches the bytes of a prebuilt table file, or null where there are none.
