@@ -103,14 +103,26 @@ class PyraminxCube {
     }
   }
 
+  /// How many steps of [turn] a move of [pyraminxMoves] is.
+  ///
+  /// `turn` cycles the other three faces in ascending order, which seen from the
+  /// vertex is clockwise for the odd vertices and anticlockwise for the even
+  /// ones. The notation is clockwise at all four, so those two are turned the
+  /// other way round.
+  static int stepsOf(int move) {
+    final vertex = pyraminxMoves.axisOf(move) % vertexCount;
+    final times = pyraminxMoves.amountOf(move) + 1;
+    return vertex.isEven ? 3 - times : times;
+  }
+
   /// Apply one move index of [pyraminxMoves].
   void applyMove(int move) {
     final axis = pyraminxMoves.axisOf(move);
-    final times = pyraminxMoves.amountOf(move) + 1;
+    final steps = stepsOf(move);
     if (axis >= vertexCount) {
-      turnTip(axis - vertexCount, times);
+      turnTip(axis - vertexCount, steps);
     } else {
-      turn(axis, times);
+      turn(axis, steps);
     }
   }
 

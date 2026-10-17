@@ -132,6 +132,38 @@ void main() {
     });
   });
 
+  // The notation is clockwise at every vertex. U, L and R sit on a straight
+  // stretch of the net, where that is clockwise on the screen too (y points down).
+  test("pyraminx turns go the same way round on the net", () {
+    for (final (vertex, name) in [(0, "U"), (1, "L"), (2, "R")]) {
+      final stickers = (PyraminxCube()..apply(Algorithm.parse(name, moveSet: pyraminxMoves))).toFacelets();
+      final faces = [
+        for (var face = 0; face < PyraminxCube.vertexCount; face++)
+          if (face != vertex) face,
+      ];
+      Point at(int face) {
+        final polygon = pyraminxLayout[face * 9 + vertexSlots[cornersOfFace(face).indexOf(vertex)]];
+        return (
+          polygon.map((p) => p.$1).reduce((a, b) => a + b) / 3,
+          polygon.map((p) => p.$2).reduce((a, b) => a + b) / 3,
+        );
+      }
+
+      final centre = (
+        faces.map((f) => at(f).$1).reduce((a, b) => a + b) / 3,
+        faces.map((f) => at(f).$2).reduce((a, b) => a + b) / 3,
+      );
+      var turning = 0.0;
+      for (final face in faces) {
+        // The sticker now on `face` came from the face whose colour it shows.
+        final from = at(stickers[face * 9 + vertexSlots[cornersOfFace(face).indexOf(vertex)]]);
+        final to = at(face);
+        turning += (from.$1 - centre.$1) * (to.$2 - centre.$2) - (from.$2 - centre.$2) * (to.$1 - centre.$1);
+      }
+      expect(turning, greaterThan(0), reason: "$name is not clockwise");
+    }
+  });
+
   group("clock layout", () {
     test("has one circle per dial", () {
       expect(clockLayout.dials.length, nClockDials);

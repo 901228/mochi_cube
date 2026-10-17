@@ -28,9 +28,9 @@ abstract final class PyraminxSearch {
       if (twist == 0) {
         continue;
       }
-      // One turn puts it back: twisted once needs the other way round.
-      final amount = twist == 1 ? 1 : 0;
-      moves.add((PyraminxCube.vertexCount + tip) * pyraminxMoves.amounts.length + amount);
+      // One turn puts it back: whichever of the two undoes the twist.
+      final first = (PyraminxCube.vertexCount + tip) * pyraminxMoves.amounts.length;
+      moves.add(PyraminxCube.stepsOf(first) == 3 - twist ? first : first + 1);
     }
 
     return Algorithm(moves, moveSet: pyraminxMoves);

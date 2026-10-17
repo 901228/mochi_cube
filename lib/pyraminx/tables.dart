@@ -32,7 +32,7 @@ class PyraminxTables {
   static TableFile get _cache => const TableFile(
     name: TableFiles.pyraminx,
     magic: [0x50, 0x59, 0x52, 0x41], // "PYRA"
-    version: 1,
+    version: 2,
   );
 
   static List<int> get _sectionLengths => [
@@ -177,7 +177,7 @@ MovingTable _buildVertexMove() {
         rest ~/= 3;
       }
       digits[pyraminxMoves.axisOf(move)] =
-          (digits[pyraminxMoves.axisOf(move)] + pyraminxMoves.amountOf(move) + 1) % 3;
+          (digits[pyraminxMoves.axisOf(move)] + PyraminxCube.stepsOf(move)) % 3;
 
       var next = 0;
       for (var i = PyraminxCube.vertexCount - 1; i >= 0; i--) {

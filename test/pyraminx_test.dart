@@ -50,7 +50,7 @@ void main() {
       expect(cube.areLayersSolved, isTrue, reason: "a tip turn moved a layer");
       expect(cube.areTipsSolved, isFalse);
       expect(cube.isSolved, isFalse);
-      expect(cube.tips, [1, 2, 1, 2]);
+      expect(cube.tips, [2, 2, 2, 2]);
     });
 
     test("a layer turn carries its tip with it", () {
