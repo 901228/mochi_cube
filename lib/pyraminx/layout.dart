@@ -6,27 +6,29 @@ import "facelets.dart";
 
 /// The net of a Pyraminx: 36 triangles, in the order `toFacelets()` gives them.
 ///
-/// The standard unfolding — one big triangle of side two cut into four of side
-/// one, three of them the right way up and the middle one inverted. Each of
-/// those is a face, cut again into the nine the puzzle has.
+/// The standard unfolding, as csTimer and Twisty Timer draw it: one big triangle
+/// of side two standing on its point, cut into four of side one. Each of those
+/// is a face, cut again into the nine the puzzle has.
 ///
-/// Which face lands where is not a choice. A tetrahedron's six net points are
-/// its three edge midpoints, each shared by three faces, and three outer
-/// corners which are all the same vertex seen three times; vertex `v` is on
-/// every face but `v`, so the vertex the middle face does not have is the one
-/// at the outside, and that pins all four faces down at once.
+/// The vertices are numbered as `pyraminxMoves` names them: U, L, R, B. Held
+/// with U up and B at the back, the front is the face without B, the bottom the
+/// one without U, the left the one without R and the right the one without L.
+/// So B is in the middle, U at the bottom, R top left and L top right. The
+/// middle face lacks vertex B, which makes B the outer corner of the other
+/// three, and U comes out at the top, where a turn of it is drawn.
 final PuzzleLayout pyraminxLayout = _build();
 
 /// The height of a triangle of side two, and so of the whole net.
 final double _height = sqrt(3);
 
-/// Where the three edge midpoints are: vertices 1, 2 and 3.
-final Map<int, Point> _midpoints = {1: (0.5, _height / 2), 2: (1.5, _height / 2), 3: (1.0, _height)};
+/// The face in the middle of the net, and so the vertex at its outer corners.
+const int pyraminxMiddleFace = 3;
 
-/// Where vertex 0 is on each face, being the outer corner of that face.
-///
-/// Face 0 has no vertex 0, which is why it is the one in the middle.
-final Map<int, Point> _outerCorners = {1: (2.0, _height), 2: (0.0, _height), 3: (1.0, 0.0)};
+/// Where the three edge midpoints are: vertices U, L and R.
+final Map<int, Point> _midpoints = {0: (1.0, 0.0), 1: (0.5, _height / 2), 2: (1.5, _height / 2)};
+
+/// Where the middle face's vertex is on each other face, being the outer corner of that face.
+final Map<int, Point> _outerCorners = {0: (1.0, _height), 1: (2.0, 0.0), 2: (0.0, 0.0)};
 
 PuzzleLayout _build() => PuzzleLayout(
   width: 2,
@@ -34,7 +36,8 @@ PuzzleLayout _build() => PuzzleLayout(
   stickers: [
     for (var face = 0; face < PyraminxCube.vertexCount; face++)
       ..._faceStickers([
-        for (final vertex in cornersOfFace(face)) vertex == 0 ? _outerCorners[face]! : _midpoints[vertex]!,
+        for (final vertex in cornersOfFace(face))
+          vertex == pyraminxMiddleFace ? _outerCorners[face]! : _midpoints[vertex]!,
       ]),
   ],
 );

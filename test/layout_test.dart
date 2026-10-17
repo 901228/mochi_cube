@@ -108,19 +108,23 @@ void main() {
     // The middle face touches all three others, and the piece along each of
     // those folds is one edge showing two of its stickers.
     test("the folds of the net are drawn joined", () {
-      for (var face = 1; face < PyraminxCube.vertexCount; face++) {
-        final edge = PyraminxCube.edgeIndexOf(0, face);
-        final here = pyraminxLayout[0 * 9 + _edgeSlotOn(0, edge)];
+      const middle = pyraminxMiddleFace;
+      for (var face = 0; face < PyraminxCube.vertexCount; face++) {
+        if (face == middle) continue;
+        final edge = PyraminxCube.edgeIndexOf(middle, face);
+        final here = pyraminxLayout[middle * 9 + _edgeSlotOn(middle, edge)];
         final there = pyraminxLayout[face * 9 + _edgeSlotOn(face, edge)];
-        expect(_sharedCorners(here, there), 2, reason: "edge $edge between faces 0 and $face");
+        expect(_sharedCorners(here, there), 2, reason: "edge $edge between faces $middle and $face");
       }
     });
 
     test("the tips of a vertex meet at the point they share", () {
-      for (var face = 1; face < PyraminxCube.vertexCount; face++) {
-        for (final vertex in cornersOfFace(0)) {
+      const middle = pyraminxMiddleFace;
+      for (var face = 0; face < PyraminxCube.vertexCount; face++) {
+        if (face == middle) continue;
+        for (final vertex in cornersOfFace(middle)) {
           if (!cornersOfFace(face).contains(vertex)) continue;
-          final here = pyraminxLayout[0 * 9 + tipSlots[cornersOfFace(0).indexOf(vertex)]];
+          final here = pyraminxLayout[middle * 9 + tipSlots[cornersOfFace(middle).indexOf(vertex)]];
           final there = pyraminxLayout[face * 9 + tipSlots[cornersOfFace(face).indexOf(vertex)]];
           expect(_sharedCorners(here, there), greaterThanOrEqualTo(1));
         }

@@ -18,7 +18,7 @@ library;
 
 export "cube/algorithm.dart" show Algorithm, MoveSet;
 export "cube/layout.dart" show Point, PuzzleLayout;
-export "pyraminx/layout.dart" show pyraminxLayout;
+export "pyraminx/layout.dart" show pyraminxLayout, pyraminxMiddleFace;
 export "pyraminx/cube.dart" show PyraminxCube, layerMoveCount, pyraminxMoves, tipMoveCount;
 export "pyraminx/facelets.dart"
     show
