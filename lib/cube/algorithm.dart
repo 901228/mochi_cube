@@ -28,8 +28,9 @@ class Algorithm extends IterableBase<int> {
   ///
   /// Whitespace between moves is ignored; an empty string gives [empty].
   factory Algorithm.parse(String notation, {MoveSet moveSet = MoveSet.cube}) {
-    final tokens = notation.split(RegExp(r"\s+")).where((token) => token.isNotEmpty);
-    return Algorithm([for (final token in tokens) moveSet.parse(token)], moveSet: moveSet);
+    return Algorithm([
+      for (final token in moveSet.tokensOf(notation)) moveSet.parse(token),
+    ], moveSet: moveSet);
   }
 
   /// The moves that undo this algorithm: reversed, each one inverted.
@@ -111,6 +112,13 @@ class MoveSet {
   int axisOf(int move) => move ~/ amounts.length;
 
   int amountOf(int move) => move % amounts.length;
+
+  /// Split [notation] into the tokens [parse] reads, one per move.
+  ///
+  /// Whitespace between moves, which is how every puzzle here writes them but
+  /// the Square-1, whose `(1,0)/` runs two moves together.
+  Iterable<String> tokensOf(String notation) =>
+      notation.split(RegExp(r"\s+")).where((token) => token.isNotEmpty);
 
   /// Parse one move, e.g. `"R'"`.
   int parse(String token) {
