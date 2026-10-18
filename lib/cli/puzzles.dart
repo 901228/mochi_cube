@@ -2,6 +2,7 @@ import "dart:math";
 
 import "../clock.dart";
 import "../mochi_cube.dart";
+import "../nxn.dart" show NxNCube, nxnMoves;
 import "../pocket.dart";
 import "../pyraminx.dart";
 import "../scramblers.dart";
@@ -11,13 +12,16 @@ import "render.dart";
 
 /// One puzzle, as the command line deals with it.
 ///
-/// The library keeps the six puzzles apart on purpose — they have different
-/// cube models and, in the Clock's case, no cube at all — so this is where the
+/// The library keeps the puzzles apart on purpose — they have different cube
+/// models and, in the Clock's case, no cube at all — so this is where the
 /// command line puts them back together, and the only place that has to know
-/// all six.
+/// all of them.
 enum CliPuzzle {
   cube("3x3", "333", ["3x3x3", "cube"]),
   pocket("2x2", "222", ["2x2x2", "pocket"]),
+  cube5("5x5", "555", ["5x5x5"]),
+  cube6("6x6", "666", ["6x6x6"]),
+  cube7("7x7", "777", ["7x7x7"]),
   pyraminx("pyraminx", "pyram", ["pyra", "pyramid"]),
   skewb("skewb", "skewb", []),
   square1("sq1", "sq1", ["square1", "square-1"]),
@@ -46,7 +50,7 @@ enum CliPuzzle {
 
   /// Which puzzle a state describes, worked out from the state itself.
   ///
-  /// The four sticker strings are different lengths, a Square-1's is 25 hex
+  /// The sticker strings are all different lengths, a Square-1's is 25 hex
   /// digits and a clock's is not stickers at all, so there is nothing to ask
   /// the user.
   static CliPuzzle of(String state) {
@@ -54,12 +58,15 @@ enum CliPuzzle {
     return switch (stickers.length) {
       54 => cube,
       nPocketFacelets => pocket,
+      150 => cube5,
+      216 => cube6,
+      294 => cube7,
       nPyraminxFacelets => pyraminx,
       nSkewbFacelets => skewb,
       25 => square1,
       _ when state.contains("y2") => clock,
       _ => throw FormatException(
-        "Cannot tell what '$state' is: expected 54, $nPocketFacelets, "
+        "Cannot tell what '$state' is: expected 54, $nPocketFacelets, 150, 216, 294, "
         "$nPyraminxFacelets or $nSkewbFacelets stickers, a Square-1's 25 digits or a clock scramble",
       ),
     };
@@ -94,6 +101,7 @@ enum CliPuzzle {
     pyraminx => Ascii.pyraminxFaces(
       (PyraminxCube()..apply(Algorithm.parse(scramble, moveSet: pyraminxMoves))).toFaceletString(),
     ),
+    cube5 || cube6 || cube7 => Ascii.cubeNet(_nxnAfter(scramble).toFaceletString()),
     skewb => Ascii.skewbNet(_skewbAfter(scramble).toFaceletString()),
     square1 => Ascii.square1Layers(_square1After(scramble)),
     clock => Ascii.clockDials(ClockState.parse(scramble)),
@@ -104,6 +112,7 @@ enum CliPuzzle {
     cube => Algorithm.parse(scramble).cube.toFaceletString(),
     pocket => Algorithm.parse(scramble).cube.toPocketFaceletString(),
     pyraminx => (PyraminxCube()..apply(Algorithm.parse(scramble, moveSet: pyraminxMoves))).toFaceletString(),
+    cube5 || cube6 || cube7 => _nxnAfter(scramble).toFaceletString(),
     skewb => _skewbAfter(scramble).toFaceletString(),
     square1 => _square1After(scramble).toString(),
     clock => ClockState.parse(scramble).toDials().join(" "),
@@ -116,6 +125,7 @@ enum CliPuzzle {
       cube => Ascii.cubeNet(CubieCube.fromFaceletString(stickers).toFaceletString()),
       pocket => Ascii.cubeNet(PocketCube.fromFaceletString(stickers).toPocketFaceletString()),
       pyraminx => Ascii.pyraminxFaces(PyraminxFacelet.fromFaceletString(stickers).toFaceletString()),
+      cube5 || cube6 || cube7 => Ascii.cubeNet(NxNCube.fromFaceletString(_size, stickers).toFaceletString()),
       skewb => Ascii.skewbNet(SkewbFacelet.fromFaceletString(stickers).toFaceletString()),
       square1 => Ascii.square1Layers(Square1Cube.parse(stickers)),
       clock => Ascii.clockDials(ClockState.parse(state)),
@@ -126,7 +136,8 @@ enum CliPuzzle {
   ///
   /// Optimal for the 2x2x2, the Pyraminx, the Skewb and the Clock, since all four know
   /// the exact distance; near optimal for the 3x3x3, which searches, and not
-  /// for the Square-1, whose search goes by way of a cube.
+  /// for the Square-1, whose search goes by way of a cube. Nothing solves the
+  /// 5x5x5 and up, which throw.
   String solve(String state, {int? maxLength}) {
     final stickers = state.replaceAll(RegExp(r"\s"), "");
     switch (this) {
@@ -140,6 +151,8 @@ enum CliPuzzle {
         return PocketSearch.solve(PocketCube.fromFaceletString(stickers)).toString();
       case pyraminx:
         return PyraminxSearch.solve(PyraminxFacelet.fromFaceletString(stickers)).toString();
+      case cube5 || cube6 || cube7:
+        throw FormatException("Nothing solves the $name: it is scrambled by random turns, not from a state");
       case skewb:
         return SkewbSearch.solve(SkewbFacelet.fromFaceletString(stickers)).toString();
       case square1:
@@ -148,6 +161,17 @@ enum CliPuzzle {
         return ClockState.parse(state).inverse.toString();
     }
   }
+
+  /// How many stickers along a side, for the cubes from 5x5x5 up.
+  int get _size => switch (this) {
+    cube5 => 5,
+    cube6 => 6,
+    cube7 => 7,
+    _ => throw StateError("The $name is not one of the big cubes"),
+  };
+
+  NxNCube _nxnAfter(String scramble) =>
+      NxNCube(_size)..apply(Algorithm.parse(scramble, moveSet: nxnMoves(_size)));
 }
 
 SkewbCube _skewbAfter(String scramble) => SkewbCube()..apply(Algorithm.parse(scramble, moveSet: skewbMoves));

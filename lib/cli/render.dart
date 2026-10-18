@@ -1,6 +1,7 @@
+import "dart:math";
+
 import "../clock.dart";
 import "../mochi_cube.dart";
-import "../pocket.dart" show nPocketFacelets;
 import "../pyraminx.dart";
 import "../skewb.dart" show nSkewbFacelets;
 import "../square1.dart" show Square1Cube, square1Layout;
@@ -20,11 +21,10 @@ abstract final class Ascii {
   /// Laid out from [cubeNetPosition], so it is the same net the drawing
   /// geometry uses and changing one moves the other.
   static String cubeNet(String facelets) {
-    final n = switch (facelets.length) {
-      54 => 3,
-      nPocketFacelets => 2,
-      _ => throw FormatException("Not a cube's stickers: ${facelets.length} of them"),
-    };
+    final n = sqrt(facelets.length / 6).round();
+    if (n < 2 || 6 * n * n != facelets.length) {
+      throw FormatException("Not a cube's stickers: ${facelets.length} of them");
+    }
 
     final grid = [for (var row = 0; row < 3 * n; row++) List.filled(4 * n, " ")];
     for (var facelet = 0; facelet < facelets.length; facelet++) {

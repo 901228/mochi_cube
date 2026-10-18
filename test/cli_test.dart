@@ -3,6 +3,7 @@ import "package:mochi_cube/cli.dart";
 import "package:mochi_cube/clock.dart";
 import "package:mochi_cube/mochi_cube.dart";
 import "package:mochi_cube/pocket.dart" show PocketFacelets;
+import "package:mochi_cube/nxn.dart" show NxNCube;
 import "package:mochi_cube/pyraminx.dart";
 import "package:mochi_cube/scramblers.dart" show puzzleScramblers;
 import "package:mochi_cube/skewb.dart" show SkewbCube, skewbMoves;
@@ -33,6 +34,7 @@ void main() {
       // solver's own tie breaking; the others are drawn and nothing else.
       for (final puzzle in [
         CliPuzzle.pocket,
+        CliPuzzle.cube5,
         CliPuzzle.pyraminx,
         CliPuzzle.skewb,
         CliPuzzle.square1,
@@ -48,7 +50,7 @@ void main() {
       for (final puzzle in CliPuzzle.values) {
         if (puzzle == CliPuzzle.clock) continue; // its state is its scramble
         final lines = await run(["scramble", puzzle.name, "--state"]);
-        expect(CliPuzzle.of(lines[1]), puzzle);
+        expect(CliPuzzle.of(lines.last), puzzle);
       }
     });
   });
@@ -61,6 +63,13 @@ void main() {
       expect(_solvesSkewb(await run(["scramble", "skewb"])), isTrue);
       expect(_solvesSquare1(await run(["scramble", "sq1"])), isTrue);
       expect(_solvesClock(await run(["scramble", "clock"])), isTrue);
+    });
+
+    test("refuses the big cubes, which nothing solves", () async {
+      for (final puzzle in ["5x5"]) {
+        final state = (await run(["scramble", puzzle, "--state"])).last;
+        expect(() => run(["solve", state]), throwsFormatException, reason: puzzle);
+      }
     });
 
     test("says which puzzle it cannot tell", () async {
@@ -88,6 +97,12 @@ void main() {
       final net = (await run(["show", SkewbCube().toFaceletString()])).join("\n");
       expect(net, contains("L   L F   F R   R B   B"));
       expect(net, contains("  L     F     R     B"));
+    });
+
+    test("draws a big cube as the same net, a letter a sticker", () async {
+      final net = await run(["show", NxNCube(5).toFaceletString()]);
+      expect(net, hasLength(15));
+      expect(net[7], "L L L L L F F F F F R R R R R B B B B B");
     });
 
     test("draws a solved Square-1 as its two layers", () async {
@@ -146,7 +161,7 @@ void main() {
           expect(CliPuzzle.byName(name.toUpperCase()), puzzle);
         }
       }
-      expect(() => CliPuzzle.byName("megaminx"), throwsFormatException);
+      expect(() => CliPuzzle.byName("fto"), throwsFormatException);
     });
 
     // The tool and the library have to agree on what a puzzle is called, or a

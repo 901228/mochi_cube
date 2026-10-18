@@ -2,6 +2,7 @@ import "dart:math";
 
 import "package:mochi_cube/clock.dart";
 import "package:mochi_cube/mochi_cube.dart";
+import "package:mochi_cube/nxn.dart" show NxNCube, nxnMoves;
 import "package:mochi_cube/pocket.dart" show PocketFacelets;
 import "package:mochi_cube/pyraminx.dart";
 import "package:mochi_cube/scramblers.dart";
@@ -24,6 +25,10 @@ int piecesOf(Layout layout) => switch (layout) {
 List<int> stateFromNotation(Scrambler scrambler, Scramble scramble) => switch (scrambler.puzzleId) {
   "333" => Algorithm.parse(scramble.notation).cube.toFacelets(),
   "222" => Algorithm.parse(scramble.notation).cube.toPocketFacelets(),
+  "555" || "666" || "777" => [
+    for (final size in [int.parse(scrambler.puzzleId[0])])
+      ...(NxNCube(size)..apply(Algorithm.parse(scramble.notation, moveSet: nxnMoves(size)))).toFacelets(),
+  ],
   "pyram" => (PyraminxCube()..apply(Algorithm.parse(scramble.notation, moveSet: pyraminxMoves))).toFacelets(),
   "skewb" => (SkewbCube()..apply(Algorithm.parse(scramble.notation, moveSet: skewbMoves))).toFacelets(),
   "sq1" => [
@@ -78,6 +83,7 @@ void main() {
     // Random.secure of its own.
     for (final scrambler in [
       const PocketScrambler(),
+      const NxNScrambler(5),
       const PyraminxScrambler(),
       const SkewbScrambler(),
       const Square1Scrambler(),
@@ -93,7 +99,17 @@ void main() {
 
   test("a scrambler is filed under its own id", () {
     allScramblers.forEach((key, scrambler) => expect(scrambler.id, key));
-    expect(puzzleScramblers.keys, ["333", "222", "pyram", "skewb", "sq1", "clock"]);
+    expect(puzzleScramblers.keys, [
+      "333",
+      "222",
+      "555",
+      "666",
+      "777",
+      "pyram",
+      "skewb",
+      "sq1",
+      "clock",
+    ]);
     expect(practiceScramblers.keys, ["pll", "oll", "f2l"]);
     expect(allScramblers, hasLength(puzzleScramblers.length + practiceScramblers.length));
   });

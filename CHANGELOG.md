@@ -1,5 +1,13 @@
 ## Unreleased
 
+### The 5x5x5, 6x6x6 and 7x7x7
+
+`package:mochi_cube/nxn.dart`: `NxNCube` and `randomNxNScramble`, random turn
+scrambles as TNoodle makes them — 60, 80 and 100 turns, none cancelling or
+merging with another. `NxNScrambler` is filed as `555`, `666` and `777`, drawn
+with `cubeNetLayout(n)`, and the command line scrambles and shows them; it does
+not solve them.
+
 ### The Square-1
 
 `package:mochi_cube/square1.dart`: `Square1Cube`, `Square1Search` and
