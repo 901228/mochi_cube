@@ -5,6 +5,7 @@ import "package:mochi_cube/mochi_cube.dart";
 import "package:mochi_cube/pocket.dart" show pocketLayout;
 import "package:mochi_cube/pyraminx.dart";
 import "package:mochi_cube/skewb.dart" show nSkewbFacelets, skewbCornerOf, skewbLayout;
+import "package:mochi_cube/square1.dart" show Square1Cube, randomSquare1Cube, square1Layout;
 import "package:test/test.dart";
 
 /// How close two points have to be to count as the same corner.
@@ -209,6 +210,91 @@ void main() {
       }
       expect(turning, greaterThan(0), reason: "$name is not clockwise");
     }
+  });
+
+  group("square-1", () {
+    List<int> stateOf(Square1Cube cube) => [...cube.pieces, cube.middle];
+    Point centroid(List<Point> polygon) => (
+      polygon.map((p) => p.$1).reduce((a, b) => a + b) / polygon.length,
+      polygon.map((p) => p.$2).reduce((a, b) => a + b) / polygon.length,
+    );
+    // A layer's middle is the one corner its wedges all share.
+    Point middleOf(int first) => square1Layout.edges[first][0].firstWhere(
+      (point) => square1Layout.edges[first + 6][0].any((other) => _same(point, other)),
+    );
+    final topCentre = middleOf(0);
+    final bottomCentre = middleOf(12);
+
+    test("draws every piece once, inside the box, wound the same way", () {
+      final random = Random(1);
+      for (var trial = 0; trial < 100; trial++) {
+        final cube = randomSquare1Cube(random: random)..turnTop(random.nextInt(12));
+        final stickers = square1Layout.stickers(stateOf(cube));
+        // Eight edges of two stickers, eight corners of three, two of middle.
+        expect(stickers, hasLength(42));
+        for (final (polygon, _) in stickers) {
+          expect(_area(polygon), greaterThan(0));
+          for (final (x, y) in polygon) {
+            expect(x, inInclusiveRange(-_epsilon, square1Layout.width + _epsilon));
+            expect(y, inInclusiveRange(-_epsilon, square1Layout.height + _epsilon));
+          }
+        }
+      }
+    });
+
+    test("solved, each layer is a square of side two", () {
+      // Everything but the two middle stickers, which come last.
+      final stickers = square1Layout.stickers(stateOf(Square1Cube()));
+      final layers = stickers.take(stickers.length - 2).map((sticker) => _area(sticker.$1));
+      expect(layers.reduce((a, b) => a + b), closeTo(8, 1e-9));
+    });
+
+    // The colours are the part that is puzzle knowledge. Solved, a side sticker
+    // must be on the side of its own face: the top is drawn from above with the
+    // back up, the bottom from below with the front up, right on the right.
+    test("solved, every side sticker faces its own face", () {
+      const up = {5: (0.0, -1.0), 2: (0.0, 1.0), 1: (1.0, 0.0), 4: (-1.0, 0.0)};
+      const down = {2: (0.0, -1.0), 5: (0.0, 1.0), 1: (1.0, 0.0), 4: (-1.0, 0.0)};
+      final stickers = square1Layout.stickers(stateOf(Square1Cube()));
+      for (final (polygon, face) in stickers.take(stickers.length - 2)) {
+        final (x, y) = centroid(polygon);
+        final onTop = y < square1Layout.middle[0][0].$2;
+        if (face == 0 || face == 3) {
+          expect(face, onTop ? 0 : 3);
+          continue;
+        }
+        final (cx, cy) = onTop ? topCentre : bottomCentre;
+        final (dx, dy) = (onTop ? up : down)[face]!;
+        // Within 45 degrees of that face's direction.
+        final cosine = ((x - cx) * dx + (y - cy) * dy) / sqrt(pow(x - cx, 2) + pow(y - cy, 2));
+        expect(cosine, greaterThanOrEqualTo(sqrt1_2 - 1e-9), reason: "face $face at ${(x, y)}");
+      }
+    });
+
+    test("the middle shows the front, or the back of its right half once turned over", () {
+      final square = square1Layout.stickers(stateOf(Square1Cube())).skip(40).map((s) => s.$2);
+      final turned = square1Layout.stickers(stateOf(Square1Cube()..slash())).skip(40).map((s) => s.$2);
+      expect(square, [2, 2]);
+      expect(turned, [2, 5]);
+    });
+
+    test("turning a layer is clockwise on the page, the way it is seen", () {
+      for (final (first, turn, centre) in [
+        (0, (Square1Cube cube) => cube.turnTop(1), topCentre),
+        (12, (Square1Cube cube) => cube.turnBottom(1), bottomCentre),
+      ]) {
+        final cube = Square1Cube();
+        turn(cube);
+        for (var slot = first; slot < first + 12; slot++) {
+          final to = first + (slot - first + 11) % 12;
+          expect(cube.pieces[to], Square1Cube.solvedPieces[slot], reason: "slot $slot");
+          final (ax, ay) = centroid(square1Layout.edges[slot][0]);
+          final (bx, by) = centroid(square1Layout.edges[to][0]);
+          final (cx, cy) = centre;
+          expect((ax - cx) * (by - cy) - (ay - cy) * (bx - cx), greaterThan(0), reason: "slot $slot");
+        }
+      }
+    });
   });
 
   group("clock layout", () {

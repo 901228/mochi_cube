@@ -1,5 +1,18 @@
 ## Unreleased
 
+### The Square-1
+
+`package:mochi_cube/square1.dart`: `Square1Cube`, `Square1Search` and
+`randomSquare1Scramble`, a port of Chen Shuang's sq12phase two-phase search, in
+WCA `(x,y) /` notation. Scrambles are random states as TNoodle draws them, about
+24 moves; turns are checked against TNoodle's own puzzle model. `Square1Scrambler`
+is filed as `sq1`, and the command line scrambles, solves and shows it.
+
+**Breaking.** `Layout` has a third kind, `Square1Layout`, since a Square-1's
+stickers move with the state; a `switch` over layouts needs a case for it.
+`MoveSet.tokensOf` is new, so a puzzle can say how its notation splits into
+moves.
+
 ### The Skewb
 
 `package:mochi_cube/skewb.dart`: `SkewbCube`, `SkewbSearch` and

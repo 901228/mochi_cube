@@ -1,7 +1,7 @@
 # mochi_cube
 
 Twisty puzzle solvers and scramble generators in pure Dart, no Flutter
-dependency. The 3x3x3, the 2x2x2, the Pyraminx, the Skewb and the Clock so far,
+dependency. The 3x3x3, the 2x2x2, the Pyraminx, the Skewb, the Square-1 and the Clock so far,
 as a library and as a [command line tool](#command-line).
 
 For the 3x3x3 there are two solvers. The one you want is a port of Chen Shuang's
@@ -179,6 +179,47 @@ rule to get wrong: 8748 corner states and 360 centre states, which multiply to
 the published count. Reading stickers back takes the colours from the corner
 that never moves, as the 2x2x2 does.
 
+## The Square-1
+
+`package:mochi_cube/square1.dart`, a port of Chen Shuang's
+[sq12phase](https://github.com/cs0x7f/sq12phase), which the official TNoodle
+scrambler and csTimer both use. Far too many states for a table of distances,
+so it is a two-phase search: back to a cube of a parity phase 2 can finish, then
+solved as a cube.
+
+```dart
+import "package:mochi_cube/square1.dart";
+
+final scramble = randomSquare1Scramble();
+// (1,0) / (-1,2) / (0,-3) / …
+
+final cube = Square1Cube()..apply(scramble);
+print(Square1Search.solve(cube));
+```
+
+| | |
+| ---------- | --------------------------------------------- |
+| solve      | about 25ms, not optimal                       |
+| moves      | 24 average, 29 at worst, counted as 12c4 does |
+| tables     | under 400 KB, built in ~0.2s, not cached      |
+
+The notation is WCA regulation 12d's: `(x,y)` turns the top and bottom, `/` the
+right half, and each is one move, so `Algorithm.length` is the WCA move count.
+That is not faces and amounts, so `square1Moves` is a `MoveSet` that overrides
+how a move is read and written; `MoveSet.tokensOf` is the one hook that needed,
+since `(1,0)/` runs two moves together. Every turn is checked against TNoodle's
+own model of the puzzle, ported into the test as the reference.
+
+A state is the piece in each of the 24 slots and the middle, written as 24 hex
+digits and a 0 or 1 by `toString` and read back by `Square1Cube.parse`. A corner
+across the cut is held rather than refused, since turning a layer part way gets
+there; the solver turns it back into line first.
+
+A scramble is drawn as TNoodle draws one, evenly from every state `/` can be
+turned in, and must be at least eleven moves (4b3). That is checked against the
+solution found rather than an optimal one, so it is an upper bound — see the
+`shortcut:` on `randomSquare1Scramble`.
+
 ## The Clock
 
 `package:mochi_cube/clock.dart`, and the odd one out: no search, and no table
@@ -248,7 +289,7 @@ symmetry, but H, Z, E and N cover 8 or 4, and 51 of the 57 OLLs cover 4
 orientations where two cover only one. `pllCases` and `ollCases` are the
 groupings themselves, 21 and 57 of them.
 
-## One interface for all five
+## One interface for all six
 
 The puzzles are kept apart everywhere else on purpose, so their scramble
 functions have different names, different arguments and — for the Clock, whose
@@ -259,17 +300,17 @@ and wrong for a screen with a puzzle picker on it.
 ```dart
 import "package:mochi_cube/scramblers.dart";
 
-puzzleScramblers;                     // {333: …, 222: …, pyram: …, skewb: …, clock: …}
+puzzleScramblers;                     // {333: …, 222: …, pyram: …, skewb: …, sq1: …, clock: …}
 
 final scrambler = puzzleScramblers[saved]!;
 final scramble = await scrambler.next();
 
 scramble.notation;   // "R U2 F' …", or "UR4+ DR0+ … ALL6+"
-scramble.state;      // one number per piece, index-matched to scrambler.layout
+scramble.state;      // one number per piece of scrambler.layout
 scramble.algorithm;  // the moves, or null for the Clock
 ```
 
-The keys are the WCA event ids — `333`, `222`, `pyram`, `skewb`, `clock` — rather
+The keys are the WCA event ids — `333`, `222`, `pyram`, `skewb`, `sq1`, `clock` — rather
 than a spelling of our own, since those are what the rest of the speedcubing world
 writes and what the official scrambler is asked for. A saved setting can then
 name a puzzle without depending on the order they happen to be declared in, and
@@ -291,6 +332,7 @@ the puzzle's tables:
 | `222` | 1003ms | 0.1ms |
 | `pyram` | 333ms | 0.1ms |
 | `skewb` | 593ms | 0.1ms |
+| `sq1` | 120ms | 29ms |
 | `clock` | 1ms | 0ms |
 
 Measured under dart2js, where there is no cache to load them from; on a platform
@@ -308,7 +350,7 @@ each puzzle before anything has been scrambled. `stateLength` is both the length
 of a state and the number of pieces in the layout, which is checked.
 
 It scrambles and it says how to draw the result; it does not solve. Only two of
-the five puzzles have a `Solver`, and the other three do not need one.
+the six puzzles have a `Solver`, and the other four do not need one.
 
 ## Command line
 
@@ -317,12 +359,12 @@ dart pub global activate mochi_cube
 ```
 
 ```
-mochi_cube scramble [3x3|2x2|pyraminx|skewb|clock]   a scramble, drawn evenly from every state
-mochi_cube solve <state>                             the moves back; the state says which puzzle
-mochi_cube show <state>                              draw it as a net of letters
-mochi_cube practice <pll|oll|f2l>                    a drill scramble
-mochi_cube pattern <name>                            the moves that make a known pattern
-mochi_cube tables                                    build the caches, and say where they went
+mochi_cube scramble [3x3|2x2|pyraminx|skewb|sq1|clock]   a scramble, drawn evenly from every state
+mochi_cube solve <state>                                 the moves back; the state says which puzzle
+mochi_cube show <state>                                  draw it as a net of letters
+mochi_cube practice <pll|oll|f2l>                        a drill scramble
+mochi_cube pattern <name>                                the moves that make a known pattern
+mochi_cube tables                                        build the caches, and say where they went
 ```
 
 ```console
@@ -391,14 +433,21 @@ for (var i = 0; i < facelets.length; i++) {
 | 2x2x2    | `pocketLayout`    | 24 squares, the same net        |
 | Pyraminx | `pyraminxLayout`  | 36 triangles, the tetrahedron net |
 | Skewb    | `skewbLayout`     | 30 pieces, the cube's cross net  |
+| Square-1 | `square1Layout`   | kites and wedges, picked by the state |
 | Clock    | `clockLayout`     | 18 dials and 8 pins, as circles |
 
-`Layout` is sealed, so a switch over the two kinds needs no default branch and
-the compiler will tell you if a third kind ever appears:
+The Square-1's stickers do not stay where they are: a slot holds an edge or half
+a corner depending on the state. So `Square1Layout` holds the polygons a piece
+would have in each slot, and `stickers(state)` gives the ones a state uses, each
+with its face — a kite per corner, as csTimer and TNoodle draw it.
+
+`Layout` is sealed, so a switch over the three kinds needs no default branch and
+the compiler will tell you if a fourth kind ever appears:
 
 ```dart
 Widget paint(Scrambler scrambler, List<int> state) => switch (scrambler.layout) {
   final PuzzleLayout layout => CustomPaint(painter: StickerPainter(layout, state)),
+  final Square1Layout layout => CustomPaint(painter: PiecePainter(layout.stickers(state))),
   final ClockLayout layout => CustomPaint(painter: DialPainter(layout, state)),
 };
 ```
@@ -465,11 +514,12 @@ it has to use an 8-element subgroup; and a breadth-first search that ignores
 inadmissible and lets the search miss solutions. Neither shows up without an
 exhaustive comparison.
 
-296 tests, `dart test`.
+323 tests, `dart test`.
 
 ## Roadmap
 
-The 3x3x3, the 2x2x2, the Pyraminx, the Skewb and the Clock are implemented. Everything
+The 3x3x3, the 2x2x2, the Pyraminx, the Skewb, the Square-1 and the Clock are
+implemented. Everything
 below is wanted but not written.
 
 ### Other puzzles
@@ -489,7 +539,7 @@ and reversed, as above. Where it cannot, it is random turns.
 | Pyraminx     | random state | **done**                                         |
 | Megaminx     | random turns | 70 turns, in the fixed `R++ D--` pattern         |
 | Skewb        | random state | **done**                                         |
-| Square-1     | random state | a two-phase search, shape then permutation       |
+| Square-1     | random state | **done**                                         |
 | Clock        | random state | **done**                                         |
 | FTO          | random state | its own solver                                   |
 
@@ -502,9 +552,9 @@ that as a parameter.
 
 The notation is no longer the 3x3x3's alone: `MoveSet` says what a puzzle's axes
 and amounts are called, and covers anything that turns some number of axes by
-some number of amounts — Skewb and FTO included. Megaminx does not fit as
-neatly, and Square-1 and Clock are not face turns at all, so those will want
-something of their own rather than a `MoveSet` bent to fit.
+some number of amounts — Skewb and FTO included. The Square-1 overrides how a
+move is read and written, and the Clock is not a sequence of turns at all.
+Megaminx does not fit as neatly either.
 
 ### Named cases
 

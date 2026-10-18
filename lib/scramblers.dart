@@ -1,6 +1,6 @@
 /// One way to ask any of the puzzles for a scramble.
 ///
-/// The five puzzles are kept apart everywhere else on purpose — different cube
+/// The six puzzles are kept apart everywhere else on purpose — different cube
 /// models, and the Clock has no cube at all — so their scramble functions have
 /// different names, different arguments and, for the Clock, a different return
 /// type. That is right for code that knows which puzzle it wants. It is wrong
@@ -14,7 +14,7 @@
 /// CustomPaint(painter: MyPainter(scrambler.layout, scramble.state));
 /// ```
 ///
-/// Importing this pulls in all five puzzles. Code that only wants one should
+/// Importing this pulls in all six puzzles. Code that only wants one should
 /// import that puzzle's own library and call its function directly.
 library;
 
@@ -26,6 +26,7 @@ import "mochi_cube.dart";
 import "pocket.dart";
 import "pyraminx.dart";
 import "skewb.dart";
+import "square1.dart";
 import "table_storage.dart" show TableFiles, loadTables;
 
 // Algorithm and MoveSet are part of this library's own surface: a Scramble
@@ -36,17 +37,18 @@ export "cube/algorithm.dart" show Algorithm, MoveSet;
 export "table_storage.dart" show TableBytesLoader, TableFiles, useTableBytesLoader;
 export "clock/layout.dart" show ClockLayout;
 export "cube/layout.dart" show Layout, Point, PuzzleLayout;
+export "square1/layout.dart" show Square1Layout;
 
 /// A source of scrambles for one puzzle.
 ///
 /// Deliberately narrow. It scrambles and it says how to draw the result; it
-/// does not solve, since only two of the five puzzles have a [Solver] and the
-/// other three do not need one.
+/// does not solve, since only two of the six puzzles have a [Solver] and the
+/// other four do not need one.
 abstract interface class Scrambler {
   /// A short name, and the key this is filed under.
   ///
-  /// The five puzzles use their WCA event id — `333`, `222`, `pyram`, `skewb`
-  /// and `clock` — rather than a spelling of our own, since those are what the
+  /// The six puzzles use their WCA event id — `333`, `222`, `pyram`, `skewb`,
+  /// `sq1` and `clock` — rather than a spelling of our own, since those are what the
   /// rest of the speedcubing world writes and what the official scrambler is
   /// asked for. The drills, which the WCA has no id for, are `pll`, `oll` and
   /// `f2l`.
@@ -63,8 +65,9 @@ abstract interface class Scrambler {
 
   /// Where the pieces of that puzzle are drawn.
   ///
-  /// A [PuzzleLayout] for the four that are stickers, and a [ClockLayout] for
-  /// the Clock, whose dials are circles rather than polygons.
+  /// A [PuzzleLayout] for the four whose stickers stay where they are, a
+  /// [Square1Layout] for the Square-1, whose do not, and a [ClockLayout] for the
+  /// Clock, whose dials are circles rather than polygons.
   Layout get layout;
 
   /// How many numbers a state has, and so how many pieces [layout] holds.
@@ -148,12 +151,14 @@ class Scramble {
 
   /// What the puzzle then looks like, one number per piece of the layout.
   ///
-  /// For the four that have stickers these are face indices, so
-  /// `state[i]` is which colour to paint `layout[i]`. For the Clock they are
-  /// hours, 0 to 11, one per dial — a number to draw a hand at, not a colour.
+  /// For the four with a [PuzzleLayout] these are face indices, so `state[i]`
+  /// is which colour to paint `layout[i]`. For the Square-1 they are the piece
+  /// in each slot and then the middle, which [Square1Layout.stickers] turns
+  /// into polygons and faces. For the Clock they are hours, 0 to 11, one per
+  /// dial — a number to draw a hand at, not a colour.
   final List<int> state;
 
-  /// The moves, for the four puzzles that turn.
+  /// The moves, for the five puzzles that turn.
   ///
   /// Null for the Clock, whose scramble is a set of dial positions rather than
   /// a sequence of anything.
@@ -365,6 +370,52 @@ class SkewbScrambler with _AlgorithmSteps implements Scrambler {
   }
 }
 
+/// The Square-1.
+///
+/// Its state is not stickers: the piece in each of the 24 slots and then the
+/// middle, since which slots make up a piece changes as it turns.
+/// [Square1Layout.stickers] turns one into polygons and faces.
+class Square1Scrambler with _AlgorithmSteps implements Scrambler {
+  const Square1Scrambler();
+
+  @override
+  String get id => "sq1";
+
+  @override
+  String get name => "Square-1";
+
+  @override
+  String get puzzleId => id;
+
+  @override
+  Layout get layout => square1Layout;
+
+  @override
+  int get stateLength => square1Layout.length;
+
+  @override
+  List<int> get solvedState => _stateOf(Square1Cube());
+
+  @override
+  List<int> stateOf(Algorithm algorithm) => _stateOf(Square1Cube()..apply(algorithm));
+
+  static List<int> _stateOf(Square1Cube cube) => [...cube.pieces, cube.middle];
+
+  @override
+  MoveSet get _moveSet => square1Moves;
+
+  /// None: they build in about 0.2s, so they are not cached.
+  @override
+  List<String> get tables => const [];
+
+  @override
+  Future<Scramble> next({Random? random}) async {
+    await loadTables(tables);
+    final algorithm = randomSquare1Scramble(random: random);
+    return Scramble(notation: algorithm.toString(), state: stateOf(algorithm), algorithm: algorithm);
+  }
+}
+
 /// The Rubik's Clock.
 class ClockScrambler implements Scrambler {
   const ClockScrambler();
@@ -486,7 +537,7 @@ class PracticeScrambler with _AlgorithmSteps implements Scrambler {
   }
 }
 
-/// The five puzzles, by WCA event id.
+/// The six puzzles, by WCA event id.
 ///
 /// A map so a saved setting can name a puzzle without depending on the order
 /// they happen to be declared in. Dart maps keep their insertion order, so
@@ -496,6 +547,7 @@ const Map<String, Scrambler> puzzleScramblers = {
   "222": PocketScrambler(),
   "pyram": PyraminxScrambler(),
   "skewb": SkewbScrambler(),
+  "sq1": Square1Scrambler(),
   "clock": ClockScrambler(),
 };
 

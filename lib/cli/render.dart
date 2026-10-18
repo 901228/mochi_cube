@@ -3,6 +3,7 @@ import "../mochi_cube.dart";
 import "../pocket.dart" show nPocketFacelets;
 import "../pyraminx.dart";
 import "../skewb.dart" show nSkewbFacelets;
+import "../square1.dart" show Square1Cube, square1Layout;
 
 /// Drawing a puzzle in a terminal.
 ///
@@ -78,6 +79,34 @@ abstract final class Ascii {
     return [
       for (var line = 0; line < blocks.first.length; line++)
         blocks.map((block) => block[line]).join(" ").trimRight(),
+    ].join("\n");
+  }
+
+  /// A Square-1's two layers, each read round from the back, and its middle.
+  ///
+  /// A piece is its top or bottom face and then its sides, in face letters, so
+  /// a corner reads `UBL` and an edge `UB`; `|` is the cut `/` turns along.
+  static String square1Layers(Square1Cube cube) {
+    const names = ["U", "R", "F", "D", "L", "B"];
+    String layer(int first) {
+      final out = StringBuffer();
+      for (var slot = first; slot < first + 12; slot++) {
+        final piece = cube.pieces[slot];
+        final faces = square1Layout.pieceFaces[piece];
+        final previous = slot == first ? first + 11 : slot - 1;
+        final secondHalf = faces.length == 3 && cube.pieces[previous] == piece;
+        out.write(secondHalf ? names[faces[2]] : names[faces[0]] + names[faces[1]]);
+        if (slot == first + 11) break;
+        final next = cube.pieces[slot + 1];
+        out.write(slot == first + 5 ? " | " : (next == piece ? "" : " "));
+      }
+      return out.toString();
+    }
+
+    return [
+      "top     ${layer(0)}",
+      "middle  ${cube.middle == 0 ? "square" : "turned over"}",
+      "bottom  ${layer(12)}",
     ].join("\n");
   }
 

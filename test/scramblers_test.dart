@@ -6,6 +6,7 @@ import "package:mochi_cube/pocket.dart" show PocketFacelets;
 import "package:mochi_cube/pyraminx.dart";
 import "package:mochi_cube/scramblers.dart";
 import "package:mochi_cube/skewb.dart" show SkewbCube, skewbMoves;
+import "package:mochi_cube/square1.dart" show Square1Cube, square1Moves;
 import "package:test/test.dart";
 
 /// Every scrambler there is, drills included.
@@ -15,6 +16,7 @@ final List<Scrambler> all = allScramblers.values.toList();
 int piecesOf(Layout layout) => switch (layout) {
   PuzzleLayout() => layout.length,
   ClockLayout() => layout.dials.length,
+  Square1Layout() => layout.length,
 };
 
 /// The state the notation of [scramble] actually leaves, worked out from the
@@ -24,6 +26,12 @@ List<int> stateFromNotation(Scrambler scrambler, Scramble scramble) => switch (s
   "222" => Algorithm.parse(scramble.notation).cube.toPocketFacelets(),
   "pyram" => (PyraminxCube()..apply(Algorithm.parse(scramble.notation, moveSet: pyraminxMoves))).toFacelets(),
   "skewb" => (SkewbCube()..apply(Algorithm.parse(scramble.notation, moveSet: skewbMoves))).toFacelets(),
+  "sq1" => [
+    for (final cube in [Square1Cube()..apply(Algorithm.parse(scramble.notation, moveSet: square1Moves))]) ...[
+      ...cube.pieces,
+      cube.middle,
+    ],
+  ],
   "clock" => ClockState.parse(scramble.notation).toDials(),
   _ => throw StateError("Unknown puzzle ${scrambler.puzzleId}"),
 };
@@ -72,6 +80,7 @@ void main() {
       const PocketScrambler(),
       const PyraminxScrambler(),
       const SkewbScrambler(),
+      const Square1Scrambler(),
       const ClockScrambler(),
     ]) {
       expect(
@@ -84,7 +93,7 @@ void main() {
 
   test("a scrambler is filed under its own id", () {
     allScramblers.forEach((key, scrambler) => expect(scrambler.id, key));
-    expect(puzzleScramblers.keys, ["333", "222", "pyram", "skewb", "clock"]);
+    expect(puzzleScramblers.keys, ["333", "222", "pyram", "skewb", "sq1", "clock"]);
     expect(practiceScramblers.keys, ["pll", "oll", "f2l"]);
     expect(allScramblers, hasLength(puzzleScramblers.length + practiceScramblers.length));
   });

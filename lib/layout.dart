@@ -1,12 +1,13 @@
 /// What every layout can say about itself: how big it is, and how to fit it in.
 ///
-/// The puzzles do not all draw the same way — a cube is polygons and a Clock is
-/// circles — so this is the part they share, and all a caller needs to size the
-/// box it is going to draw into.
+/// The puzzles do not all draw the same way — a cube is polygons, a Clock is
+/// circles and a Square-1 is polygons that change with the state — so this is
+/// the part they share, and all a caller needs to size the box it is going to
+/// draw into.
 ///
 /// It is `sealed` so that a caller's switch over the kinds is exhaustive: adding
-/// a layout that is neither polygons nor circles should break the drawing code
-/// rather than fall quietly into a default branch. That is also why the three
+/// a fifth kind of layout should break the drawing code
+/// rather than fall quietly into a default branch. That is also why the four
 /// types live here together rather than beside the puzzles they describe — a
 /// sealed type's subtypes must share its library.
 sealed class Layout {
@@ -106,4 +107,82 @@ class ClockLayout extends Layout {
     required this.pins,
     required this.pinRadius,
   });
+}
+
+/// Where a Square-1's stickers are drawn, which depends on the state.
+///
+/// The other puzzles keep their stickers in fixed places and only change
+/// colour. A Square-1 changes shape: a slot holds an edge, a 30 degree wedge,
+/// or half a corner, a 60 degree kite, and which it is moves as the puzzle
+/// turns. So rather than one polygon per number of the state, this holds the
+/// polygons a piece would have in each slot and [stickers] picks out the ones a
+/// state uses — the way csTimer and the official scrambler draw it, a kite for
+/// a corner rather than two wedges.
+///
+/// The state is the 24 slots' pieces and then the middle, as the Square-1's own
+/// library writes them.
+class Square1Layout extends Layout {
+  @override
+  final double width;
+
+  @override
+  final double height;
+
+  /// For each slot, an edge there: its top or bottom sticker, then its side.
+  final List<List<List<Point>>> edges;
+
+  /// For each slot, a corner starting there and running into the next: its top
+  /// or bottom sticker, then the side over this slot, then the side over the
+  /// next.
+  final List<List<List<Point>>> corners;
+
+  /// The middle layer's front: the left piece, then the right one square and
+  /// the right one turned over, which shows its narrower back.
+  final List<List<Point>> middle;
+
+  /// The faces each piece shows, in the order [edges] and [corners] draw them.
+  final List<List<int>> pieceFaces;
+
+  /// The faces the middle shows: the left, the right square, the right turned.
+  final List<int> middleFaces;
+
+  const Square1Layout({
+    required this.width,
+    required this.height,
+    required this.edges,
+    required this.corners,
+    required this.middle,
+    required this.pieceFaces,
+    required this.middleFaces,
+  });
+
+  /// How many numbers a state has: 24 slots and the middle.
+  int get length => edges.length + 1;
+
+  /// Every sticker [state] shows, each with the face whose colour it is.
+  List<(List<Point>, int)> stickers(List<int> state) {
+    final shown = <(List<Point>, int)>[];
+    for (var slot = 0; slot < edges.length; slot++) {
+      final piece = state[slot];
+      final faces = pieceFaces[piece];
+      if (faces.length == 2) {
+        for (var i = 0; i < 2; i++) {
+          shown.add((edges[slot][i], faces[i]));
+        }
+        continue;
+      }
+      // A corner is drawn from its first slot. The one before it in the same
+      // layer, going round past the twelfth, tells which that is.
+      final previous = slot % 12 == 0 ? slot + 11 : slot - 1;
+      if (state[previous] == piece) continue;
+      for (var i = 0; i < 3; i++) {
+        shown.add((corners[slot][i], faces[i]));
+      }
+    }
+    final flipped = state[edges.length];
+    shown
+      ..add((middle[0], middleFaces[0]))
+      ..add((middle[1 + flipped], middleFaces[1 + flipped]));
+    return shown;
+  }
 }

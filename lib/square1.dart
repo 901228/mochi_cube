@@ -15,5 +15,6 @@ library;
 
 export "cube/algorithm.dart" show Algorithm, MoveSet;
 export "square1/cube.dart" show Square1Cube, Square1MoveSet, square1Moves;
+export "square1/layout.dart" show Point, Square1Layout, square1Layout;
 export "square1/search.dart" show Square1Search, randomSquare1Cube, randomSquare1Scramble;
 export "square1/tables.dart" show Square1Tables;

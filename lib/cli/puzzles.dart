@@ -6,19 +6,21 @@ import "../pocket.dart";
 import "../pyraminx.dart";
 import "../scramblers.dart";
 import "../skewb.dart";
+import "../square1.dart";
 import "render.dart";
 
 /// One puzzle, as the command line deals with it.
 ///
-/// The library keeps the five puzzles apart on purpose — they have different
+/// The library keeps the six puzzles apart on purpose — they have different
 /// cube models and, in the Clock's case, no cube at all — so this is where the
 /// command line puts them back together, and the only place that has to know
-/// all five.
+/// all six.
 enum CliPuzzle {
   cube("3x3", "333", ["3x3x3", "cube"]),
   pocket("2x2", "222", ["2x2x2", "pocket"]),
   pyraminx("pyraminx", "pyram", ["pyra", "pyramid"]),
   skewb("skewb", "skewb", []),
+  square1("sq1", "sq1", ["square1", "square-1"]),
   clock("clock", "clock", []);
 
   const CliPuzzle(this.name, this.id, this.aliases);
@@ -44,8 +46,9 @@ enum CliPuzzle {
 
   /// Which puzzle a state describes, worked out from the state itself.
   ///
-  /// The four sticker strings are different lengths and a clock's is not
-  /// stickers at all, so there is nothing to ask the user.
+  /// The four sticker strings are different lengths, a Square-1's is 25 hex
+  /// digits and a clock's is not stickers at all, so there is nothing to ask
+  /// the user.
   static CliPuzzle of(String state) {
     final stickers = state.replaceAll(RegExp(r"\s"), "");
     return switch (stickers.length) {
@@ -53,10 +56,11 @@ enum CliPuzzle {
       nPocketFacelets => pocket,
       nPyraminxFacelets => pyraminx,
       nSkewbFacelets => skewb,
+      25 => square1,
       _ when state.contains("y2") => clock,
       _ => throw FormatException(
         "Cannot tell what '$state' is: expected 54, $nPocketFacelets, "
-        "$nPyraminxFacelets or $nSkewbFacelets stickers, or a clock scramble",
+        "$nPyraminxFacelets or $nSkewbFacelets stickers, a Square-1's 25 digits or a clock scramble",
       ),
     };
   }
@@ -91,6 +95,7 @@ enum CliPuzzle {
       (PyraminxCube()..apply(Algorithm.parse(scramble, moveSet: pyraminxMoves))).toFaceletString(),
     ),
     skewb => Ascii.skewbNet(_skewbAfter(scramble).toFaceletString()),
+    square1 => Ascii.square1Layers(_square1After(scramble)),
     clock => Ascii.clockDials(ClockState.parse(scramble)),
   };
 
@@ -100,6 +105,7 @@ enum CliPuzzle {
     pocket => Algorithm.parse(scramble).cube.toPocketFaceletString(),
     pyraminx => (PyraminxCube()..apply(Algorithm.parse(scramble, moveSet: pyraminxMoves))).toFaceletString(),
     skewb => _skewbAfter(scramble).toFaceletString(),
+    square1 => _square1After(scramble).toString(),
     clock => ClockState.parse(scramble).toDials().join(" "),
   };
 
@@ -111,6 +117,7 @@ enum CliPuzzle {
       pocket => Ascii.cubeNet(PocketCube.fromFaceletString(stickers).toPocketFaceletString()),
       pyraminx => Ascii.pyraminxFaces(PyraminxFacelet.fromFaceletString(stickers).toFaceletString()),
       skewb => Ascii.skewbNet(SkewbFacelet.fromFaceletString(stickers).toFaceletString()),
+      square1 => Ascii.square1Layers(Square1Cube.parse(stickers)),
       clock => Ascii.clockDials(ClockState.parse(state)),
     };
   }
@@ -118,7 +125,8 @@ enum CliPuzzle {
   /// The moves that solve the state described by [state].
   ///
   /// Optimal for the 2x2x2, the Pyraminx, the Skewb and the Clock, since all four know
-  /// the exact distance; near optimal for the 3x3x3, which searches.
+  /// the exact distance; near optimal for the 3x3x3, which searches, and not
+  /// for the Square-1, whose search goes by way of a cube.
   String solve(String state, {int? maxLength}) {
     final stickers = state.replaceAll(RegExp(r"\s"), "");
     switch (this) {
@@ -134,6 +142,8 @@ enum CliPuzzle {
         return PyraminxSearch.solve(PyraminxFacelet.fromFaceletString(stickers)).toString();
       case skewb:
         return SkewbSearch.solve(SkewbFacelet.fromFaceletString(stickers)).toString();
+      case square1:
+        return Square1Search.solve(Square1Cube.parse(stickers)).toString();
       case clock:
         return ClockState.parse(state).inverse.toString();
     }
@@ -141,5 +151,8 @@ enum CliPuzzle {
 }
 
 SkewbCube _skewbAfter(String scramble) => SkewbCube()..apply(Algorithm.parse(scramble, moveSet: skewbMoves));
+
+Square1Cube _square1After(String scramble) =>
+    Square1Cube()..apply(Algorithm.parse(scramble, moveSet: square1Moves));
 
 String _because(SolveResult result) => result.error == null ? "" : " (${result.error})";

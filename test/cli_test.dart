@@ -6,6 +6,7 @@ import "package:mochi_cube/pocket.dart" show PocketFacelets;
 import "package:mochi_cube/pyraminx.dart";
 import "package:mochi_cube/scramblers.dart" show puzzleScramblers;
 import "package:mochi_cube/skewb.dart" show SkewbCube, skewbMoves;
+import "package:mochi_cube/square1.dart" show Square1Cube, square1Moves;
 import "package:test/test.dart";
 
 /// Run the tool and collect what it printed, one entry per line.
@@ -30,7 +31,13 @@ void main() {
     test("a seed makes the run repeat", () async {
       // Not the 3x3x3, whose scramble draws from Random.secure inside the
       // solver's own tie breaking; the others are drawn and nothing else.
-      for (final puzzle in [CliPuzzle.pocket, CliPuzzle.pyraminx, CliPuzzle.skewb, CliPuzzle.clock]) {
+      for (final puzzle in [
+        CliPuzzle.pocket,
+        CliPuzzle.pyraminx,
+        CliPuzzle.skewb,
+        CliPuzzle.square1,
+        CliPuzzle.clock,
+      ]) {
         final once = await run(["scramble", puzzle.name, "--seed", "42"]);
         final again = await run(["scramble", puzzle.name, "--seed", "42"]);
         expect(once, again, reason: puzzle.name);
@@ -52,6 +59,7 @@ void main() {
       expect(_solvesPocket(await run(["scramble", "2x2"])), isTrue);
       expect(_solvesPyraminx(await run(["scramble", "pyraminx"])), isTrue);
       expect(_solvesSkewb(await run(["scramble", "skewb"])), isTrue);
+      expect(_solvesSquare1(await run(["scramble", "sq1"])), isTrue);
       expect(_solvesClock(await run(["scramble", "clock"])), isTrue);
     });
 
@@ -80,6 +88,15 @@ void main() {
       final net = (await run(["show", SkewbCube().toFaceletString()])).join("\n");
       expect(net, contains("L   L F   F R   R B   B"));
       expect(net, contains("  L     F     R     B"));
+    });
+
+    test("draws a solved Square-1 as its two layers", () async {
+      final drawn = await run(["show", Square1Cube().toString()]);
+      expect(drawn, [
+        "top     UB UBL UL ULF | UF UFR UR URB",
+        "middle  square",
+        "bottom  DBR DR DRF DF | DFL DL DLB DB",
+      ]);
     });
 
     test("draws a Pyraminx as four named faces", () async {
@@ -172,6 +189,12 @@ bool _solvesPyraminx(List<String> scramble) {
 bool _solvesSkewb(List<String> scramble) {
   final solution = CliPuzzle.skewb.solve(CliPuzzle.skewb.stateOf(scramble.first));
   return (SkewbCube()..apply(Algorithm.parse("${scramble.first} $solution", moveSet: skewbMoves))).isSolved;
+}
+
+bool _solvesSquare1(List<String> scramble) {
+  final solution = CliPuzzle.square1.solve(CliPuzzle.square1.stateOf(scramble.first));
+  return (Square1Cube()..apply(Algorithm.parse("${scramble.first} $solution", moveSet: square1Moves)))
+      .isSolved;
 }
 
 bool _solvesClock(List<String> scramble) {

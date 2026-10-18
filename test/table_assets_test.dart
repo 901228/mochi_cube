@@ -17,6 +17,7 @@ void main() {
     expect(puzzleScramblers["222"]!.tables, [TableFiles.pocket]);
     expect(puzzleScramblers["pyram"]!.tables, [TableFiles.pyraminx]);
     expect(puzzleScramblers["skewb"]!.tables, [TableFiles.skewb]);
+    expect(puzzleScramblers["sq1"]!.tables, isEmpty, reason: "the Square-1's are not cached");
     expect(puzzleScramblers["clock"]!.tables, isEmpty, reason: "the Clock has no tables");
   });
 
