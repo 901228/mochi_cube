@@ -21,7 +21,9 @@ void main() {
   group("scramble", () {
     test("prints one scramble a puzzle by default", () async {
       for (final puzzle in CliPuzzle.values) {
-        expect(await run(["scramble", puzzle.name]), hasLength(1), reason: puzzle.name);
+        // A Megaminx scramble is written in seven rows, as a competition writes it.
+        final lines = puzzle == CliPuzzle.megaminx ? 7 : 1;
+        expect(await run(["scramble", puzzle.name]), hasLength(lines), reason: puzzle.name);
       }
     });
 
@@ -35,6 +37,7 @@ void main() {
       for (final puzzle in [
         CliPuzzle.pocket,
         CliPuzzle.cube5,
+        CliPuzzle.megaminx,
         CliPuzzle.pyraminx,
         CliPuzzle.skewb,
         CliPuzzle.square1,
@@ -66,7 +69,7 @@ void main() {
     });
 
     test("refuses the big cubes, which nothing solves", () async {
-      for (final puzzle in ["5x5"]) {
+      for (final puzzle in ["5x5", "megaminx"]) {
         final state = (await run(["scramble", puzzle, "--state"])).last;
         expect(() => run(["solve", state]), throwsFormatException, reason: puzzle);
       }

@@ -1,6 +1,7 @@
 import "dart:math";
 
 import "../clock.dart";
+import "../megaminx.dart" show Megaminx, megaminxFaceLetters, megaminxFaceNames;
 import "../mochi_cube.dart";
 import "../pyraminx.dart";
 import "../skewb.dart" show nSkewbFacelets;
@@ -107,6 +108,19 @@ abstract final class Ascii {
       "top     ${layer(0)}",
       "middle  ${cube.middle == 0 ? "square" : "turned over"}",
       "bottom  ${layer(12)}",
+    ].join("\n");
+  }
+
+  /// A Megaminx's twelve faces, a line each: the face, its own letter, its
+  /// centre, and the ten stickers round it, all in [megaminxFaceLetters].
+  ///
+  /// Not a net. Two flowers of pentagons do not fit a character grid.
+  static String megaminxFaces(Megaminx puzzle) {
+    final letters = puzzle.toFaceletString();
+    return [
+      for (var face = 0; face < 12; face++)
+        "${megaminxFaceNames[face].padRight(4)} ${megaminxFaceLetters[face]}  "
+            "${letters[face * 11 + 10]} | ${letters.substring(face * 11, face * 11 + 10).split("").join(" ")}",
     ].join("\n");
   }
 

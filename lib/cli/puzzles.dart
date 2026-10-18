@@ -1,6 +1,7 @@
 import "dart:math";
 
 import "../clock.dart";
+import "../megaminx.dart" show Megaminx, megaminxMoves, nMegaminxFacelets;
 import "../mochi_cube.dart";
 import "../nxn.dart" show NxNCube, nxnMoves;
 import "../pocket.dart";
@@ -22,6 +23,7 @@ enum CliPuzzle {
   cube5("5x5", "555", ["5x5x5"]),
   cube6("6x6", "666", ["6x6x6"]),
   cube7("7x7", "777", ["7x7x7"]),
+  megaminx("megaminx", "minx", ["mega"]),
   pyraminx("pyraminx", "pyram", ["pyra", "pyramid"]),
   skewb("skewb", "skewb", []),
   square1("sq1", "sq1", ["square1", "square-1"]),
@@ -61,12 +63,13 @@ enum CliPuzzle {
       150 => cube5,
       216 => cube6,
       294 => cube7,
+      nMegaminxFacelets => megaminx,
       nPyraminxFacelets => pyraminx,
       nSkewbFacelets => skewb,
       25 => square1,
       _ when state.contains("y2") => clock,
       _ => throw FormatException(
-        "Cannot tell what '$state' is: expected 54, $nPocketFacelets, 150, 216, 294, "
+        "Cannot tell what '$state' is: expected 54, $nPocketFacelets, 150, 216, 294, $nMegaminxFacelets, "
         "$nPyraminxFacelets or $nSkewbFacelets stickers, a Square-1's 25 digits or a clock scramble",
       ),
     };
@@ -102,6 +105,7 @@ enum CliPuzzle {
       (PyraminxCube()..apply(Algorithm.parse(scramble, moveSet: pyraminxMoves))).toFaceletString(),
     ),
     cube5 || cube6 || cube7 => Ascii.cubeNet(_nxnAfter(scramble).toFaceletString()),
+    megaminx => Ascii.megaminxFaces(_megaminxAfter(scramble)),
     skewb => Ascii.skewbNet(_skewbAfter(scramble).toFaceletString()),
     square1 => Ascii.square1Layers(_square1After(scramble)),
     clock => Ascii.clockDials(ClockState.parse(scramble)),
@@ -113,6 +117,7 @@ enum CliPuzzle {
     pocket => Algorithm.parse(scramble).cube.toPocketFaceletString(),
     pyraminx => (PyraminxCube()..apply(Algorithm.parse(scramble, moveSet: pyraminxMoves))).toFaceletString(),
     cube5 || cube6 || cube7 => _nxnAfter(scramble).toFaceletString(),
+    megaminx => _megaminxAfter(scramble).toFaceletString(),
     skewb => _skewbAfter(scramble).toFaceletString(),
     square1 => _square1After(scramble).toString(),
     clock => ClockState.parse(scramble).toDials().join(" "),
@@ -126,6 +131,7 @@ enum CliPuzzle {
       pocket => Ascii.cubeNet(PocketCube.fromFaceletString(stickers).toPocketFaceletString()),
       pyraminx => Ascii.pyraminxFaces(PyraminxFacelet.fromFaceletString(stickers).toFaceletString()),
       cube5 || cube6 || cube7 => Ascii.cubeNet(NxNCube.fromFaceletString(_size, stickers).toFaceletString()),
+      megaminx => Ascii.megaminxFaces(Megaminx.fromFaceletString(stickers)),
       skewb => Ascii.skewbNet(SkewbFacelet.fromFaceletString(stickers).toFaceletString()),
       square1 => Ascii.square1Layers(Square1Cube.parse(stickers)),
       clock => Ascii.clockDials(ClockState.parse(state)),
@@ -137,7 +143,7 @@ enum CliPuzzle {
   /// Optimal for the 2x2x2, the Pyraminx, the Skewb and the Clock, since all four know
   /// the exact distance; near optimal for the 3x3x3, which searches, and not
   /// for the Square-1, whose search goes by way of a cube. Nothing solves the
-  /// 5x5x5 and up, which throw.
+  /// 5x5x5 and up or the Megaminx, which throw.
   String solve(String state, {int? maxLength}) {
     final stickers = state.replaceAll(RegExp(r"\s"), "");
     switch (this) {
@@ -151,7 +157,7 @@ enum CliPuzzle {
         return PocketSearch.solve(PocketCube.fromFaceletString(stickers)).toString();
       case pyraminx:
         return PyraminxSearch.solve(PyraminxFacelet.fromFaceletString(stickers)).toString();
-      case cube5 || cube6 || cube7:
+      case cube5 || cube6 || cube7 || megaminx:
         throw FormatException("Nothing solves the $name: it is scrambled by random turns, not from a state");
       case skewb:
         return SkewbSearch.solve(SkewbFacelet.fromFaceletString(stickers)).toString();
@@ -173,6 +179,9 @@ enum CliPuzzle {
   NxNCube _nxnAfter(String scramble) =>
       NxNCube(_size)..apply(Algorithm.parse(scramble, moveSet: nxnMoves(_size)));
 }
+
+Megaminx _megaminxAfter(String scramble) =>
+    Megaminx()..apply(Algorithm.parse(scramble, moveSet: megaminxMoves));
 
 SkewbCube _skewbAfter(String scramble) => SkewbCube()..apply(Algorithm.parse(scramble, moveSet: skewbMoves));
 

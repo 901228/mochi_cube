@@ -1,5 +1,14 @@
 ## Unreleased
 
+### The Megaminx
+
+`package:mochi_cube/megaminx.dart`: `Megaminx`, `randomMegaminxScramble` and
+`megaminxNotation`, Pochmann random turn scrambles as TNoodle makes them, in
+seven rows. The turns are TNoodle's, checked against the puzzle's 60 rotations
+and its 62 pieces. `MegaminxScrambler` is filed as `minx` and drawn with
+`megaminxLayout`; the command line scrambles and shows it, and does not solve
+it.
+
 ### The 5x5x5, 6x6x6 and 7x7x7
 
 `package:mochi_cube/nxn.dart`: `NxNCube` and `randomNxNScramble`, random turn

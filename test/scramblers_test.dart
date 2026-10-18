@@ -1,6 +1,7 @@
 import "dart:math";
 
 import "package:mochi_cube/clock.dart";
+import "package:mochi_cube/megaminx.dart" show Megaminx, megaminxMoves;
 import "package:mochi_cube/mochi_cube.dart";
 import "package:mochi_cube/nxn.dart" show NxNCube, nxnMoves;
 import "package:mochi_cube/pocket.dart" show PocketFacelets;
@@ -29,6 +30,7 @@ List<int> stateFromNotation(Scrambler scrambler, Scramble scramble) => switch (s
     for (final size in [int.parse(scrambler.puzzleId[0])])
       ...(NxNCube(size)..apply(Algorithm.parse(scramble.notation, moveSet: nxnMoves(size)))).toFacelets(),
   ],
+  "minx" => (Megaminx()..apply(Algorithm.parse(scramble.notation, moveSet: megaminxMoves))).toFacelets(),
   "pyram" => (PyraminxCube()..apply(Algorithm.parse(scramble.notation, moveSet: pyraminxMoves))).toFacelets(),
   "skewb" => (SkewbCube()..apply(Algorithm.parse(scramble.notation, moveSet: skewbMoves))).toFacelets(),
   "sq1" => [
@@ -84,6 +86,7 @@ void main() {
     for (final scrambler in [
       const PocketScrambler(),
       const NxNScrambler(5),
+      const MegaminxScrambler(),
       const PyraminxScrambler(),
       const SkewbScrambler(),
       const Square1Scrambler(),
@@ -105,6 +108,7 @@ void main() {
       "555",
       "666",
       "777",
+      "minx",
       "pyram",
       "skewb",
       "sq1",
@@ -140,7 +144,8 @@ void main() {
       final steps = scrambler.stepsOf(scramble);
       final reason = scrambler.name;
 
-      expect(steps, scramble.notation.split(" "), reason: reason);
+      // A Megaminx's notation is in rows, so a step can end a line.
+      expect(steps, scramble.notation.split(RegExp(r"\s+")), reason: reason);
       expect(scrambler.stateAfter(scramble, 0), scrambler.solvedState, reason: reason);
       expect(scrambler.stateAfter(scramble, steps.length), scramble.state, reason: reason);
     }

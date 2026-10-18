@@ -1,8 +1,8 @@
 # mochi_cube
 
 Twisty puzzle solvers and scramble generators in pure Dart, no Flutter
-dependency. The 2x2x2 to the 7x7x7 bar the 4x4x4, the Pyraminx, the Skewb, the
-Square-1 and the Clock so far, as a library and as a [command line tool](#command-line).
+dependency. The 2x2x2 to the 7x7x7 bar the 4x4x4, the Megaminx, the Pyraminx,
+the Skewb, the Square-1 and the Clock so far, as a library and as a [command line tool](#command-line).
 
 For the 3x3x3 there are two solvers. The one you want is a port of Chen Shuang's
 [min2phase](https://github.com/cs0x7f/min2phase); the other is a plainer
@@ -250,6 +250,39 @@ its stickers and works its turns out from where they are in space, as the Skewb
 does, and is checked against the 3x3x3 and the 2x2x2 at those sizes. A scramble
 takes 2 to 4ms.
 
+## The Megaminx
+
+`package:mochi_cube/megaminx.dart`. Scrambled by random turns too, Stefan
+Pochmann's way, as the WCA does: seven rows of ten turns, `R` and `D` by turns
+each `++` or `--` at random, every row closed with `U` or `U'` the way its last
+`D` went.
+
+```dart
+import "package:mochi_cube/megaminx.dart";
+
+final scramble = randomMegaminxScramble();
+print(megaminxNotation(scramble));
+// R-- D-- R++ D++ R++ D-- R++ D-- R++ D++ U
+// R++ D++ R++ D++ R++ D++ R-- D++ R++ D++ U
+// …
+
+final puzzle = Megaminx()..apply(scramble);
+puzzle.toFacelets(); // 132 stickers, drawn by megaminxLayout
+```
+
+The stickers and turns are TNoodle's own, ported cycle for cycle, since what
+matters for random turns is turning exactly as the official program does. The
+test checks them against the shape of the puzzle rather than against
+themselves: each face turn and the big turn the other way about the opposite
+face must come to a rotation of the whole puzzle, and those rotations must make
+the 60 a dodecahedron has; the stickers must fall into 20 corners, 30 edges and
+12 centres that every turn keeps whole. `megaminxLayout` is TNoodle's two
+flowers of pentagons, and the test checks every face turns clockwise on the page
+and every piece within a flower is drawn joined.
+
+The state string uses a letter a face, `A` to `L` in TNoodle's face order
+(`megaminxFaceLetters`), since the faces' names are not single letters.
+
 ## The Clock
 
 `package:mochi_cube/clock.dart`, and the odd one out: no search, and no table
@@ -330,7 +363,7 @@ and wrong for a screen with a puzzle picker on it.
 ```dart
 import "package:mochi_cube/scramblers.dart";
 
-puzzleScramblers;                     // {333: …, 222: …, 555: …, …, sq1: …, clock: …}
+puzzleScramblers;                     // {333: …, 222: …, 555: …, …, minx: …, …, clock: …}
 
 final scrambler = puzzleScramblers[saved]!;
 final scramble = await scrambler.next();
@@ -340,8 +373,8 @@ scramble.state;      // one number per piece of scrambler.layout
 scramble.algorithm;  // the moves, or null for the Clock
 ```
 
-The keys are the WCA event ids — `333`, `222`, `555`, `666`, `777`, `pyram`,
-`skewb`, `sq1`, `clock` — rather
+The keys are the WCA event ids — `333`, `222`, `555`, `666`, `777`, `minx`,
+`pyram`, `skewb`, `sq1`, `clock` — rather
 than a spelling of our own, since those are what the rest of the speedcubing world
 writes and what the official scrambler is asked for. A saved setting can then
 name a puzzle without depending on the order they happen to be declared in, and
@@ -366,6 +399,7 @@ the puzzle's tables:
 | `sq1` | 120ms | 29ms |
 | `555` | 19ms | 2ms |
 | `777` | 6ms | 3.4ms |
+| `minx` | 14ms | 1.7ms |
 | `clock` | 1ms | 0ms |
 
 Measured under dart2js, where there is no cache to load them from; on a platform
@@ -393,8 +427,8 @@ dart pub global activate mochi_cube
 ```
 
 ```
-mochi_cube scramble <puzzle>                             a scramble: 3x3, 2x2, 5x5 … 7x7, pyraminx, skewb, sq1, clock
-mochi_cube solve <state>                                 the moves back; the state says which puzzle (not 5x5 and up)
+mochi_cube scramble <puzzle>                             a scramble: 3x3, 2x2, 5x5 … 7x7, megaminx, pyraminx, skewb, sq1, clock
+mochi_cube solve <state>                                 the moves back; the state says which puzzle (not 5x5 and up, nor megaminx)
 mochi_cube show <state>                                  draw it as a net of letters
 mochi_cube practice <pll|oll|f2l>                        a drill scramble
 mochi_cube pattern <name>                                the moves that make a known pattern
@@ -466,6 +500,7 @@ for (var i = 0; i < facelets.length; i++) {
 | 3x3x3    | `cubeLayout`      | 54 squares, the usual cross net |
 | 2x2x2    | `pocketLayout`    | 24 squares, the same net        |
 | NxNxN    | `cubeNetLayout(n)` | `6 * n * n` squares, the same net |
+| Megaminx | `megaminxLayout`  | 132 pieces, TNoodle's two flowers |
 | Pyraminx | `pyraminxLayout`  | 36 triangles, the tetrahedron net |
 | Skewb    | `skewbLayout`     | 30 pieces, the cube's cross net  |
 | Square-1 | `square1Layout`   | kites and wedges, picked by the state |
@@ -549,12 +584,12 @@ it has to use an 8-element subgroup; and a breadth-first search that ignores
 inadmissible and lets the search miss solutions. Neither shows up without an
 exhaustive comparison.
 
-339 tests, `dart test`.
+350 tests, `dart test`.
 
 ## Roadmap
 
-The 2x2x2, 3x3x3, 5x5x5, 6x6x6, 7x7x7, Pyraminx, Skewb, Square-1 and Clock are
-implemented. Everything below is wanted but not written.
+The 2x2x2, 3x3x3, 5x5x5, 6x6x6, 7x7x7, Megaminx, Pyraminx, Skewb, Square-1 and
+Clock are implemented. Everything below is wanted but not written.
 
 ### Other puzzles
 
@@ -571,7 +606,7 @@ and reversed, as above. Where it cannot, it is random turns.
 | 6x6x6        | random turns | **done**                                         |
 | 7x7x7        | random turns | **done**                                         |
 | Pyraminx     | random state | **done**                                         |
-| Megaminx     | random turns | 70 turns, in the fixed `R++ D--` pattern         |
+| Megaminx     | random turns | **done**                                         |
 | Skewb        | random state | **done**                                         |
 | Square-1     | random state | **done**                                         |
 | Clock        | random state | **done**                                         |

@@ -1,6 +1,7 @@
 import "dart:math";
 
 import "package:mochi_cube/clock.dart";
+import "package:mochi_cube/megaminx.dart" show Megaminx, megaminxLayout, nMegaminxFacelets;
 import "package:mochi_cube/mochi_cube.dart";
 import "package:mochi_cube/pocket.dart" show pocketLayout;
 import "package:mochi_cube/pyraminx.dart";
@@ -294,6 +295,71 @@ void main() {
           expect((ax - cx) * (by - cy) - (ay - cy) * (bx - cx), greaterThan(0), reason: "slot $slot");
         }
       }
+    });
+  });
+
+  group("megaminx net", () {
+    Point centroid(List<Point> polygon) => (
+      polygon.map((p) => p.$1).reduce((a, b) => a + b) / polygon.length,
+      polygon.map((p) => p.$2).reduce((a, b) => a + b) / polygon.length,
+    );
+
+    test("has one polygon per sticker, inside its box, wound the same way", () {
+      expect(megaminxLayout.length, nMegaminxFacelets);
+      _staysInsideTheBox(megaminxLayout);
+      for (final sticker in megaminxLayout.stickers) {
+        var signed = 0.0;
+        for (var i = 0; i < sticker.length; i++) {
+          final (x1, y1) = sticker[i];
+          final (x2, y2) = sticker[(i + 1) % sticker.length];
+          signed += x1 * y2 - x2 * y1;
+        }
+        expect(signed, greaterThan(0));
+      }
+    });
+
+    // A face turned clockwise seen from outside must turn clockwise on the page,
+    // since a net shows every face from outside. That pins each face's slot 0
+    // to the right corner of its pentagon.
+    test("every face turns clockwise on the page", () {
+      for (var face = 0; face < 12; face++) {
+        final turned = Megaminx.fromFacelets(List.generate(nMegaminxFacelets, (i) => i))..turnFace(face);
+        final middle = centroid(megaminxLayout[face * 11 + 10]);
+        for (var slot = 0; slot < 10; slot++) {
+          final to = turned.facelets.indexOf(face * 11 + slot);
+          final (ax, ay) = centroid(megaminxLayout[face * 11 + slot]);
+          final (bx, by) = centroid(megaminxLayout[to]);
+          final (cx, cy) = middle;
+          expect(
+            (ax - cx) * (by - cy) - (ay - cy) * (bx - cx),
+            greaterThan(0),
+            reason: "face $face, slot $slot",
+          );
+        }
+      }
+    });
+
+    // As for the cube: a piece spanning the middle face of a flower and one of
+    // its petals is drawn joined. Five edges and five corners twice, in each of
+    // the two flowers.
+    test("pieces within a flower are drawn joined", () {
+      final movers = List.generate(nMegaminxFacelets, (_) => <int>[]);
+      for (var face = 0; face < 12; face++) {
+        final turned = Megaminx.fromFacelets(List.generate(nMegaminxFacelets, (i) => i))..turnFace(face);
+        for (var slot = 0; slot < nMegaminxFacelets; slot++) {
+          if (turned.facelets[slot] != slot) movers[turned.facelets[slot]].add(face);
+        }
+      }
+      var joined = 0;
+      for (var a = 0; a < nMegaminxFacelets; a++) {
+        for (var b = a + 1; b < nMegaminxFacelets; b++) {
+          if (movers[a].isEmpty || movers[a].join() != movers[b].join()) continue;
+          final shared = _sharedCorners(megaminxLayout[a], megaminxLayout[b]);
+          expect(shared, anyOf(0, 1, 2), reason: "stickers $a and $b");
+          if (shared == 2) joined++;
+        }
+      }
+      expect(joined, 30);
     });
   });
 

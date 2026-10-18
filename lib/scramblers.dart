@@ -22,6 +22,8 @@ import "dart:math";
 
 import "clock.dart";
 import "cube/layout.dart";
+import "megaminx.dart"
+    show Megaminx, megaminxLayout, megaminxMoves, megaminxNotation, nMegaminxFacelets, randomMegaminxScramble;
 import "mochi_cube.dart";
 import "nxn.dart" show NxNCube, nxnMoves, randomNxNScramble;
 import "pocket.dart";
@@ -49,7 +51,7 @@ abstract interface class Scrambler {
   /// A short name, and the key this is filed under.
   ///
   /// The puzzles use their WCA event id — `333`, `222`, `555`, `666`, `777`,
-  /// `pyram`, `skewb`, `sq1` and `clock` — rather than a spelling of our own,
+  /// `minx`, `pyram`, `skewb`, `sq1` and `clock` — rather than a spelling of our own,
   /// since those are what the rest of the speedcubing world writes and what the
   /// official scrambler is asked for. The drills, which the WCA has no id for, are `pll`, `oll` and
   /// `f2l`.
@@ -333,6 +335,54 @@ class NxNScrambler with _AlgorithmSteps implements Scrambler {
   }
 }
 
+/// The Megaminx, scrambled by Pochmann's random turns as the WCA does.
+///
+/// Its notation comes in seven rows, as a competition writes it.
+class MegaminxScrambler with _AlgorithmSteps implements Scrambler {
+  const MegaminxScrambler();
+
+  @override
+  String get id => "minx";
+
+  @override
+  String get name => "Megaminx";
+
+  @override
+  String get puzzleId => id;
+
+  @override
+  Layout get layout => megaminxLayout;
+
+  @override
+  int get stateLength => nMegaminxFacelets;
+
+  @override
+  List<int> get solvedState => Megaminx().toFacelets();
+
+  @override
+  List<int> stateOf(Algorithm algorithm) => (Megaminx()..apply(algorithm)).toFacelets();
+
+  @override
+  MoveSet get _moveSet => megaminxMoves;
+
+  @override
+  Scramble parse(String notation) {
+    final algorithm = Algorithm.parse(notation, moveSet: megaminxMoves);
+    return Scramble(notation: megaminxNotation(algorithm), state: stateOf(algorithm), algorithm: algorithm);
+  }
+
+  /// None: random turns need no tables.
+  @override
+  List<String> get tables => const [];
+
+  @override
+  Future<Scramble> next({Random? random}) async {
+    await loadTables(tables);
+    final algorithm = randomMegaminxScramble(random: random);
+    return Scramble(notation: megaminxNotation(algorithm), state: stateOf(algorithm), algorithm: algorithm);
+  }
+}
+
 /// The Pyraminx.
 class PyraminxScrambler with _AlgorithmSteps implements Scrambler {
   /// Whether to set the four tips as well.
@@ -592,6 +642,7 @@ const Map<String, Scrambler> puzzleScramblers = {
   "555": NxNScrambler(5),
   "666": NxNScrambler(6),
   "777": NxNScrambler(7),
+  "minx": MegaminxScrambler(),
   "pyram": PyraminxScrambler(),
   "skewb": SkewbScrambler(),
   "sq1": Square1Scrambler(),
