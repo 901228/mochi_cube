@@ -58,7 +58,8 @@ abstract final class Patterns {
 /// [minimumMoves] rejects states that are too nearly solved; WCA regulation
 /// 4b3 asks for at least two moves for the 3x3x3. The check uses the length of
 /// the solution found, which is an upper bound on the true distance, so it can
-/// only ever be stricter than the rule.
+/// only ever be looser than the rule: it may let a too-near state through, but
+/// it never rejects a state the rule accepts.
 ///
 /// [random] defaults to [Random.secure]; pass a seeded [Random] to reproduce a
 /// scramble.
