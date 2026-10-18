@@ -161,4 +161,96 @@ void main() {
       );
     });
   });
+
+  group("tables", () {
+    late Square1Tables tables;
+    setUpAll(() => tables = Square1Tables());
+
+    test("3678 shapes, solved among the cubes phase 1 aims for", () {
+      expect(tables.shapes, hasLength(3678));
+      expect(tables.shapePrune[tables.shapeOf(Square1Cube())!], 0);
+    });
+
+    test("every shape and permutation can be reached", () {
+      expect(tables.shapePrune, isNot(contains(0xFF)));
+      expect(tables.squarePrune, isNot(contains(0xFF)));
+    });
+
+    test("a permutation's number round trips, the identity being 0", () {
+      expect(Square1Tables.permIndex([0, 1, 2, 3, 4, 5, 6, 7]), 0);
+      for (var i = 0; i < Square1Tables.nPerms; i += 97) {
+        expect(Square1Tables.permIndex(Square1Tables.permFromIndex(i)), i);
+      }
+    });
+
+    // The moves on shapes were worked out on one cube of each shape; this is
+    // the claim that any other cube of that shape goes the same way.
+    test("the shape moves follow any cube, not just the one they were built on", () {
+      final random = Random(2);
+      for (var trial = 0; trial < 300; trial++) {
+        final cube = randomSquare1Cube(random: random);
+        final shape = tables.shapeOf(cube)!;
+
+        expect(tables.shapeOf(Square1Cube.from(cube)..slash()), tables.twistMove[shape]);
+
+        final top = Square1Cube.from(cube)..turnTop(tables.topAmount[shape]);
+        expect(tables.shapeOf(top), tables.topMove[shape]);
+
+        final bottom = Square1Cube.from(cube)..turnBottom(tables.bottomAmount[shape]);
+        expect(tables.shapeOf(bottom), tables.bottomMove[shape]);
+      }
+    });
+
+    test("neighbouring shapes are at most one apart", () {
+      for (var shape = 0; shape < Square1Tables.nShapeStates; shape++) {
+        final d = tables.shapePrune[shape];
+        for (final next in [tables.twistMove[shape], tables.topMove[shape], tables.bottomMove[shape]]) {
+          expect((tables.shapePrune[next] - d).abs(), lessThanOrEqualTo(1));
+        }
+      }
+    });
+  });
+
+  group("solver", () {
+    test("solves random states", () {
+      final random = Random(3);
+      for (var trial = 0; trial < 200; trial++) {
+        final cube = randomSquare1Cube(random: random);
+        final solution = Square1Search.solve(cube);
+        expect((Square1Cube.from(cube)..apply(solution)).isSolved, isTrue, reason: "trial $trial: $solution");
+        expect(solution.length, lessThanOrEqualTo(31));
+      }
+    });
+
+    test("solves a cube with a corner across the cut", () {
+      final random = Random(4);
+      for (var trial = 0; trial < 50; trial++) {
+        final cube = randomSquare1Cube(random: random)..turnTop(1 + random.nextInt(11));
+        final solution = Square1Search.solve(cube);
+        expect((Square1Cube.from(cube)..apply(solution)).isSolved, isTrue, reason: "trial $trial: $solution");
+      }
+    });
+
+    test("solved needs nothing", () {
+      expect(Square1Search.solve(Square1Cube()), isEmpty);
+    });
+
+    test("a scramble leaves a state that is not solved, at least eleven moves long", () {
+      for (var seed = 0; seed < 20; seed++) {
+        final scramble = randomSquare1Scramble(random: Random(seed));
+        expect(scramble.length, greaterThanOrEqualTo(11));
+        expect((Square1Cube()..apply(scramble)).isSolved, isFalse);
+      }
+    });
+
+    test("random cubes are spread over the shapes", () {
+      // Coupon collector, as for the other puzzles.
+      const draws = 3000;
+      const bins = Square1Tables.nShapes;
+      final random = Random(5);
+      final tables = Square1Tables();
+      final seen = {for (var i = 0; i < draws; i++) tables.shapeOf(randomSquare1Cube(random: random))! ~/ 2};
+      expect(seen.length, closeTo(bins * (1 - exp(-draws / bins)), 60));
+    });
+  });
 }
