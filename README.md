@@ -586,6 +586,21 @@ exhaustive comparison.
 
 350 tests, `dart test`.
 
+## License
+
+GPLv3, see [LICENSE](LICENSE). This is not a choice made lightly: much of the
+package is a port of GPLv3 code, so it can only be distributed under the same
+terms.
+
+- The 3x3x3 solver is a port of Shuang Chen's
+  [min2phase](https://github.com/cs0x7f/min2phase).
+- The Square-1 solver is a port of his sq12phase, and the 4x4x4 solver of his
+  threephase, both as shipped in
+  [tnoodle-lib](https://github.com/thewca/tnoodle-lib).
+- The Megaminx turns, the Square-1 reference model in the tests and the rules
+  for random turn scrambles come from TNoodle, the WCA's official scramble
+  program, so that a scramble here is the one the official program makes.
+
 ## Roadmap
 
 The 2x2x2, 3x3x3, 5x5x5, 6x6x6, 7x7x7, Megaminx, Pyraminx, Skewb, Square-1 and

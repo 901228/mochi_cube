@@ -1,5 +1,11 @@
 ## Unreleased
 
+### GPLv3
+
+The package is licensed under the GNU GPL version 3, with a `LICENSE` file. It
+already was a derivative of GPLv3 code — min2phase, sq12phase and TNoodle — and
+now says so.
+
 ### The Megaminx
 
 `package:mochi_cube/megaminx.dart`: `Megaminx`, `randomMegaminxScramble` and
