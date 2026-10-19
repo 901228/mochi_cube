@@ -2,7 +2,12 @@ import "dart:math";
 import "dart:typed_data";
 
 import "package:mochi_cube/fourbyfour/center1.dart";
+import "package:mochi_cube/fourbyfour/center2.dart";
+import "package:mochi_cube/fourbyfour/center3.dart";
 import "package:mochi_cube/fourbyfour/cubies.dart";
+import "package:mochi_cube/fourbyfour/edge3.dart";
+import "package:mochi_cube/fourbyfour/moves.dart";
+import "package:mochi_cube/fourbyfour/tables.dart";
 import "package:mochi_cube/nxn.dart";
 import "package:test/test.dart";
 
@@ -149,6 +154,125 @@ void main() {
       }
       for (var m = 0; m < 36; m++) {
         expect(symmove[m], m, reason: "the identity leaves move $m alone");
+      }
+    });
+  });
+
+  group("the tables", () {
+    setUpAll(FourByFourTables.init);
+
+    test("phase 1's distances are those of an independent search over raw states", () {
+      // A breadth-first search over the 735471 raw states, which uses none of
+      // the symmetry reduction, to depth 5; every state it finds must be the
+      // distance away that its class says, and nothing else may be nearer. The
+      // class of the finished state holds three raw states: the colour class on
+      // U and D, on F and B, or on R and L.
+      final seen = Uint8List(Center1.nRaw)..fillRange(0, Center1.nRaw, 255);
+      const finished = [0, 12869, 735470];
+      for (final raw in finished) {
+        seen[raw] = 0;
+      }
+      var frontier = [...finished];
+      final c = Center1();
+      for (var depth = 1; depth <= 5; depth++) {
+        final next = <int>[];
+        for (final state in frontier) {
+          for (var m = 0; m < 27; m++) {
+            c.setIndex(state);
+            c.move(m);
+            final idx = c.index;
+            if (seen[idx] == 255) {
+              seen[idx] = depth;
+              next.add(idx);
+            }
+          }
+        }
+        frontier = next;
+      }
+
+      var checked = 0;
+      final probe = Center1();
+      for (var raw = 0; raw < Center1.nRaw; raw++) {
+        if (seen[raw] == 255 && raw % 37 != 0) continue;
+        probe.setIndex(raw);
+        final distance = Center1.csprun[probe.getsym() >> 6];
+        if (seen[raw] == 255) {
+          expect(distance, greaterThan(5), reason: "raw state $raw is deeper than 5");
+        } else {
+          expect(distance, seen[raw], reason: "raw state $raw");
+        }
+        checked++;
+      }
+      expect(checked, greaterThan(10000));
+      expect(Center1.csprun, isNot(contains(255)));
+    });
+
+    test("phase 1's move table follows the centres' own moves", () {
+      // A class is held by its representative, so a state's own move is the
+      // representative's move conjugated by the symmetry that links them.
+      final random = Random(4);
+      for (var trial = 0; trial < 300; trial++) {
+        final centres = CenterCube();
+        for (var i = 0; i < 12; i++) {
+          centres.move(random.nextInt(27));
+        }
+        final before = Center1.fromCenter(centres, 0).getsym();
+        final m = random.nextInt(36);
+        centres.move(m);
+        final after = Center1.fromCenter(centres, 0).getsym() >> 6;
+        final through = symmove[(before & 0x3f) * 36 + m];
+        expect(Center1.ctsmv[(before >> 6) * 36 + through] >> 6, after, reason: "trial $trial, move $m");
+      }
+    });
+
+    test("every state of phases 1, 2 and 3 can be solved", () {
+      expect(Center1.csprun, isNot(contains(255)));
+      expect(Center2.ctprun, isNot(contains(255)));
+      expect(Center3.prun, isNot(contains(255)));
+      expect(Center1.csprun.reduce(max), 8);
+      expect(Center3.prun.reduce(max), 10);
+    });
+
+    test("the wing table has as many entries as the original's, to the last", () {
+      var set = 0;
+      for (final byte in Edge3.eprun) {
+        for (var k = 0; k < 4; k++) {
+          if (((byte >> (k * 2)) & 3) != 3) set++;
+        }
+      }
+      expect(set, Edge3.prunValues[Edge3.maxDepth - 1]);
+    });
+
+    // An independent search over real cubes, using only the wing moves already
+    // checked against the NxN model. A face turn does not change what the table
+    // looks at, so it is never above the true distance, not always equal to it;
+    // but the classes the search reaches within each depth must be exactly the
+    // published count of them.
+    test("the wing distances never exceed those of a search over cubes, and the classes match", () {
+      final e = Edge3();
+      final moves = [for (var m = 0; m < 17; m++) move3std[m]];
+      String key(EdgeCube c) => c.ep.join(",");
+
+      var frontier = [EdgeCube()];
+      final seen = {key(frontier.single)};
+      final reached = <int>{};
+      for (var depth = 0; depth <= 4; depth++) {
+        for (final cube in frontier) {
+          e.setCube(cube);
+          final index = e.getsym();
+          reached.add(index);
+          expect(Edge3.getprun(index), lessThanOrEqualTo(depth), reason: "a state $depth moves out");
+        }
+        expect(reached, hasLength(Edge3.prunValues[depth]), reason: "classes within $depth moves");
+
+        final next = <EdgeCube>[];
+        for (final cube in frontier) {
+          for (final m in moves) {
+            final turned = EdgeCube.from(cube)..move(m);
+            if (seen.add(key(turned))) next.add(turned);
+          }
+        }
+        frontier = next;
       }
     });
   });
