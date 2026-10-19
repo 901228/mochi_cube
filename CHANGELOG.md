@@ -1,5 +1,15 @@
 ## Unreleased
 
+### The 4x4x4
+
+`package:mochi_cube/fourbyfour.dart`: `randomFourByFourScramble` and
+`FourByFourSearch.solve`, a port of Shuang Chen's three phase reduction solver
+as the official scramble program uses it. Scrambles are random states, about 45
+moves, written with `Uw`, `Rw` and `Fw` only; `FourByFourScrambler` is filed as
+`444`, drawn with `cubeNetLayout(4)`, and the command line scrambles, solves and
+shows it. The tables are cached as `fourbyfour.bin`, 10 MB, and take about 1.7s
+to build; on the web the first scramble takes 3.5s unless the host ships them.
+
 ### GPLv3
 
 The package is licensed under the GNU GPL version 3, with a `LICENSE` file. It

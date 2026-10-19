@@ -22,6 +22,7 @@ import "dart:math";
 
 import "clock.dart";
 import "cube/layout.dart";
+import "fourbyfour.dart" show randomFourByFourScramble;
 import "megaminx.dart"
     show Megaminx, megaminxLayout, megaminxMoves, megaminxNotation, nMegaminxFacelets, randomMegaminxScramble;
 import "mochi_cube.dart";
@@ -50,8 +51,8 @@ export "square1/layout.dart" show Square1Layout;
 abstract interface class Scrambler {
   /// A short name, and the key this is filed under.
   ///
-  /// The puzzles use their WCA event id — `333`, `222`, `555`, `666`, `777`,
-  /// `minx`, `pyram`, `skewb`, `sq1` and `clock` — rather than a spelling of our own,
+  /// The puzzles use their WCA event id — `333`, `222`, `444`, `555`, `666`,
+  /// `777`, `minx`, `pyram`, `skewb`, `sq1` and `clock` — rather than a spelling of our own,
   /// since those are what the rest of the speedcubing world writes and what the
   /// official scrambler is asked for. The drills, which the WCA has no id for, are `pll`, `oll` and
   /// `f2l`.
@@ -288,6 +289,48 @@ class PocketScrambler with _AlgorithmSteps implements Scrambler {
   Future<Scramble> next({Random? random}) async {
     await loadTables(tables);
     final algorithm = randomPocketScramble(random: random);
+    return Scramble(notation: algorithm.toString(), state: stateOf(algorithm), algorithm: algorithm);
+  }
+}
+
+/// The 4x4x4, scrambled from a random state as the WCA does.
+///
+/// The one cube of the big ones that needs tables: a three phase solver finds
+/// the scramble, and its first search builds them.
+class FourByFourScrambler with _AlgorithmSteps implements Scrambler {
+  const FourByFourScrambler();
+
+  @override
+  String get id => "444";
+
+  @override
+  String get name => "4x4x4";
+
+  @override
+  String get puzzleId => id;
+
+  @override
+  Layout get layout => cubeNetLayout(4);
+
+  @override
+  int get stateLength => 96;
+
+  @override
+  List<int> get solvedState => NxNCube(4).toFacelets();
+
+  @override
+  List<int> stateOf(Algorithm algorithm) => (NxNCube(4)..apply(algorithm)).toFacelets();
+
+  @override
+  MoveSet get _moveSet => nxnMoves(4);
+
+  @override
+  List<String> get tables => const [TableFiles.fourByFour];
+
+  @override
+  Future<Scramble> next({Random? random}) async {
+    await loadTables(tables);
+    final algorithm = randomFourByFourScramble(random: random);
     return Scramble(notation: algorithm.toString(), state: stateOf(algorithm), algorithm: algorithm);
   }
 }
@@ -639,6 +682,7 @@ class PracticeScrambler with _AlgorithmSteps implements Scrambler {
 const Map<String, Scrambler> puzzleScramblers = {
   "333": CubeScrambler(),
   "222": PocketScrambler(),
+  "444": FourByFourScrambler(),
   "555": NxNScrambler(5),
   "666": NxNScrambler(6),
   "777": NxNScrambler(7),

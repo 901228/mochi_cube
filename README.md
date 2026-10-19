@@ -1,8 +1,8 @@
 # mochi_cube
 
 Twisty puzzle solvers and scramble generators in pure Dart, no Flutter
-dependency. The 2x2x2 to the 7x7x7 bar the 4x4x4, the Megaminx, the Pyraminx,
-the Skewb, the Square-1 and the Clock so far, as a library and as a [command line tool](#command-line).
+dependency. The 2x2x2 to the 7x7x7, the Megaminx, the Pyraminx, the Skewb, the
+Square-1 and the Clock so far, as a library and as a [command line tool](#command-line).
 
 For the 3x3x3 there are two solvers. The one you want is a port of Chen Shuang's
 [min2phase](https://github.com/cs0x7f/min2phase); the other is a plainer
@@ -220,11 +220,56 @@ turned in, and must be at least eleven moves (4b3). That is checked against the
 solution found rather than an optimal one, so it is an upper bound — see the
 `shortcut:` on `randomSquare1Scramble`.
 
+## The 4x4x4
+
+`package:mochi_cube/fourbyfour.dart`, the largest piece of the package: a port
+of Shuang Chen's three phase reduction solver, which is what the official
+scramble program uses. A 4x4x4 has far too many states to scramble by random
+turns and be sure they are mixed, and 7.4 * 10^45 to draw from, so it is
+scrambled the way the WCA defines it — a random state, solved, the solution
+reversed.
+
+```dart
+import "package:mochi_cube/fourbyfour.dart";
+
+final scramble = randomFourByFourScramble();
+// Rw2 U' Fw L2 …
+
+final cube = NxNCube(4)..apply(scramble);
+FourByFourSearch.solve(cube); // about 44 moves, not the shortest
+```
+
+| | |
+| ---------- | ------------------------------------------------------------ |
+| scramble   | 375ms and about 45 moves (48 at worst), on the VM            |
+| tables     | 10 MB cached, built in ~1.7s; 3.5s for the first, then 0.7s on the web |
+
+Phase 1 puts the centres of one colour class on two opposite faces, phase 2
+sorts the rest, and phase 3 finishes the centres while pairing the wings,
+leaving a 3x3x3 that this package's own min2phase solves. Each phase is an
+iterative deepening search with its own table: the centres are folded by the 48
+symmetries of the cube, and the wings' table is a 2-bit table of 31 million
+reduced states, kept as the depth modulo 3 and only as far as nine moves.
+
+The 36 moves are `nxnMoves(4)`, the very same numbering, so a scramble is an
+ordinary `Algorithm` and `NxNCube(4)` can follow it. The solution leaves the
+cube a whole-cube rotation away from where it began, since a 4x4x4 has no fixed
+centres; the scramble is written with only `Uw`, `Rw` and `Fw` for the wide
+turns, as the official ones are.
+
+It is checked against `NxNCube(4)` throughout, which the 3x3x3 and 2x2x2
+checked in turn: every move of the solver's own pieces, a scramble against the
+random cube it came from up to a rotation, a solution against the cube it was
+found for. The tables are checked by independent searches — over all 735471 raw
+centre states to depth 5, and over real cubes for the wings, where the number of
+classes reached within each number of moves is exactly the original's published
+1, 4, 16, 55, 324, 1922.
+
 ## The 5x5x5, 6x6x6 and 7x7x7
 
 `package:mochi_cube/nxn.dart`. These the WCA scrambles by random turns rather
 than a random state, so nothing here solves them: the scramble needs the turns
-and nothing else.
+and nothing else. The 4x4x4 above uses the same cube.
 
 ```dart
 import "package:mochi_cube/nxn.dart";
@@ -394,6 +439,7 @@ the puzzle's tables:
 | --- | --- | --- |
 | `333` | 1780ms | 24ms |
 | `222` | 1003ms | 0.1ms |
+| `444` | 3542ms | 738ms |
 | `pyram` | 333ms | 0.1ms |
 | `skewb` | 593ms | 0.1ms |
 | `sq1` | 120ms | 29ms |
@@ -427,7 +473,7 @@ dart pub global activate mochi_cube
 ```
 
 ```
-mochi_cube scramble <puzzle>                             a scramble: 3x3, 2x2, 5x5 … 7x7, megaminx, pyraminx, skewb, sq1, clock
+mochi_cube scramble <puzzle>                             a scramble: 3x3, 2x2, 4x4 … 7x7, megaminx, pyraminx, skewb, sq1, clock
 mochi_cube solve <state>                                 the moves back; the state says which puzzle (not 5x5 and up, nor megaminx)
 mochi_cube show <state>                                  draw it as a net of letters
 mochi_cube practice <pll|oll|f2l>                        a drill scramble
@@ -499,7 +545,7 @@ for (var i = 0; i < facelets.length; i++) {
 | -------- | ----------------- | ------------------------------ |
 | 3x3x3    | `cubeLayout`      | 54 squares, the usual cross net |
 | 2x2x2    | `pocketLayout`    | 24 squares, the same net        |
-| NxNxN    | `cubeNetLayout(n)` | `6 * n * n` squares, the same net |
+| NxNxN    | `cubeNetLayout(n)` | `6 * n * n` squares, the same net; the 4x4x4 too |
 | Megaminx | `megaminxLayout`  | 132 pieces, TNoodle's two flowers |
 | Pyraminx | `pyraminxLayout`  | 36 triangles, the tetrahedron net |
 | Skewb    | `skewbLayout`     | 30 pieces, the cube's cross net  |
@@ -584,7 +630,7 @@ it has to use an 8-element subgroup; and a breadth-first search that ignores
 inadmissible and lets the search miss solutions. Neither shows up without an
 exhaustive comparison.
 
-350 tests, `dart test`.
+371 tests, `dart test`.
 
 ## License
 
@@ -603,8 +649,8 @@ terms.
 
 ## Roadmap
 
-The 2x2x2, 3x3x3, 5x5x5, 6x6x6, 7x7x7, Megaminx, Pyraminx, Skewb, Square-1 and
-Clock are implemented. Everything below is wanted but not written.
+The 2x2x2 to the 7x7x7, Megaminx, Pyraminx, Skewb, Square-1 and Clock are
+implemented. Everything below is wanted but not written.
 
 ### Other puzzles
 
@@ -616,7 +662,7 @@ and reversed, as above. Where it cannot, it is random turns.
 | ------------ | ------------ | ------------------------------------------------ |
 | 2x2x2        | random state | **done**                                         |
 | 3x3x3        | random state | **done**                                         |
-| 4x4x4        | random state | a staged reduction solver — much the largest job |
+| 4x4x4        | random state | **done**                                         |
 | 5x5x5        | random turns | **done**                                         |
 | 6x6x6        | random turns | **done**                                         |
 | 7x7x7        | random turns | **done**                                         |

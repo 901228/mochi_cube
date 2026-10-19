@@ -8,6 +8,7 @@ import "cli/puzzles.dart";
 
 export "cli/puzzles.dart" show CliPuzzle;
 import "mochi_cube.dart";
+import "fourbyfour.dart" show FourByFourTables;
 import "pocket.dart" show PocketTables;
 import "pyraminx.dart" show PyraminxTables;
 import "scramblers.dart";
@@ -276,6 +277,7 @@ class _TablesCommand extends _Command {
       "min2phase phase 1": () => Phase1Tables().lengthInBytes,
       "min2phase phase 2": () => Phase2Tables().lengthInBytes,
       "2x2x2": () => PocketTables().lengthInBytes,
+      "4x4x4": () => FourByFourTables.lengthInBytes,
       "pyraminx": () => PyraminxTables().lengthInBytes,
       "skewb": () => SkewbTables().lengthInBytes,
     };

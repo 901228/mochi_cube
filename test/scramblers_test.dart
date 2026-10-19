@@ -26,7 +26,7 @@ int piecesOf(Layout layout) => switch (layout) {
 List<int> stateFromNotation(Scrambler scrambler, Scramble scramble) => switch (scrambler.puzzleId) {
   "333" => Algorithm.parse(scramble.notation).cube.toFacelets(),
   "222" => Algorithm.parse(scramble.notation).cube.toPocketFacelets(),
-  "555" || "666" || "777" => [
+  "444" || "555" || "666" || "777" => [
     for (final size in [int.parse(scrambler.puzzleId[0])])
       ...(NxNCube(size)..apply(Algorithm.parse(scramble.notation, moveSet: nxnMoves(size)))).toFacelets(),
   ],
@@ -85,6 +85,7 @@ void main() {
     // Random.secure of its own.
     for (final scrambler in [
       const PocketScrambler(),
+      const FourByFourScrambler(),
       const NxNScrambler(5),
       const MegaminxScrambler(),
       const PyraminxScrambler(),
@@ -105,6 +106,7 @@ void main() {
     expect(puzzleScramblers.keys, [
       "333",
       "222",
+      "444",
       "555",
       "666",
       "777",

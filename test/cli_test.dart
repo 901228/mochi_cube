@@ -3,7 +3,7 @@ import "package:mochi_cube/cli.dart";
 import "package:mochi_cube/clock.dart";
 import "package:mochi_cube/mochi_cube.dart";
 import "package:mochi_cube/pocket.dart" show PocketFacelets;
-import "package:mochi_cube/nxn.dart" show NxNCube;
+import "package:mochi_cube/nxn.dart" show NxNCube, nxnMoves;
 import "package:mochi_cube/pyraminx.dart";
 import "package:mochi_cube/scramblers.dart" show puzzleScramblers;
 import "package:mochi_cube/skewb.dart" show SkewbCube, skewbMoves;
@@ -36,6 +36,7 @@ void main() {
       // solver's own tie breaking; the others are drawn and nothing else.
       for (final puzzle in [
         CliPuzzle.pocket,
+        CliPuzzle.cube4,
         CliPuzzle.cube5,
         CliPuzzle.megaminx,
         CliPuzzle.pyraminx,
@@ -63,6 +64,7 @@ void main() {
       expect(_solvesCube(await run(["scramble"])), isTrue);
       expect(_solvesPocket(await run(["scramble", "2x2"])), isTrue);
       expect(_solvesPyraminx(await run(["scramble", "pyraminx"])), isTrue);
+      expect(_solvesFourByFour(await run(["scramble", "4x4"])), isTrue);
       expect(_solvesSkewb(await run(["scramble", "skewb"])), isTrue);
       expect(_solvesSquare1(await run(["scramble", "sq1"])), isTrue);
       expect(_solvesClock(await run(["scramble", "clock"])), isTrue);
@@ -100,6 +102,12 @@ void main() {
       final net = (await run(["show", SkewbCube().toFaceletString()])).join("\n");
       expect(net, contains("L   L F   F R   R B   B"));
       expect(net, contains("  L     F     R     B"));
+    });
+
+    test("draws a 4x4x4 as the same net", () async {
+      final net = await run(["show", NxNCube(4).toFaceletString()]);
+      expect(net, hasLength(12));
+      expect(net[5], "L L L L F F F F R R R R B B B B");
     });
 
     test("draws a big cube as the same net, a letter a sticker", () async {
@@ -202,6 +210,15 @@ bool _solvesPyraminx(List<String> scramble) {
   final solution = CliPuzzle.pyraminx.solve(CliPuzzle.pyraminx.stateOf(scramble.first));
   final cube = PyraminxCube()..apply(Algorithm.parse("${scramble.first} $solution", moveSet: pyraminxMoves));
   return cube.toFaceletString() == PyraminxCube().toFaceletString();
+}
+
+bool _solvesFourByFour(List<String> scramble) {
+  // Solved the way a 4x4x4 can be: every face one colour, whichever way up.
+  final solution = CliPuzzle.cube4.solve(CliPuzzle.cube4.stateOf(scramble.first));
+  final cube = NxNCube(4)..apply(Algorithm.parse("${scramble.first} $solution", moveSet: nxnMoves(4)));
+  return [
+    for (var face = 0; face < 6; face++) cube.facelets.sublist(face * 16, face * 16 + 16).toSet().length,
+  ].every((colours) => colours == 1);
 }
 
 bool _solvesSkewb(List<String> scramble) {
