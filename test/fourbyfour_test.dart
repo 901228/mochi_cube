@@ -1,14 +1,14 @@
 import "dart:math";
 import "dart:typed_data";
 
+import "package:mochi_cube/fourbyfour.dart";
 import "package:mochi_cube/fourbyfour/center1.dart";
 import "package:mochi_cube/fourbyfour/center2.dart";
 import "package:mochi_cube/fourbyfour/center3.dart";
 import "package:mochi_cube/fourbyfour/cubies.dart";
 import "package:mochi_cube/fourbyfour/edge3.dart";
 import "package:mochi_cube/fourbyfour/moves.dart";
-import "package:mochi_cube/fourbyfour/tables.dart";
-import "package:mochi_cube/nxn.dart";
+import "package:mochi_cube/fourbyfour/search.dart";
 import "package:test/test.dart";
 
 /// The stickers of [cube] as the NxN model writes them.
@@ -274,6 +274,74 @@ void main() {
         }
         frontier = next;
       }
+    });
+  });
+
+  group("the solver", () {
+    test("a scramble leaves the random cube it was made from, up to turning it over", () {
+      final holds = rotations();
+      for (var seed = 0; seed < 25; seed++) {
+        final target = FullCube.random(Random(seed));
+        final scramble = Algorithm(ThreePhaseSearch().search(target), moveSet: nxnMoves(4));
+        final made = NxNCube(4)..apply(scramble);
+        final wanted = stickers(target);
+        final found = holds.any((hold) {
+          for (var i = 0; i < 96; i++) {
+            if (made.facelets[i] != wanted[hold[i]]) return false;
+          }
+          return true;
+        });
+        expect(found, isTrue, reason: "seed $seed: $scramble");
+      }
+    });
+
+    test("a solution solves the cube it was found for", () {
+      for (var seed = 0; seed < 25; seed++) {
+        final target = FullCube.random(Random(100 + seed));
+        final cube = NxNCube.fromFacelets(4, stickers(target));
+        final solution = FourByFourSearch.solve(cube);
+        expect(isSolvedAnyWayUp(cube..apply(solution)), isTrue, reason: "seed $seed: $solution");
+      }
+    });
+
+    test("it solves what is reached by turning, whichever way round the cube is held", () {
+      final random = Random(5);
+      for (var trial = 0; trial < 10; trial++) {
+        final cube = NxNCube(4);
+        for (var i = 0; i < 60; i++) {
+          cube.applyMove(random.nextInt(36));
+        }
+        // Held another way: the whole cube turned, which moves the centres.
+        cube.turn(random.nextInt(6), 4, 1 + random.nextInt(3));
+        final solution = FourByFourSearch.solve(cube);
+        expect(isSolvedAnyWayUp(cube..apply(solution)), isTrue, reason: "trial $trial");
+        expect(solution.length, lessThan(70));
+      }
+    });
+
+    test("solved needs nothing but possibly a rotation, and a scramble is not solved", () {
+      final solution = FourByFourSearch.solve(NxNCube(4));
+      expect(isSolvedAnyWayUp(NxNCube(4)..apply(solution)), isTrue);
+      expect((NxNCube(4)..apply(randomFourByFourScramble(random: Random(7)))).isSolved, isFalse);
+    });
+
+    test("a scramble is the same on every run of one seed, and uses the three wide turns", () {
+      final once = randomFourByFourScramble(random: Random(8));
+      expect(randomFourByFourScramble(random: Random(8)), once);
+      expect(once.moveSet, nxnMoves(4));
+      expect(once.length, inInclusiveRange(30, 70));
+      // Only U, R and F wide: axes 6 to 8 of the 12, never D, L or B.
+      for (final move in once.moves) {
+        final axis = nxnMoves(4).axisOf(move);
+        if (axis >= 6) expect(axis, lessThan(9), reason: "$once");
+      }
+    });
+
+    test("stickers that are not a 4x4x4 are refused", () {
+      expect(() => FourByFourSearch.solve(NxNCube(3)), throwsArgumentError);
+      final twisted = NxNCube(4);
+      twisted.facelets[0x0f] = 1;
+      expect(() => FourByFourSearch.solve(twisted), throwsFormatException);
     });
   });
 }
