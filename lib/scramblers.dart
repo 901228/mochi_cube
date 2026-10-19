@@ -20,6 +20,7 @@ library;
 
 import "dart:math";
 
+import "background/worker_stub.dart" if (dart.library.io) "background/worker_io.dart";
 import "clock.dart";
 import "cube/layout.dart";
 import "fourbyfour.dart" show randomFourByFourScramble;
@@ -42,6 +43,34 @@ export "table_storage.dart" show TableBytesLoader, TableFiles, useTableBytesLoad
 export "clock/layout.dart" show ClockLayout;
 export "cube/layout.dart" show Layout, Point, PuzzleLayout;
 export "square1/layout.dart" show Square1Layout;
+
+/// Scrambling off the thread that draws the screen.
+extension ScramblerInBackground on Scrambler {
+  /// [Scrambler.next], made on an isolate of its own where there are isolates.
+  ///
+  /// The first scramble of a puzzle builds or unpacks its tables, and every one after that is a
+  /// search: for the 4x4x4 that is half a second to several on a phone, enough to stop an
+  /// animation. Here the tables live on one worker isolate, started by the first call, and the
+  /// thread that called is free throughout. The tables a host ships through [useTableBytesLoader]
+  /// reach the worker from that loader, so a host sets it up as it already does.
+  ///
+  /// **Not on the web**, which has no isolates: there this is [Scrambler.next], holding the thread
+  /// as it does. It is also [Scrambler.next] when [random] is given, which cannot cross to
+  /// another isolate, and for a scrambler that is not the one filed under its [Scrambler.id].
+  ///
+  /// A program that uses it has to [closeBackgroundScrambling] before it can exit.
+  Future<Scramble> nextInBackground({Random? random}) async {
+    if (random == null && allScramblers[id] == this) {
+      if (scrambleInBackground(id) case final notation?) return parse(await notation);
+    }
+    return next(random: random);
+  }
+}
+
+/// Stop the isolate [ScramblerInBackground.nextInBackground] runs on, and the tables it holds.
+///
+/// The next call starts it again. Needed by a program that is to exit; an app never need call it.
+Future<void> closeBackgroundScrambling() => closeWorker();
 
 /// A source of scrambles for one puzzle.
 ///

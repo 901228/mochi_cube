@@ -1,5 +1,14 @@
 ## Unreleased
 
+### Scrambling in the background
+
+`nextInBackground`, on every `Scrambler`, is `next` made on an isolate of its own, so a first
+scramble that builds or unpacks tables, or a 4x4x4 search, no longer holds the thread that draws the
+screen. One worker isolate starts on the first call and keeps the tables; the main isolate's
+`useTableBytesLoader` still supplies a shipped file, which the worker asks it for. On the web, which
+has no isolates, and when `random` is given, it is `next`. A program that uses it calls
+`closeBackgroundScrambling` before it exits.
+
 ### The 4x4x4
 
 `package:mochi_cube/fourbyfour.dart`: `randomFourByFourScramble` and

@@ -418,6 +418,11 @@ scramble.state;      // one number per piece of scrambler.layout
 scramble.algorithm;  // the moves, or null for the Clock
 ```
 
+`next` holds the calling thread while it builds a puzzle's tables and searches, which an app that
+draws a screen cannot afford. `scrambler.nextInBackground()` is the same scramble made on a worker
+isolate that keeps the tables; on the web, which has no isolates, it is `next`. A program that uses
+it calls `closeBackgroundScrambling()` before it exits, or the worker keeps it alive.
+
 The keys are the WCA event ids — `333`, `222`, `555`, `666`, `777`, `minx`,
 `pyram`, `skewb`, `sq1`, `clock` — rather
 than a spelling of our own, since those are what the rest of the speedcubing world

@@ -43,6 +43,11 @@ abstract final class TableFiles {
   static const List<String> all = [phase1, phase2, pocket, pyraminx, skewb, fourByFour];
 }
 
+/// The bytes the host's [useTableBytesLoader] has for [name], or null where it has none or set none.
+///
+/// For the background scrambler, whose isolate cannot reach what the host bundles and asks this one.
+Future<Uint8List?> suppliedTableBytes(String name) async => _loader?.call(name);
+
 /// Fetches the bytes of a prebuilt table file, or null where there are none.
 ///
 /// See [useTableBytesLoader].
