@@ -1,6 +1,7 @@
 import "dart:math";
 
 import "../clock.dart";
+import "../fto.dart" show ftoFaceNames;
 import "../megaminx.dart" show Megaminx, megaminxFaceLetters, megaminxFaceNames;
 import "../mochi_cube.dart";
 import "../pyraminx.dart";
@@ -123,6 +124,12 @@ abstract final class Ascii {
             "${letters[face * 11 + 10]} | ${letters.substring(face * 11, face * 11 + 10).split("").join(" ")}",
     ].join("\n");
   }
+
+  /// An FTO's eight faces, a line each, the nine letters of each face in order.
+  static String ftoFaces(String facelets) => [
+    for (var face = 0; face < 8; face++)
+      "${ftoFaceNames[face].padRight(3)} ${facelets.substring(face * 9, face * 9 + 9).split("").join(" ")}",
+  ].join("\n");
 
   /// A clock's eighteen dials, as two grids of hours.
   static String clockDials(ClockState state) {

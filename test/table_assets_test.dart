@@ -17,6 +17,7 @@ void main() {
     expect(puzzleScramblers["222"]!.tables, [TableFiles.pocket]);
     expect(puzzleScramblers["pyram"]!.tables, [TableFiles.pyraminx]);
     expect(puzzleScramblers["skewb"]!.tables, [TableFiles.skewb]);
+    expect(puzzleScramblers["fto"]!.tables, [TableFiles.fto]);
     expect(puzzleScramblers["444"]!.tables, [TableFiles.fourByFour]);
     for (final id in ["555", "666", "777", "minx"]) {
       expect(puzzleScramblers[id]!.tables, isEmpty, reason: "random turns need no tables");

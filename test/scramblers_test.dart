@@ -5,6 +5,7 @@ import "package:mochi_cube/megaminx.dart" show Megaminx, megaminxMoves;
 import "package:mochi_cube/mochi_cube.dart";
 import "package:mochi_cube/nxn.dart" show NxNCube, nxnMoves;
 import "package:mochi_cube/pocket.dart" show PocketFacelets;
+import "package:mochi_cube/fto.dart" show Fto, ftoMoves;
 import "package:mochi_cube/pyraminx.dart";
 import "package:mochi_cube/scramblers.dart";
 import "package:mochi_cube/skewb.dart" show SkewbCube, skewbMoves;
@@ -31,6 +32,7 @@ List<int> stateFromNotation(Scrambler scrambler, Scramble scramble) => switch (s
       ...(NxNCube(size)..apply(Algorithm.parse(scramble.notation, moveSet: nxnMoves(size)))).toFacelets(),
   ],
   "minx" => (Megaminx()..apply(Algorithm.parse(scramble.notation, moveSet: megaminxMoves))).toFacelets(),
+  "fto" => (Fto()..apply(Algorithm.parse(scramble.notation, moveSet: ftoMoves))).facelets,
   "pyram" => (PyraminxCube()..apply(Algorithm.parse(scramble.notation, moveSet: pyraminxMoves))).toFacelets(),
   "skewb" => (SkewbCube()..apply(Algorithm.parse(scramble.notation, moveSet: skewbMoves))).toFacelets(),
   "sq1" => [
@@ -111,6 +113,7 @@ void main() {
       "666",
       "777",
       "minx",
+      "fto",
       "pyram",
       "skewb",
       "sq1",

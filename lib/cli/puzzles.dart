@@ -4,6 +4,7 @@ import "../clock.dart";
 import "../megaminx.dart" show Megaminx, megaminxMoves, nMegaminxFacelets;
 import "../mochi_cube.dart";
 import "../fourbyfour.dart" show FourByFourSearch;
+import "../fto.dart" show Fto, FtoSearch, ftoFromFaceletString, ftoMoves;
 import "../nxn.dart" show NxNCube, nxnMoves;
 import "../pocket.dart";
 import "../pyraminx.dart";
@@ -26,6 +27,7 @@ enum CliPuzzle {
   cube6("6x6", "666", ["6x6x6"]),
   cube7("7x7", "777", ["7x7x7"]),
   megaminx("megaminx", "minx", ["mega"]),
+  fto("fto", "fto", ["octahedron"]),
   pyraminx("pyraminx", "pyram", ["pyra", "pyramid"]),
   skewb("skewb", "skewb", []),
   square1("sq1", "sq1", ["square1", "square-1"]),
@@ -67,6 +69,7 @@ enum CliPuzzle {
       216 => cube6,
       294 => cube7,
       nMegaminxFacelets => megaminx,
+      72 => fto,
       nPyraminxFacelets => pyraminx,
       nSkewbFacelets => skewb,
       25 => square1,
@@ -109,6 +112,7 @@ enum CliPuzzle {
     ),
     cube4 || cube5 || cube6 || cube7 => Ascii.cubeNet(_nxnAfter(scramble).toFaceletString()),
     megaminx => Ascii.megaminxFaces(_megaminxAfter(scramble)),
+    fto => Ascii.ftoFaces(_ftoAfter(scramble).toFaceletString()),
     skewb => Ascii.skewbNet(_skewbAfter(scramble).toFaceletString()),
     square1 => Ascii.square1Layers(_square1After(scramble)),
     clock => Ascii.clockDials(ClockState.parse(scramble)),
@@ -121,6 +125,7 @@ enum CliPuzzle {
     pyraminx => (PyraminxCube()..apply(Algorithm.parse(scramble, moveSet: pyraminxMoves))).toFaceletString(),
     cube4 || cube5 || cube6 || cube7 => _nxnAfter(scramble).toFaceletString(),
     megaminx => _megaminxAfter(scramble).toFaceletString(),
+    fto => _ftoAfter(scramble).toFaceletString(),
     skewb => _skewbAfter(scramble).toFaceletString(),
     square1 => _square1After(scramble).toString(),
     clock => ClockState.parse(scramble).toDials().join(" "),
@@ -138,6 +143,7 @@ enum CliPuzzle {
       cube6 ||
       cube7 => Ascii.cubeNet(NxNCube.fromFaceletString(_size, stickers).toFaceletString()),
       megaminx => Ascii.megaminxFaces(Megaminx.fromFaceletString(stickers)),
+      fto => Ascii.ftoFaces(ftoFromFaceletString(stickers).toFaceletString()),
       skewb => Ascii.skewbNet(SkewbFacelet.fromFaceletString(stickers).toFaceletString()),
       square1 => Ascii.square1Layers(Square1Cube.parse(stickers)),
       clock => Ascii.clockDials(ClockState.parse(state)),
@@ -164,6 +170,8 @@ enum CliPuzzle {
         return PocketSearch.solve(PocketCube.fromFaceletString(stickers)).toString();
       case pyraminx:
         return PyraminxSearch.solve(PyraminxFacelet.fromFaceletString(stickers)).toString();
+      case fto:
+        return FtoSearch.solve(ftoFromFaceletString(stickers)).toString();
       case cube4:
         return FourByFourSearch.solve(NxNCube.fromFaceletString(4, stickers)).toString();
       case cube5 || cube6 || cube7 || megaminx:
@@ -189,6 +197,8 @@ enum CliPuzzle {
   NxNCube _nxnAfter(String scramble) =>
       NxNCube(_size)..apply(Algorithm.parse(scramble, moveSet: nxnMoves(_size)));
 }
+
+Fto _ftoAfter(String scramble) => Fto()..apply(Algorithm.parse(scramble, moveSet: ftoMoves));
 
 Megaminx _megaminxAfter(String scramble) =>
     Megaminx()..apply(Algorithm.parse(scramble, moveSet: megaminxMoves));

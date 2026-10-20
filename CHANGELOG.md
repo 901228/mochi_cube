@@ -1,5 +1,12 @@
 ## Unreleased
 
+### The Face Turning Octahedron
+
+`package:mochi_cube/fto.dart`: `randomFtoScramble`, `FtoSearch.solve` and `Fto`,
+a port of Levi Gibson's fto3phase. `FtoScrambler` is filed as `fto`, drawn with
+`ftoLayout`, and the command line scrambles, solves and shows it. The tables are
+cached as `fto.bin`, 11 MB.
+
 ### Scrambling in the background
 
 `nextInBackground`, on every `Scrambler`, is `next` made on an isolate of its own, so a first

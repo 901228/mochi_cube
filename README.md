@@ -328,6 +328,25 @@ and every piece within a flower is drawn joined.
 The state string uses a letter a face, `A` to `L` in TNoodle's face order
 (`megaminxFaceLetters`), since the faces' names are not single letters.
 
+## The Face Turning Octahedron
+
+`package:mochi_cube/fto.dart`. A port of Levi Gibson's fto3phase, the solver the
+official scramble program uses. Scrambles are random states, solved and reversed,
+about 28 moves.
+
+```dart
+import "package:mochi_cube/fto.dart";
+
+final scramble = randomFtoScramble();
+final puzzle = Fto()..apply(scramble);
+puzzle.toFacelets(); // 72 stickers, drawn by ftoLayout
+```
+
+The eight faces are `U R F L B BL D BR`, with the moves `U R' BL …` written as
+the WCA writes them. The turns are checked against TNoodle's own hand-written
+turn table sticker for sticker, and the solver's pieces against the stickers.
+The 11 MB phase 2 table is cached as `fto.bin` and takes about 3 s to build.
+
 ## The Clock
 
 `package:mochi_cube/clock.dart`, and the odd one out: no search, and no table
@@ -676,7 +695,7 @@ and reversed, as above. Where it cannot, it is random turns.
 | Skewb        | random state | **done**                                         |
 | Square-1     | random state | **done**                                         |
 | Clock        | random state | **done**                                         |
-| FTO          | random state | its own solver                                   |
+| FTO          | random state | **done**                                         |
 
 Each has its own minimum, per WCA regulation 4b3: 2x2x2 four moves, Pyraminx
 six, Skewb seven, Square-1 eleven, the rest two. Both scramble generators take

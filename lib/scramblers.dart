@@ -24,6 +24,7 @@ import "background/worker_stub.dart" if (dart.library.io) "background/worker_io.
 import "clock.dart";
 import "cube/layout.dart";
 import "fourbyfour.dart" show randomFourByFourScramble;
+import "fto.dart" show Fto, ftoLayout, ftoMoves, nFtoFacelets, randomFtoScramble;
 import "megaminx.dart"
     show Megaminx, megaminxLayout, megaminxMoves, megaminxNotation, nMegaminxFacelets, randomMegaminxScramble;
 import "mochi_cube.dart";
@@ -582,6 +583,46 @@ class Square1Scrambler with _AlgorithmSteps implements Scrambler {
   }
 }
 
+/// The Face Turning Octahedron, scrambled from a random state as the WCA does.
+class FtoScrambler with _AlgorithmSteps implements Scrambler {
+  const FtoScrambler();
+
+  @override
+  String get id => "fto";
+
+  @override
+  String get name => "Face Turning Octahedron";
+
+  @override
+  String get puzzleId => id;
+
+  @override
+  Layout get layout => ftoLayout;
+
+  @override
+  int get stateLength => nFtoFacelets;
+
+  @override
+  List<int> get solvedState => Fto().toFacelets();
+
+  @override
+  List<int> stateOf(Algorithm algorithm) => (Fto()..apply(algorithm)).toFacelets();
+
+  @override
+  MoveSet get _moveSet => ftoMoves;
+
+  /// The solver's tables are built on first use, and cached as one file.
+  @override
+  List<String> get tables => const [TableFiles.fto];
+
+  @override
+  Future<Scramble> next({Random? random}) async {
+    await loadTables(tables);
+    final algorithm = randomFtoScramble(random: random);
+    return Scramble(notation: algorithm.toString(), state: stateOf(algorithm), algorithm: algorithm);
+  }
+}
+
 /// The Rubik's Clock.
 class ClockScrambler implements Scrambler {
   const ClockScrambler();
@@ -716,6 +757,7 @@ const Map<String, Scrambler> puzzleScramblers = {
   "666": NxNScrambler(6),
   "777": NxNScrambler(7),
   "minx": MegaminxScrambler(),
+  "fto": FtoScrambler(),
   "pyram": PyraminxScrambler(),
   "skewb": SkewbScrambler(),
   "sq1": Square1Scrambler(),

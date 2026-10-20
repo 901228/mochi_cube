@@ -4,6 +4,7 @@ import "package:mochi_cube/clock.dart";
 import "package:mochi_cube/mochi_cube.dart";
 import "package:mochi_cube/pocket.dart" show PocketFacelets;
 import "package:mochi_cube/nxn.dart" show NxNCube, nxnMoves;
+import "package:mochi_cube/fto.dart" show Fto, ftoMoves;
 import "package:mochi_cube/pyraminx.dart";
 import "package:mochi_cube/scramblers.dart" show puzzleScramblers;
 import "package:mochi_cube/skewb.dart" show SkewbCube, skewbMoves;
@@ -65,6 +66,7 @@ void main() {
       expect(_solvesPocket(await run(["scramble", "2x2"])), isTrue);
       expect(_solvesPyraminx(await run(["scramble", "pyraminx"])), isTrue);
       expect(_solvesFourByFour(await run(["scramble", "4x4"])), isTrue);
+      expect(_solvesFto(await run(["scramble", "fto"])), isTrue);
       expect(_solvesSkewb(await run(["scramble", "skewb"])), isTrue);
       expect(_solvesSquare1(await run(["scramble", "sq1"])), isTrue);
       expect(_solvesClock(await run(["scramble", "clock"])), isTrue);
@@ -102,6 +104,12 @@ void main() {
       final net = (await run(["show", SkewbCube().toFaceletString()])).join("\n");
       expect(net, contains("L   L F   F R   R B   B"));
       expect(net, contains("  L     F     R     B"));
+    });
+
+    test("draws an FTO as its eight faces", () async {
+      final lines = await run(["show", Fto().toFaceletString()]);
+      expect(lines, hasLength(8));
+      expect(lines.first, "U   A A A A A A A A A");
     });
 
     test("draws a 4x4x4 as the same net", () async {
@@ -172,7 +180,7 @@ void main() {
           expect(CliPuzzle.byName(name.toUpperCase()), puzzle);
         }
       }
-      expect(() => CliPuzzle.byName("fto"), throwsFormatException);
+      expect(() => CliPuzzle.byName("dodecahedron"), throwsFormatException);
     });
 
     // The tool and the library have to agree on what a puzzle is called, or a
@@ -210,6 +218,11 @@ bool _solvesPyraminx(List<String> scramble) {
   final solution = CliPuzzle.pyraminx.solve(CliPuzzle.pyraminx.stateOf(scramble.first));
   final cube = PyraminxCube()..apply(Algorithm.parse("${scramble.first} $solution", moveSet: pyraminxMoves));
   return cube.toFaceletString() == PyraminxCube().toFaceletString();
+}
+
+bool _solvesFto(List<String> scramble) {
+  final solution = CliPuzzle.fto.solve(CliPuzzle.fto.stateOf(scramble.first));
+  return (Fto()..apply(Algorithm.parse("${scramble.first} $solution", moveSet: ftoMoves))).isSolved;
 }
 
 bool _solvesFourByFour(List<String> scramble) {
