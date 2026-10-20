@@ -1,6 +1,8 @@
 import "dart:math";
 
 import "package:mochi_cube/fto/cube.dart";
+import "package:mochi_cube/fto/cubie.dart";
+import "package:mochi_cube/fto/facelets.dart";
 import "package:mochi_cube/mochi_cube.dart" show Algorithm;
 import "package:test/test.dart";
 
@@ -187,6 +189,75 @@ void main() {
         ..apply(algorithm)
         ..apply(algorithm.inverse);
       expect(cube.isSolved, isTrue);
+    });
+  });
+
+  // fto3phase's pieces are a separate model, its moves a hand-written table of
+  // which piece goes where. Turning them and turning the stickers have to agree
+  // for every move, once each piece is placed by the faces it is named after.
+  group("fto3phase's pieces", () {
+    /// Our move for fto3phase's move [m].
+    int ours(int m) => ftoMoves.parse(FtoCubie.moveNames[m ~/ 2] + (m.isOdd ? "'" : ""));
+
+    test("are named after faces that really meet there", () {
+      for (final faces in cornerFaces) {
+        // Two of each half, going round alternately.
+        expect(ufbrblFaces.contains(faces[0]), isTrue);
+        expect(rlbdFaces.contains(faces[1]), isTrue);
+        expect(ufbrblFaces.contains(faces[2]), isTrue);
+        expect(rlbdFaces.contains(faces[3]), isTrue);
+      }
+      // CDL is round the corner of D and L, CDR of D and R, CDB of D and B.
+      expect(cornerFaces[FtoCubie.cdl], containsAll([6, 3]));
+      expect(cornerFaces[FtoCubie.cdr], containsAll([6, 1]));
+      expect(cornerFaces[FtoCubie.cdb], containsAll([6, 4]));
+    });
+
+    test("cover every sticker once, solved as solved", () {
+      expect(FtoCubie().toFacelets(), Fto().facelets);
+    });
+
+    test("turn as the stickers do, move for move", () {
+      for (var m = 0; m < 16; m++) {
+        final cubie = FtoCubie()..turn(m);
+        final stickers = Fto()..applyMove(ours(m));
+        expect(cubie.toFacelets(), stickers.facelets, reason: "move ${ftoMoves.render(ours(m))}");
+      }
+      final random = Random(2);
+      for (var trial = 0; trial < 100; trial++) {
+        final cubie = FtoCubie();
+        final stickers = Fto();
+        for (var step = 0; step < 30; step++) {
+          final m = random.nextInt(16);
+          cubie.turn(m);
+          stickers.applyMove(ours(m));
+        }
+        expect(cubie.toFacelets(), stickers.facelets, reason: "trial $trial");
+      }
+    });
+
+    test("read back from their stickers, and a random state is a real one", () {
+      for (var seed = 0; seed < 100; seed++) {
+        final cubie = FtoCubie.random(Random(seed));
+        expect(ftoCubieFromFacelets(cubie.toFacelets()), cubie, reason: "seed $seed");
+      }
+    });
+
+    test("stickers that are not an FTO are refused", () {
+      final solved = Fto().facelets;
+      final swapped = [...solved];
+      // Two edges traded: an odd permutation.
+      final (a1, a2) = edgeFacelets[0];
+      final (b1, b2) = edgeFacelets[1];
+      swapped[a1] = solved[b1];
+      swapped[a2] = solved[b2];
+      swapped[b1] = solved[a1];
+      swapped[b2] = solved[a2];
+      expect(() => ftoCubieFromFacelets(swapped), throwsFormatException);
+
+      final misplaced = [...solved];
+      misplaced[ufbrblTriangleFacelets[0]] = rlbdFaces[0];
+      expect(() => ftoCubieFromFacelets(misplaced), throwsFormatException);
     });
   });
 }
