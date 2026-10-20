@@ -36,11 +36,14 @@ abstract final class TableFiles {
   /// The 4x4x4's tables: the first phase's moves and the last phase's wings.
   static const String fourByFour = "fourbyfour.bin";
 
+  /// The FTO's tables: the second phase's edges and triangles.
+  static const String fto = "fto.bin";
+
   /// The older Kociemba solver's tables. Not needed by any scrambler.
   static const String kociemba = "tables.bin";
 
   /// Every file the scramblers ask for, for a host bundling the lot.
-  static const List<String> all = [phase1, phase2, pocket, pyraminx, skewb, fourByFour];
+  static const List<String> all = [phase1, phase2, pocket, pyraminx, skewb, fourByFour, fto];
 }
 
 /// The bytes the host's [useTableBytesLoader] has for [name], or null where it has none or set none.

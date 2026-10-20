@@ -3,6 +3,8 @@ import "dart:math";
 import "package:mochi_cube/fto/cube.dart";
 import "package:mochi_cube/fto/cubie.dart";
 import "package:mochi_cube/fto/facelets.dart";
+import "package:mochi_cube/fto/search.dart";
+import "package:mochi_cube/fto/tables.dart";
 import "package:mochi_cube/mochi_cube.dart" show Algorithm;
 import "package:test/test.dart";
 
@@ -258,6 +260,63 @@ void main() {
       final misplaced = [...solved];
       misplaced[ufbrblTriangleFacelets[0]] = rlbdFaces[0];
       expect(() => ftoCubieFromFacelets(misplaced), throwsFormatException);
+    });
+  });
+
+  group("tables", () {
+    setUpAll(FtoTables.init);
+
+    test("every state of every phase can be solved", () {
+      expect(FtoTables.g1Prun, isNot(contains(255)));
+      expect(FtoTables.g2TriplePrun, isNot(contains(255)));
+      expect(FtoTables.g2TxEPrun, isNot(contains(255)));
+      expect(FtoTables.g3CornerPrun, isNot(contains(255)));
+    });
+
+    // The move tables are built through the packing functions, so check them
+    // against the pieces themselves, turned as the stickers turn.
+    test("the move tables follow the pieces", () {
+      final random = Random(3);
+      for (var trial = 0; trial < 200; trial++) {
+        final cubie = FtoCubie();
+        for (var i = 0; i < 20; i++) {
+          cubie.turn(random.nextInt(16));
+        }
+        final m = random.nextInt(16);
+        final turned = FtoCubie.from(cubie)..turn(m);
+        expect(FtoTables.g1EdgeMoves[cubie.g1PackEdges() * 16 + m], turned.g1PackEdges());
+        expect(FtoTables.g1TriangleMoves[cubie.g1PackTriangles() * 16 + m], turned.g1PackTriangles());
+      }
+    });
+  });
+
+  group("solver", () {
+    test("a scramble leaves the random state it was drawn for", () {
+      for (var seed = 0; seed < 30; seed++) {
+        final cubie = randomFtoCubie(random: Random(seed));
+        final scramble = FtoSearch.scrambleFor(cubie);
+        expect((Fto()..apply(scramble)).facelets, cubie.toFacelets(), reason: "seed $seed: $scramble");
+        expect(scramble.length, lessThanOrEqualTo(40));
+      }
+    });
+
+    test("solves stickers, and solved needs nothing", () {
+      final random = Random(4);
+      for (var trial = 0; trial < 10; trial++) {
+        final cube = Fto();
+        for (var i = 0; i < 40; i++) {
+          cube.applyMove(random.nextInt(16));
+        }
+        expect((Fto.from(cube)..apply(FtoSearch.solve(cube))).isSolved, isTrue, reason: "trial $trial");
+      }
+      expect(FtoSearch.solve(Fto()), isEmpty);
+    });
+
+    test("a seed repeats the scramble, and it uses the official names", () {
+      final once = randomFtoScramble(random: Random(5));
+      expect(randomFtoScramble(random: Random(5)), once);
+      expect(once.moveSet, ftoMoves);
+      expect(Algorithm.parse(once.toString(), moveSet: ftoMoves), once);
     });
   });
 }
