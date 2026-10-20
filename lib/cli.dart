@@ -12,6 +12,7 @@ import "fourbyfour.dart" show FourByFourTables;
 import "pocket.dart" show PocketTables;
 import "pyraminx.dart" show PyraminxTables;
 import "scramblers.dart";
+import "fto.dart" show FtoTables;
 import "skewb.dart" show SkewbTables;
 import "table_storage.dart" show TableFiles, tableDirectory;
 
@@ -280,6 +281,7 @@ class _TablesCommand extends _Command {
       "4x4x4": () => FourByFourTables.lengthInBytes,
       "pyraminx": () => PyraminxTables().lengthInBytes,
       "skewb": () => SkewbTables().lengthInBytes,
+      "fto": () => FtoTables.lengthInBytes(),
     };
 
     for (final MapEntry(key: what, value: build) in builders.entries) {
