@@ -5,7 +5,7 @@ import "package:mochi_cube/megaminx.dart" show Megaminx, megaminxLayout, nMegami
 import "package:mochi_cube/mochi_cube.dart";
 import "package:mochi_cube/pocket.dart" show pocketLayout;
 import "package:mochi_cube/pyraminx.dart";
-import "package:mochi_cube/skewb.dart" show nSkewbFacelets, skewbCornerOf, skewbLayout;
+import "package:mochi_cube/skewb.dart" show nSkewbFacelets, skewbCornerOf, skewbIsometricLayout, skewbLayout;
 import "package:mochi_cube/square1.dart" show Square1Cube, randomSquare1Cube, square1Layout;
 import "package:test/test.dart";
 
@@ -133,6 +133,31 @@ void main() {
         }
       }
       expect(joined, 10);
+    });
+  });
+
+  group("skewb as csTimer draws it", () {
+    test("has the flat net's polygons in the same order, each face a sheared copy of its own", () {
+      expect(skewbIsometricLayout.length, nSkewbFacelets);
+      _staysInsideTheBox(skewbIsometricLayout);
+      // A face is cos 30 degrees of the unit square's area once it leans.
+      expect(
+        skewbIsometricLayout.stickers.map(_area).reduce((a, b) => a + b),
+        closeTo(6 * 0.8660254037844386, 1e-9),
+      );
+    });
+
+    test("the six faces are apart or share an edge, and none overlap", () {
+      for (var a = 0; a < nSkewbFacelets; a++) {
+        for (var b = a + 1; b < nSkewbFacelets; b++) {
+          if (a ~/ 5 == b ~/ 5) continue;
+          final centre = (
+            skewbIsometricLayout[a].map((p) => p.$1).reduce((x, y) => x + y) / skewbIsometricLayout[a].length,
+            skewbIsometricLayout[a].map((p) => p.$2).reduce((x, y) => x + y) / skewbIsometricLayout[a].length,
+          );
+          expect(_inside(centre, skewbIsometricLayout[b]), isFalse, reason: "stickers $a and $b");
+        }
+      }
     });
   });
 

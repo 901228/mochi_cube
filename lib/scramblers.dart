@@ -511,7 +511,7 @@ class SkewbScrambler with _AlgorithmSteps implements Scrambler {
   String get puzzleId => id;
 
   @override
-  Layout get layout => skewbLayout;
+  Layout get layout => skewbIsometricLayout;
 
   @override
   int get stateLength => nSkewbFacelets;

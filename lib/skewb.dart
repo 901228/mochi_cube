@@ -16,7 +16,7 @@ library;
 
 export "cube/algorithm.dart" show Algorithm, MoveSet;
 export "skewb/coordinates.dart" show SkewbPart;
-export "skewb/layout.dart" show Point, PuzzleLayout, skewbLayout;
+export "skewb/layout.dart" show Point, PuzzleLayout, skewbIsometricLayout, skewbLayout;
 export "skewb/cube.dart"
     show
         SkewbCube,
