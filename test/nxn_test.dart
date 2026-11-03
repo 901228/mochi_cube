@@ -226,14 +226,28 @@ void main() {
       expect(cubeLayerTurns("R x M' 3Rw2 2L", size: 5), [
         (face: 1, lo: 1, hi: 1, quarters: 1),
         (face: 1, lo: 1, hi: 5, quarters: 1),
-        (face: 4, lo: 3, hi: 3, quarters: 3),
+        (face: 4, lo: 3, hi: 3, quarters: -1),
         (face: 1, lo: 1, hi: 3, quarters: 2),
         (face: 4, lo: 2, hi: 2, quarters: 1),
       ]);
     });
 
+    test("reads the count written, as many quarters and the way round it says", () {
+      expect(read("R3 U'2 F2' L'3", 3), "R' U2 F2 L");
+      expect(read("R4 Rw3", 4), "Rw'");
+      expect(cubeLayerTurns("R3 U'2 F2' R' L2", size: 3).map((t) => t.quarters), [3, -2, -2, -1, 2]);
+    });
+
     test("refuses what it cannot read", () {
-      for (final (notation, size) in [("Q", 3), ("M", 2), ("4R", 3), ("2x", 3), ("3r", 5), ("Rw3", 4)]) {
+      for (final (notation, size) in [
+        ("Q", 3),
+        ("M", 2),
+        ("4R", 3),
+        ("2x", 3),
+        ("3r", 5),
+        ("R0", 3),
+        ("R2'3", 3),
+      ]) {
         expect(() => parseCubeNotation(notation, size: size), throwsFormatException, reason: notation);
       }
     });

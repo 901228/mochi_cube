@@ -9,6 +9,7 @@ import "cube.dart";
 ///   layer of an even one;
 /// - a lowercase face, `r`, which is `Rw`;
 /// - a depth without a `w`, `2R`, which turns that one layer alone;
+/// - a count after the turn, `R3`, `U'2`, `F2'`: that many quarter turns, the way written;
 /// - brackets, which only group turns and are left out.
 ///
 /// The cube being turned as a whole, by a rotation or by a turn deeper than
@@ -64,7 +65,8 @@ Algorithm parseCubeNotation(String notation, {int size = 3}) {
 }
 
 /// A turn of layers [lo] to [hi] of a cube, counted from [face] in [nxnFaceNames] order, a [quarters]
-/// quarter turns clockwise as seen from it. A rotation turns every layer.
+/// quarter turns clockwise as seen from it, anticlockwise when negative and as many as written: `R3` is 3,
+/// `R'` is -1, `U'2` is -2. A rotation turns every layer.
 typedef CubeLayerTurn = ({int face, int lo, int hi, int quarters});
 
 /// The layers each move of [notation] turns on a cube of [size], one turn a move, in the notation
@@ -78,11 +80,10 @@ List<CubeLayerTurn> cubeLayerTurns(String notation, {int size = 3}) => [
 CubeLayerTurn _layerTurn(String token, int size) {
   final m = _token.firstMatch(token);
   if (m == null) throw FormatException("Invalid move: $token");
-  final quarters = switch (m[4]) {
-    null => 1,
-    "'" => 3,
-    _ => 2,
-  };
+  // `R3` and `R'3` count turns in the direction written, `R2'` a half turn counter-clockwise.
+  final count = int.tryParse(m[4]! + m[6]!) ?? 1;
+  if (m[4]!.isNotEmpty && m[6]!.isNotEmpty || count < 1) throw FormatException("Invalid move: $token");
+  final quarters = m[5] == "'" ? -count : count;
   final name = m[2]!;
   final depth = m[1] == null ? null : int.parse(m[1]!);
   final plain = depth == null && m[3]!.isEmpty;
@@ -107,7 +108,7 @@ CubeLayerTurn _layerTurn(String token, int size) {
   }
 }
 
-final _token = RegExp(r"^(\d+)?([URFDLBurfdlbMESxyz])(w?)(2'?|')?$");
+final _token = RegExp(r"^(\d+)?([URFDLBurfdlbMESxyz])(w?)(\d*)('?)(\d*)$");
 
 int _opposite(int face) => (face + 3) % 6;
 
