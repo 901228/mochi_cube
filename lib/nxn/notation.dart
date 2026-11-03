@@ -51,35 +51,8 @@ Algorithm parseCubeNotation(String notation, {int size = 3}) {
     block(held[_opposite(face)], size - hi, quarters);
   }
 
-  for (final token in notation.split(RegExp(r"[\s()\[\]]+"))) {
-    if (token.isEmpty) continue;
-    final m = _token.firstMatch(token);
-    if (m == null) throw FormatException("Invalid move: $token");
-    final quarters = switch (m[4]) {
-      null => 1,
-      "'" => 3,
-      _ => 2,
-    };
-    final name = m[2]!;
-    final depth = m[1] == null ? null : int.parse(m[1]!);
-    final plain = depth == null && m[3]!.isEmpty;
-    switch (name) {
-      case "x" || "y" || "z":
-        if (!plain) throw FormatException("Invalid move: $token");
-        rotate(nxnFaceNames.indexOf(const {"x": "R", "y": "U", "z": "F"}[name]!), quarters);
-      case "M" || "E" || "S":
-        if (!plain || size < 3) throw FormatException("Invalid move: $token");
-        final (lo, hi) = size.isEven ? (2, size - 1) : ((size + 1) ~/ 2, (size + 1) ~/ 2);
-        layers(nxnFaceNames.indexOf(const {"M": "L", "E": "D", "S": "F"}[name]!), lo, hi, quarters);
-      default:
-        final face = name.toUpperCase();
-        final wide = m[3]!.isNotEmpty || name != face;
-        final (lo, hi) = wide ? (1, depth ?? 2) : (depth ?? 1, depth ?? 1);
-        if (hi < 1 || hi > size || (wide && name != face && depth != null)) {
-          throw FormatException("Invalid move: $token");
-        }
-        layers(nxnFaceNames.indexOf(face), lo, hi, quarters);
-    }
+  for (final turn in cubeLayerTurns(notation, size: size)) {
+    layers(turn.face, turn.lo, turn.hi, turn.quarters);
   }
   if (size.isEven) {
     for (final (face, quarters) in _turnsBack(held).reversed) {
@@ -88,6 +61,50 @@ Algorithm parseCubeNotation(String notation, {int size = 3}) {
     }
   }
   return Algorithm(moves, moveSet: moveSet);
+}
+
+/// A turn of layers [lo] to [hi] of a cube, counted from [face] in [nxnFaceNames] order, a [quarters]
+/// quarter turns clockwise as seen from it. A rotation turns every layer.
+typedef CubeLayerTurn = ({int face, int lo, int hi, int quarters});
+
+/// The layers each move of [notation] turns on a cube of [size], one turn a move, in the notation
+/// [parseCubeNotation] reads: what the moves do to a cube in the hand, which a rotation turns as a
+/// whole and the next moves find held that way.
+List<CubeLayerTurn> cubeLayerTurns(String notation, {int size = 3}) => [
+  for (final token in notation.split(RegExp(r"[\s()\[\]]+")))
+    if (token.isNotEmpty) _layerTurn(token, size),
+];
+
+CubeLayerTurn _layerTurn(String token, int size) {
+  final m = _token.firstMatch(token);
+  if (m == null) throw FormatException("Invalid move: $token");
+  final quarters = switch (m[4]) {
+    null => 1,
+    "'" => 3,
+    _ => 2,
+  };
+  final name = m[2]!;
+  final depth = m[1] == null ? null : int.parse(m[1]!);
+  final plain = depth == null && m[3]!.isEmpty;
+  switch (name) {
+    case "x" || "y" || "z":
+      if (!plain) throw FormatException("Invalid move: $token");
+      final face = nxnFaceNames.indexOf(const {"x": "R", "y": "U", "z": "F"}[name]!);
+      return (face: face, lo: 1, hi: size, quarters: quarters);
+    case "M" || "E" || "S":
+      if (!plain || size < 3) throw FormatException("Invalid move: $token");
+      final (lo, hi) = size.isEven ? (2, size - 1) : ((size + 1) ~/ 2, (size + 1) ~/ 2);
+      final face = nxnFaceNames.indexOf(const {"M": "L", "E": "D", "S": "F"}[name]!);
+      return (face: face, lo: lo, hi: hi, quarters: quarters);
+    default:
+      final face = name.toUpperCase();
+      final wide = m[3]!.isNotEmpty || name != face;
+      final (lo, hi) = wide ? (1, depth ?? 2) : (depth ?? 1, depth ?? 1);
+      if (hi < 1 || hi > size || (wide && name != face && depth != null)) {
+        throw FormatException("Invalid move: $token");
+      }
+      return (face: nxnFaceNames.indexOf(face), lo: lo, hi: hi, quarters: quarters);
+  }
 }
 
 final _token = RegExp(r"^(\d+)?([URFDLBurfdlbMESxyz])(w?)(2'?|')?$");

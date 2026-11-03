@@ -222,6 +222,16 @@ void main() {
       expect(rotated.facelets, halves.facelets);
     });
 
+    test("says which layers each move turns, held however the moves before it left the cube", () {
+      expect(cubeLayerTurns("R x M' 3Rw2 2L", size: 5), [
+        (face: 1, lo: 1, hi: 1, quarters: 1),
+        (face: 1, lo: 1, hi: 5, quarters: 1),
+        (face: 4, lo: 3, hi: 3, quarters: 3),
+        (face: 1, lo: 1, hi: 3, quarters: 2),
+        (face: 4, lo: 2, hi: 2, quarters: 1),
+      ]);
+    });
+
     test("refuses what it cannot read", () {
       for (final (notation, size) in [("Q", 3), ("M", 2), ("4R", 3), ("2x", 3), ("3r", 5), ("Rw3", 4)]) {
         expect(() => parseCubeNotation(notation, size: size), throwsFormatException, reason: notation);

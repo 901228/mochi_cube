@@ -8,5 +8,5 @@ library;
 export "cube/algorithm.dart" show Algorithm, MoveSet;
 export "cube/layout.dart" show Point, PuzzleLayout, cubeNetLayout;
 export "nxn/cube.dart" show NxNCube, nxnFaceNames, nxnFaceletPosition, nxnMoves;
-export "nxn/notation.dart" show parseCubeNotation;
+export "nxn/notation.dart" show CubeLayerTurn, cubeLayerTurns, parseCubeNotation;
 export "nxn/scramble.dart" show NxNTurns, randomNxNScramble, randomTurnCounts;
