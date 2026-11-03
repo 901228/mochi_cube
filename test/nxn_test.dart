@@ -192,4 +192,40 @@ void main() {
       expect(() => NxNCube.fromFaceletString(6, "R${solved.substring(1)}"), throwsFormatException);
     });
   });
+
+  group("notation", () {
+    String read(String notation, int size) => parseCubeNotation(notation, size: size).toString();
+
+    test("reads the WCA's turns as they are, and brackets as nothing", () {
+      expect(read("R U' Rw 3Rw2 B", 6), "R U' Rw 3Rw2 B");
+      expect(read("(R U) [R' U']", 3), "R U R' U'");
+    });
+
+    test("reads a lowercase face as wide, and a depth alone as that one layer", () {
+      expect(read("r U", 3), "L F");
+      expect(read("2R U", 4), "Rw R' U");
+      expect(read("3Rw U", 5), "Lw F");
+    });
+
+    test("leaves an odd cube's whole-cube turns out, as its centres say how it is held", () {
+      expect(read("y' R", 3), "F");
+      expect(read("x", 3), "");
+      expect(read("M2", 3), "R2 L2");
+      // E on a 5x5 is its middle layer: Uw one way and Dw the other, the whole cube turned back left out.
+      expect(read("E", 5), "Uw Dw'");
+    });
+
+    test("turns an even cube as a whole as its two halves", () {
+      expect(read("x", 4), "Rw Lw'");
+      final rotated = NxNCube(4)..apply(parseCubeNotation("x y", size: 4));
+      final halves = NxNCube(4)..apply(Algorithm.parse("Rw Lw' Uw Dw'", moveSet: nxnMoves(4)));
+      expect(rotated.facelets, halves.facelets);
+    });
+
+    test("refuses what it cannot read", () {
+      for (final (notation, size) in [("Q", 3), ("M", 2), ("4R", 3), ("2x", 3), ("3r", 5), ("Rw3", 4)]) {
+        expect(() => parseCubeNotation(notation, size: size), throwsFormatException, reason: notation);
+      }
+    });
+  });
 }
