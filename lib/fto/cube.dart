@@ -136,14 +136,24 @@ const List<List<(int, int)>> _slotTriangles = [
   return (x, y, z);
 }
 
-/// Where each sticker goes under a clockwise third of a turn of [face].
+/// Where [point] goes under a clockwise third of a turn about [face].
 ///
-/// The layer that turns is everything more than a third of the way out
-/// towards the face, which is where the puzzle is cut. Clockwise as seen from
-/// outside is -120 degrees about the face's normal: about (1, 1, 1) that takes
-/// (x, y, z) to (y, z, x), and the other faces are that with the signs changed.
-/// Changing an odd number of signs is a reflection, which turns a rotation the
-/// other way, so those faces take the inverse, (z, x, y), instead.
+/// Clockwise as seen from outside is -120 degrees about the face's normal:
+/// about (1, 1, 1) that takes (x, y, z) to (y, z, x), and the other faces are
+/// that with the signs changed. Changing an odd number of signs is a
+/// reflection, which turns a rotation the other way, so those faces take the
+/// inverse, (z, x, y), instead.
+(int, int, int) ftoTurned(int face, (int, int, int) point) {
+  final (s1, s2, s3) = ftoFaceNormal[face];
+  final (x, y, z) = point;
+  return s1 * s2 * s3 == 1
+      ? (s1 * s2 * y, s2 * s3 * z, s3 * s1 * x)
+      : (s1 * s3 * z, s2 * s1 * x, s3 * s2 * y);
+}
+
+/// Where each sticker goes under a clockwise third of a turn of [face]: the
+/// layer that turns is everything more than a third of the way out towards
+/// the face, which is where the puzzle is cut.
 List<int> _turnPermutation(int face) {
   final (s1, s2, s3) = ftoFaceNormal[face];
   final positions = [for (var i = 0; i < nFtoFacelets; i++) ftoFaceletPosition(i)];
@@ -153,9 +163,7 @@ List<int> _turnPermutation(int face) {
       () {
         // Nine times a third, on the scale positions are kept at.
         if (s1 * x + s2 * y + s3 * z <= 3) return index[(x, y, z)]!;
-        final turned = s1 * s2 * s3 == 1
-            ? (s1 * s2 * y, s2 * s3 * z, s3 * s1 * x)
-            : (s1 * s3 * z, s2 * s1 * x, s3 * s2 * y);
+        final turned = ftoTurned(face, (x, y, z));
         return index[turned] ?? (throw StateError("A turn of face $face leaves the puzzle at $turned"));
       }(),
   ];

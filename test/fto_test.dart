@@ -3,6 +3,7 @@ import "dart:math";
 import "package:mochi_cube/fto/cube.dart";
 import "package:mochi_cube/fto/cubie.dart";
 import "package:mochi_cube/fto/facelets.dart";
+import "package:mochi_cube/fto/notation.dart";
 import "package:mochi_cube/fto/search.dart";
 import "package:mochi_cube/fto/tables.dart";
 import "package:mochi_cube/mochi_cube.dart" show Algorithm;
@@ -191,6 +192,51 @@ void main() {
         ..apply(algorithm)
         ..apply(algorithm.inverse);
       expect(cube.isSolved, isTrue);
+    });
+  });
+
+  group("Nautilus notation", () {
+    String read(String notation) => parseFtoNotation(notation).toString();
+
+    test("reads the WCA's turns as they are, a double as a prime and brackets as nothing", () {
+      expect(read("U R' BL F BR' D L B'"), "U R' BL F BR' D L B'");
+      expect(read("R2 U2'"), "R' U");
+      expect(read("(U) R (U' F)"), "U R U' F");
+      expect(parseFtoNotation("").isEmpty, isTrue);
+    });
+
+    test("turns the whole puzzle to bring the first layer up and the second to the front", () {
+      // R and D share a corner: held with a corner in front, as the WCA names the faces.
+      expect(read("{R, D} U F"), "R D");
+      // U and R share an edge: held with an edge in front, its faces named one further round.
+      expect(read("{U,R} U F R"), "U R BR");
+      expect(read("{U,R}"), "");
+    });
+
+    // The same as Twizzle's (cubing.js), with Nautilus' faces after a rotation
+    // as checked by hand in Twizzle for {U, R}: there R is Twizzle's BR.
+    test("agrees with Twizzle on wide turns and rotations", () {
+      expect(read("r U"), "BL F");
+      expect(read("br R2 u'"), "L D' B'");
+      expect(read("{U, R} R U R' U' r R' U R U' r'"), "BR U BR' U' L BR' F BR F' L'");
+      expect(read("{U, R} R U R' U' r R' U R U' r'"), read("BR U BR' U' br BR' U BR U' br'"));
+      expect(read("{F, BR} R' U R' D' R U' R' D R2"), "R' F R' B' R F' R' B R'");
+      expect(read("(U) {L,F} U R' F' R U' BR U R' F' R U'"), "U L R' F' R L' U L R' F' R L'");
+      expect(read("{U,R} r U {L,U} R"), "L F L");
+    });
+
+    test("an algorithm undone leaves the puzzle as it was", () {
+      final algorithm = parseFtoNotation("{U,R} r U' R' U' R U' r' U r U' R' U' R U' r'");
+      final puzzle = Fto()
+        ..apply(algorithm)
+        ..apply(algorithm.inverse);
+      expect(puzzle.isSolved, isTrue);
+    });
+
+    test("refuses what it cannot read", () {
+      for (final notation in ["X", "Rw", "R3", "Br", "{U}", "{U, D}", "{U, Q}"]) {
+        expect(() => parseFtoNotation(notation), throwsFormatException, reason: notation);
+      }
     });
   });
 

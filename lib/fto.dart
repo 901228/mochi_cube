@@ -17,6 +17,7 @@ library;
 export "cube/algorithm.dart" show Algorithm, MoveSet;
 export "fto/cube.dart" show Fto, ftoFaceLetters, ftoFaceNames, ftoMoves, nFtoFacelets;
 export "fto/facelets.dart" show ftoFromFaceletString;
+export "fto/notation.dart" show parseFtoNotation;
 export "fto/layout.dart" show Point, PuzzleLayout, ftoLayout;
 export "fto/search.dart" show FtoSearch, randomFtoScramble;
 export "fto/tables.dart" show FtoTables;
