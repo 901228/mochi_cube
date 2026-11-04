@@ -9,6 +9,7 @@ import "package:mochi_cube/fourbyfour/cubies.dart";
 import "package:mochi_cube/fourbyfour/edge3.dart";
 import "package:mochi_cube/fourbyfour/moves.dart";
 import "package:mochi_cube/fourbyfour/search.dart";
+import "package:mochi_cube/nxn/scramble.dart";
 import "package:test/test.dart";
 
 /// The stickers of [cube] as the NxN model writes them.
@@ -334,6 +335,16 @@ void main() {
       for (final move in once.moves) {
         final axis = nxnMoves(4).axisOf(move);
         if (axis >= 6) expect(axis, lessThan(9), reason: "$once");
+      }
+    });
+
+    test("no two neighbouring turns of a scramble merge, as TNoodle would have it", () {
+      final turns = NxNTurns(4);
+      for (var seed = 0; seed < 20; seed++) {
+        final moves = randomFourByFourScramble(random: Random(seed)).moves;
+        for (var i = 0; i + 1 < moves.length; i++) {
+          expect(turns.wastes(moves[i], moves[i + 1]), isFalse, reason: "seed $seed at $i");
+        }
       }
     });
 

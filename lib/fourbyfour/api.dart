@@ -37,9 +37,5 @@ abstract final class FourByFourSearch {
 ///
 /// [random] defaults to [Random.secure]; pass a seeded [Random] to reproduce a
 /// scramble.
-// shortcut: moves are written as the search finds them, where TNoodle also
-// merges neighbouring turns of one axis, so "R Rw" would be one turn there and
-// two here. Rare, and the scramble is the same state either way; merge them if
-// the notation ever has to match TNoodle's character for character.
 Algorithm randomFourByFourScramble({Random? random}) =>
     Algorithm(ThreePhaseSearch().randomState(random ?? Random.secure()), moveSet: nxnMoves(4));
