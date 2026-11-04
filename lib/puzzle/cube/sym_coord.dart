@@ -132,9 +132,8 @@ final SymCoord flipSym = SymCoord.reduce(
 
 /// Corner permutation, reduced. Raw[0, 8!)
 ///
-/// NOTE: only the structure of this reduction is verified so far, not that it
-/// is conflict-free against the true phase 2 distances the way [twistSym] and
-/// [flipSym] are. Run that check before building the phase 2 pruning tables.
+/// Checked against the kociemba phase 2 distances on every (corner permutation,
+/// slice permutation) pair, in `test/puzzle_test.dart`.
 final SymCoord cpermSym = SymCoord.reduce(
   rawCount: 40320,
   write: (c, v) => c.cperm = v,
