@@ -122,6 +122,21 @@ const List<List<(int, int)>> _slotTriangles = [
   [(2, 0), (3, 0), (2, 1)],
 ];
 
+/// The three corners of sticker [facelet]'s triangle, three times as far out
+/// as they are on the octahedron `|x| + |y| + |z| = 1`, so that every
+/// coordinate is a whole number.
+List<(int, int, int)> ftoFaceletCorners(int facelet) {
+  final [a, b, c] = ftoFaceCorners(facelet ~/ 9);
+  return [
+    for (final (i, j) in _slotTriangles[facelet % 9])
+      (
+        3 * a.$1 + i * (b.$1 - a.$1) + j * (c.$1 - a.$1),
+        3 * a.$2 + i * (b.$2 - a.$2) + j * (c.$2 - a.$2),
+        3 * a.$3 + i * (b.$3 - a.$3) + j * (c.$3 - a.$3),
+      ),
+  ];
+}
+
 /// Where sticker [facelet] is in space: nine times its centre, so that every
 /// coordinate is a whole number.
 (int, int, int) ftoFaceletPosition(int facelet) {

@@ -128,6 +128,14 @@ Fto labelled() => Fto.fromFacelets(List.generate(nFtoFacelets, (i) => i));
 
 void main() {
   group("geometry", () {
+    test("each sticker's corners are about its centre", () {
+      for (var i = 0; i < nFtoFacelets; i++) {
+        final corners = ftoFaceletCorners(i);
+        final sum = corners.fold((0, 0, 0), (s, c) => (s.$1 + c.$1, s.$2 + c.$2, s.$3 + c.$3));
+        expect(sum, ftoFaceletPosition(i), reason: "facelet $i");
+      }
+    });
+
     test("every sticker has a place of its own, on its own face", () {
       final positions = {for (var i = 0; i < nFtoFacelets; i++) ftoFaceletPosition(i)};
       expect(positions, hasLength(nFtoFacelets));
@@ -231,6 +239,45 @@ void main() {
         ..apply(algorithm)
         ..apply(algorithm.inverse);
       expect(puzzle.isSolved, isTrue);
+    });
+
+    test("step by step, turns count as written and the puzzle's own faces are named", () {
+      expect(ftoNotationSteps("R R' R2 R2'"), [FtoTurn(1, 1), FtoTurn(1, -1), FtoTurn(1, 2), FtoTurn(1, -2)]);
+      // After {R, D}, R of the puzzle is up and D in front; the U named next is that R.
+      expect(ftoNotationSteps("{R, D} U"), [FtoRotation(1, 6), FtoTurn(1, 1)]);
+      // A wide turn turns the puzzle about it, so R stays R but the U after it is another face.
+      final [wide, same, moved] = ftoNotationSteps("r R U");
+      expect(wide, FtoTurn(1, 1, wide: true));
+      expect(same, FtoTurn(1, 1));
+      expect(moved, isNot(FtoTurn(0, 1)));
+    });
+
+    test("turns of one axis in brackets are made at once, others are only grouped", () {
+      // R with the middle layer, then R back: the middle layer alone.
+      expect(ftoNotationSteps("(r R')"), [const FtoLayers(1, (0, 1, 0))]);
+      // BL is opposite R, so turning it clockwise turns R's far layer anticlockwise as seen from R.
+      expect(ftoNotationSteps("(R BL)"), [const FtoLayers(1, (1, 0, -1))]);
+      expect(ftoNotationSteps("(U R)"), [const FtoTurn(0, 1), const FtoTurn(1, 1)]);
+      expect(ftoNotationSteps("(U)"), [const FtoTurn(0, 1)]);
+      // At once or one after the other, they come to the same.
+      for (final (together, apart) in [
+        ("(r R')", "r R'"),
+        ("(R BL') U", "R BL' U"),
+        ("{U,R} (br' BR) F", "{U,R} br' BR F"),
+        ("(r2 bl) R", "r2 bl R"),
+      ]) {
+        expect(
+          (Fto()..apply(parseFtoNotation(together))).facelets,
+          (Fto()..apply(parseFtoNotation(apart))).facelets,
+          reason: together,
+        );
+        // And the puzzle is held the same way after, so what follows names the same faces.
+        expect(
+          (Fto()..apply(parseFtoNotation("$together R U' F"))).facelets,
+          (Fto()..apply(parseFtoNotation("$apart R U' F"))).facelets,
+          reason: together,
+        );
+      }
     });
 
     test("refuses what it cannot read", () {
