@@ -238,6 +238,12 @@ void main() {
       expect(cubeLayerTurns("R3 U'2 F2' R' L2", size: 3).map((t) => t.quarters), [3, -2, -2, -1, 2]);
     });
 
+    test("the turns in brackets are kept together, as many as there are", () {
+      final groups = cubeLayerGroups("(R L') U [F] (2R) () (r R')", size: 4);
+      expect([for (final g in groups) g.length], [2, 1, 1, 1, 2]);
+      expect(groups.expand((g) => g), cubeLayerTurns("(R L') U [F] (2R) () (r R')", size: 4));
+    });
+
     test("refuses what it cannot read", () {
       for (final (notation, size) in [
         ("Q", 3),

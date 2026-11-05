@@ -77,6 +77,16 @@ List<CubeLayerTurn> cubeLayerTurns(String notation, {int size = 3}) => [
     if (token.isNotEmpty) _layerTurn(token, size),
 ];
 
+/// The turns of [notation] as [cubeLayerTurns] reads them, the ones in each pair of brackets, `( )`, kept
+/// together and every other turn on its own: for a reader that turns the layers of one bracket at once.
+List<List<CubeLayerTurn>> cubeLayerGroups(String notation, {int size = 3}) => [
+  for (final m in RegExp(r"\(([^()]*)\)|[^\s()\[\]]+").allMatches(notation))
+    if (m[1] == null)
+      [_layerTurn(m[0]!, size)]
+    else if (m[1]!.trim().isNotEmpty)
+      cubeLayerTurns(m[1]!, size: size),
+];
+
 CubeLayerTurn _layerTurn(String token, int size) {
   final m = _token.firstMatch(token);
   if (m == null) throw FormatException("Invalid move: $token");
