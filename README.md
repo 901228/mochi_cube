@@ -1,5 +1,7 @@
 # mochi_cube
 
+<p align="center">English · <a href="README_zh.md">繁體中文</a></p>
+
 Twisty puzzle solvers and scramble generators in pure Dart, no Flutter
 dependency. The 2x2x2 to the 7x7x7, the Megaminx, the Pyraminx, the Skewb, the
 Square-1 and the Clock so far, as a library and as a [command line tool](#command-line).
@@ -346,6 +348,17 @@ The eight faces are `U R F L B BL D BR`, with the moves `U R' BL …` written as
 the WCA writes them. The turns are checked against TNoodle's own hand-written
 turn table sticker for sticker, and the solver's pieces against the stickers.
 The 11 MB phase 2 table is cached as `fto.bin` and takes about 3 s to build.
+
+`parseFtoNotation` also reads [Nautilus' notation](https://nautilusfto.com/Notation),
+which goes past the WCA's:
+
+- a lowercase face, `r` or `br`, turns the middle layer with the face;
+- a count is taken as written, so `R2` turns a face two thirds of the way and is `R'`;
+- `{X,Y}` turns the whole puzzle to bring layer X up and layer Y to the front. When
+  the two share a corner the puzzle is held with a corner in front, when they share
+  an edge, with an edge in front;
+- turns on one axis in brackets, `(r R')` or `(R BL')`, are one step, which
+  `ftoNotationSteps` returns as an `FtoLayers`; any other brackets only group.
 
 ## The Clock
 
